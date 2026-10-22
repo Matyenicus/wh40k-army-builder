@@ -1,0 +1,2284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warhammer 40,000 Army Roster Engine & Datasheet CMS</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: {
+                            950: '#06080b',
+                            900: '#0d1117',
+                            850: '#131922',
+                            800: '#1b2330',
+                            700: '#263345',
+                            600: '#35465e'
+                        },
+                        aquila: {
+                            gold: '#f59e0b',
+                            goldLight: '#fbbf24',
+                            goldDark: '#b45309',
+                            plasma: '#06b6d4',
+                            danger: '#ef4444',
+                            bolter: '#94a3b8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Georgia', 'serif'],
+                        mono: ['Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #06080b; }
+        ::-webkit-scrollbar-thumb { background: #263345; border-radius: 4px; border: 1px solid #35465e; }
+        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+        
+        .grimdark-glow {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+        }
+        .grimdark-glow-danger {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+        }
+        .stat-cell {
+            background: linear-gradient(180deg, #182230 0%, #0d121a 100%);
+            border: 1px solid #28374d;
+        }
+        .hud-bracket {
+            position: relative;
+            border: 1px solid #28374d;
+        }
+        .hud-bracket::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: -1px; width: 7px; height: 7px;
+            border-top: 2px solid #f59e0b; border-left: 2px solid #f59e0b;
+        }
+        .hud-bracket::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; right: -1px; width: 7px; height: 7px;
+            border-bottom: 2px solid #f59e0b; border-right: 2px solid #f59e0b;
+        }
+    </style>
+</head>
+<body class="bg-void-950 text-slate-200 min-h-screen font-sans flex flex-col antialiased selection:bg-aquila-gold selection:text-black">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-void-900 border-b border-aquila-gold/30 sticky top-0 z-50 shadow-2xl backdrop-blur-md bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-aquila-gold to-yellow-900 flex items-center justify-center text-black font-extrabold shadow-lg shadow-aquila-gold/20">
+                    <i class="fa-solid fa-skull-crossbones text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-bold tracking-wider text-aquila-gold uppercase font-display">Munitorum Engine</span>
+                        <span class="text-[10px] bg-aquila-gold/15 text-aquila-gold px-2 py-0.5 rounded border border-aquila-gold/30 font-mono">10TH ED 40K</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Warhammer 40k Force Organizer & Datasheet CMS</p>
+                </div>
+            </div>
+
+            <!-- View Switcher -->
+            <div class="flex items-center p-1 bg-void-850 rounded-lg border border-void-700 shadow-inner">
+                <button id="viewBtnRoster" onclick="switchMainView('roster')" class="px-4 py-1.5 rounded-md text-xs sm:text-sm font-bold flex items-center gap-2 transition-all bg-aquila-gold text-black shadow">
+                    <i class="fa-solid fa-list-check"></i> Roster Builder
+                </button>
+                <button id="viewBtnAdmin" onclick="switchMainView('admin')" class="px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium text-slate-400 hover:text-white flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-database"></i> Datasheet CMS <span id="adminBadgeUnitsCount" class="text-[10px] bg-void-700 px-1.5 py-0.2 rounded text-aquila-gold font-mono">0</span>
+                </button>
+            </div>
+
+            <!-- Database Backup & Factory Reset Controls -->
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+                <button onclick="exportDatabaseJSON()" title="Export database to JSON file" class="px-2.5 py-1.5 bg-void-800 hover:bg-void-700 text-slate-300 border border-void-700 rounded transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-arrow-down text-aquila-gold"></i> Export JSON
+                </button>
+                <label title="Import database from JSON file" class="cursor-pointer px-2.5 py-1.5 bg-void-800 hover:bg-void-700 text-slate-300 border border-void-700 rounded transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-arrow-up text-aquila-plasma"></i> Import JSON
+                    <input type="file" id="importJsonFileInput" accept=".json" onchange="importDatabaseJSON(event)" class="hidden">
+                </label>
+                <button onclick="resetToFactoryDefault()" title="Reset to official factory default datasheets" class="px-2.5 py-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/60 rounded transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 space-y-6">
+
+        <!-- ============================================================== -->
+        <!-- VIEW 1: ARMY ROSTER BUILDER                                   -->
+        <!-- ============================================================== -->
+        <div id="viewRosterSection" class="space-y-6">
+
+            <!-- Army Configuration Header Panel -->
+            <section class="bg-void-900 rounded-xl p-5 border border-void-700 shadow-xl space-y-5 hud-bracket">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Faction Selector -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-aquila-gold mb-1.5">
+                            <i class="fa-solid fa-shield-halved mr-1"></i> Faction
+                        </label>
+                        <select id="factionSelect" onchange="handleFactionChange(this.value)" class="w-full bg-void-850 border border-void-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aquila-gold transition-colors">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Detachment Selector -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-aquila-gold mb-1.5">
+                            <i class="fa-solid fa-chess-rook mr-1"></i> Detachment
+                        </label>
+                        <select id="detachmentSelect" onchange="handleDetachmentChange(this.value)" class="w-full bg-void-850 border border-void-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aquila-gold transition-colors">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Battle Size / Points Limit Selector -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-aquila-gold mb-1.5">
+                            <i class="fa-solid fa-bullseye mr-1"></i> Battle Size / Limit
+                        </label>
+                        <div class="flex gap-2">
+                            <select id="pointLimitSelect" onchange="handleLimitPreset(this.value)" class="w-2/3 bg-void-850 border border-void-600 rounded-lg px-2.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-aquila-gold">
+                                <option value="500">Combat Patrol (500 pts)</option>
+                                <option value="1000">Incursion (1000 pts)</option>
+                                <option value="2000" selected>Strike Force (2000 pts)</option>
+                                <option value="3000">Onslaught (3000 pts)</option>
+                                <option value="custom">Custom Limit</option>
+                            </select>
+                            <input type="number" id="customLimitInput" value="2000" min="100" max="10000" step="50" onchange="handleCustomLimit(this.value)" class="w-1/3 bg-void-850 border border-void-600 rounded-lg px-2 py-2 text-sm text-white text-center focus:outline-none focus:border-aquila-gold font-mono">
+                        </div>
+                    </div>
+
+                    <!-- Army Name Input -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-aquila-gold mb-1.5">
+                            <i class="fa-solid fa-feather-pointed mr-1"></i> Strike Force Name
+                        </label>
+                        <input type="text" id="armyNameInput" value="Imperium Strike Force" oninput="armyData.name = this.value; saveAppState();" class="w-full bg-void-850 border border-void-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aquila-gold">
+                    </div>
+                </div>
+
+                <!-- Detachment Rule & Faction Ability Banner -->
+                <div id="detachmentRuleCard" class="bg-void-850/80 rounded-lg p-3.5 border-l-4 border-aquila-gold text-xs sm:text-sm">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Live Metrics Summary Bar -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-void-700/80">
+                    <!-- Points Gauge -->
+                    <div class="bg-void-950 p-3 rounded-lg border border-void-700 flex flex-col justify-between">
+                        <div class="flex justify-between items-center text-xs text-slate-400 mb-1">
+                            <span>Total Points</span>
+                            <span id="pointsRatioBadge" class="font-mono text-xs text-aquila-gold font-bold">0 / 2000 pts</span>
+                        </div>
+                        <div class="w-full bg-void-800 rounded-full h-2.5 overflow-hidden">
+                            <div id="pointsProgressBar" class="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-aquila-gold transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="pointsOverflowNotice" class="text-[11px] text-red-400 mt-1 font-semibold hidden">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Over points limit!
+                        </div>
+                    </div>
+
+                    <!-- Warlord Status -->
+                    <div class="bg-void-950 p-3 rounded-lg border border-void-700 flex items-center justify-between">
+                        <div>
+                            <span class="block text-[11px] text-slate-400 uppercase font-semibold">Warlord</span>
+                            <span id="warlordStatusName" class="text-xs sm:text-sm font-semibold text-white truncate max-w-[130px] block">None</span>
+                        </div>
+                        <div id="warlordStatusIcon" class="w-8 h-8 rounded-full bg-void-850 flex items-center justify-center text-slate-500 border border-void-700">
+                            <i class="fa-solid fa-crown text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- Unit Count -->
+                    <div class="bg-void-950 p-3 rounded-lg border border-void-700 flex items-center justify-between">
+                        <div>
+                            <span class="block text-[11px] text-slate-400 uppercase font-semibold">Total Units</span>
+                            <span id="unitCountDisplay" class="text-base sm:text-lg font-bold font-mono text-white">0</span>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-void-850 flex items-center justify-center text-aquila-gold border border-void-700">
+                            <i class="fa-solid fa-users text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- Enhancements Count -->
+                    <div class="bg-void-950 p-3 rounded-lg border border-void-700 flex items-center justify-between">
+                        <div>
+                            <span class="block text-[11px] text-slate-400 uppercase font-semibold">Enhancements</span>
+                            <span id="enhancementCountDisplay" class="text-xs sm:text-sm font-mono font-bold text-white">0 / 3</span>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-void-850 flex items-center justify-center text-yellow-500 border border-void-700">
+                            <i class="fa-solid fa-gem text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Issues Box -->
+                <div id="armyValidationAlerts" class="hidden p-3 bg-red-950/40 border border-red-700/60 rounded-lg space-y-1 text-xs text-red-300">
+                    <!-- Populated dynamically if errors exist -->
+                </div>
+            </section>
+
+            <!-- Roster Builder Workspace -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Panel: Fast Recruitment Dropdown (4 cols) -->
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="bg-void-900 rounded-xl p-4 border border-void-700 shadow-lg space-y-3">
+                        <div class="flex items-center justify-between border-b border-void-700 pb-2">
+                            <h2 class="text-sm font-bold text-aquila-gold uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-plus"></i> Recruit Unit
+                            </h2>
+                            <button onclick="switchMainView('admin'); prepareCreateUnit();" class="text-[11px] text-aquila-gold hover:underline flex items-center gap-1">
+                                <i class="fa-solid fa-pen-to-square"></i> New in CMS
+                            </button>
+                        </div>
+
+                        <!-- Role Filter Selector -->
+                        <div>
+                            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Filter by Battlefield Role</label>
+                            <select id="quickAddRoleFilter" onchange="populateQuickAddUnitDropdown()" class="w-full bg-void-850 border border-void-600 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-aquila-gold">
+                                <option value="All">All Battlefield Roles</option>
+                                <option value="Epic Hero">Epic Hero</option>
+                                <option value="Character">Character</option>
+                                <option value="Battleline">Battleline</option>
+                                <option value="Infantry">Infantry</option>
+                                <option value="Mounted">Mounted</option>
+                                <option value="Vehicle">Vehicle</option>
+                                <option value="Monster">Monster</option>
+                                <option value="Dedicated Transport">Dedicated Transport</option>
+                                <option value="Fortification">Fortification</option>
+                            </select>
+                        </div>
+
+                        <!-- Unit Select Dropdown -->
+                        <div>
+                            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Select Datasheet</label>
+                            <select id="quickAddUnitSelect" onchange="updateQuickUnitPreview()" class="w-full bg-void-850 border border-void-600 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-aquila-gold font-medium">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Quick Unit Preview Card -->
+                        <div id="quickUnitPreviewBox" class="bg-void-850/60 p-3 rounded-lg border border-void-700 text-xs space-y-2">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <!-- Add Button -->
+                        <button onclick="addSelectedUnitToRoster()" id="btnConfirmAddUnit" class="w-full py-2.5 bg-aquila-gold hover:bg-aquila-goldLight text-black font-bold rounded-lg text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow active:scale-98">
+                            <i class="fa-solid fa-user-plus"></i> Add to Strike Force
+                        </button>
+                    </div>
+
+                    <!-- Quick Tools & Actions -->
+                    <div class="bg-void-900 rounded-xl p-4 border border-void-700 shadow text-xs space-y-2">
+                        <h3 class="font-bold text-slate-300 uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-sliders text-aquila-gold"></i> Export & Operations
+                        </h3>
+                        <button onclick="openExportModal()" class="w-full py-2 bg-void-800 hover:bg-void-700 text-aquila-gold border border-aquila-gold/40 rounded text-xs font-semibold flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-scroll"></i> Clean Text Roster (Tournament / Discord)
+                        </button>
+                        <button onclick="window.print()" class="w-full py-2 bg-void-800 hover:bg-void-700 text-slate-300 border border-void-700 rounded text-xs flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-print"></i> Print Friendly / PDF
+                        </button>
+                        <button onclick="clearCurrentRoster()" class="w-full py-1.5 bg-red-950/30 hover:bg-red-900/50 text-red-400 border border-red-800/50 rounded text-xs flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-trash-can"></i> Clear Current Roster
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Built Army Roster (8 cols) -->
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="bg-void-900 rounded-xl p-4 sm:p-5 border border-void-700 shadow-xl min-h-[540px]">
+                        
+                        <div class="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-void-700 gap-2">
+                            <div>
+                                <h2 class="text-base sm:text-lg font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-shield text-aquila-gold"></i>
+                                    <span>Active Strike Force Units</span>
+                                </h2>
+                                <p class="text-xs text-slate-400" id="rosterUnitCountSubtitle">0 units enrolled</p>
+                            </div>
+
+                            <!-- Role Filter in Roster -->
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-400">Filter:</span>
+                                <select id="rosterDisplayFilter" onchange="renderRosterList()" class="bg-void-850 border border-void-600 rounded text-xs px-2.5 py-1 text-slate-200 focus:outline-none focus:border-aquila-gold">
+                                    <option value="All">All Units</option>
+                                    <option value="Epic Hero">Epic Hero</option>
+                                    <option value="Character">Character</option>
+                                    <option value="Battleline">Battleline</option>
+                                    <option value="Infantry">Infantry</option>
+                                    <option value="Mounted">Mounted</option>
+                                    <option value="Vehicle">Vehicle</option>
+                                    <option value="Monster">Monster</option>
+                                    <option value="Dedicated Transport">Dedicated Transport</option>
+                                    <option value="Fortification">Fortification</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="rosterEmptyPlaceholder" class="text-center py-20 px-4">
+                            <div class="w-16 h-16 rounded-full bg-void-850 mx-auto flex items-center justify-center text-slate-500 mb-3 border border-void-700">
+                                <i class="fa-solid fa-crosshairs text-2xl"></i>
+                            </div>
+                            <h4 class="text-base font-semibold text-slate-300">Your Strike Force is Empty</h4>
+                            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Select a unit from the left recruitment dropdown, or open the Datasheet CMS tab to build custom 40k units!</p>
+                        </div>
+
+                        <!-- Roster Accordion List -->
+                        <div id="rosterCardsContainer" class="space-y-3.5">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- VIEW 2: DATASHEET CMS / DATABASE ADMIN PANEL                  -->
+        <!-- ============================================================== -->
+        <div id="viewAdminSection" class="hidden space-y-6">
+            
+            <!-- CMS Top Bar -->
+            <div class="bg-void-900 rounded-xl p-4 border border-void-700 shadow-xl flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-aquila-plasma/20 border border-aquila-plasma text-aquila-plasma flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-pen-ruler text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-white uppercase tracking-wider">Munitorum Datasheet CMS</h2>
+                        <p class="text-xs text-slate-400">Manage stats, weapon profiles, point tiers, abilities, and keywords with live sync.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="prepareCreateUnit()" class="px-4 py-2 bg-aquila-gold hover:bg-aquila-goldLight text-black text-xs font-bold rounded-lg flex items-center gap-2 shadow active:scale-95 transition">
+                        <i class="fa-solid fa-plus"></i> Create New Unit
+                    </button>
+                </div>
+            </div>
+
+            <!-- CMS Layout: Left list (4 cols) & Right editor (8 cols) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left: Existing Units Manager List -->
+                <div class="lg:col-span-4 bg-void-900 rounded-xl p-4 border border-void-700 shadow space-y-3">
+                    <div class="flex items-center justify-between border-b border-void-700 pb-2">
+                        <span class="text-xs uppercase font-bold text-slate-300">Registered Datasheets</span>
+                        <span id="adminListCounter" class="text-xs font-mono text-aquila-gold font-bold">0 units</span>
+                    </div>
+
+                    <!-- Filter by Faction & Role in CMS -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Faction</label>
+                            <select id="adminFilterFaction" onchange="renderAdminUnitList()" class="w-full bg-void-850 border border-void-600 rounded px-2 py-1 text-xs text-white focus:outline-none">
+                                <option value="All">All Factions</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Role</label>
+                            <select id="adminFilterRole" onchange="renderAdminUnitList()" class="w-full bg-void-850 border border-void-600 rounded px-2 py-1 text-xs text-white focus:outline-none">
+                                <option value="All">All Roles</option>
+                                <option value="Epic Hero">Epic Hero</option>
+                                <option value="Character">Character</option>
+                                <option value="Battleline">Battleline</option>
+                                <option value="Infantry">Infantry</option>
+                                <option value="Mounted">Mounted</option>
+                                <option value="Vehicle">Vehicle</option>
+                                <option value="Monster">Monster</option>
+                                <option value="Dedicated Transport">Dedicated Transport</option>
+                                <option value="Fortification">Fortification</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative">
+                        <input type="text" id="adminSearchInput" oninput="renderAdminUnitList()" placeholder="Search datasheet by name or keyword..." class="w-full bg-void-850 border border-void-600 rounded pl-8 pr-2.5 py-1 text-xs text-white focus:outline-none focus:border-aquila-gold">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-500 text-xs"></i>
+                    </div>
+
+                    <!-- Scrollable Units List -->
+                    <div id="adminUnitListContainer" class="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right: Full Datasheet Editor Form -->
+                <div class="lg:col-span-8 bg-void-900 rounded-xl p-5 border border-void-700 shadow-xl space-y-5">
+                    
+                    <div class="flex items-center justify-between border-b border-void-700 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span id="editorFormBadge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-900/60 text-blue-300 border border-blue-700">EDITING</span>
+                            <h3 id="editorFormTitle" class="text-base font-bold text-white uppercase tracking-wider">Datasheet Parameters</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="cancelEditor()" class="px-3 py-1 bg-void-800 hover:bg-void-700 text-slate-300 text-xs rounded border border-void-600">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="saveUnitFromForm()" class="px-4 py-1.5 bg-aquila-gold hover:bg-aquila-goldLight text-black font-bold text-xs rounded shadow flex items-center gap-1.5 active:scale-95 transition">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Datasheet
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- The Editor Form -->
+                    <form id="unitEditForm" onsubmit="event.preventDefault(); saveUnitFromForm();" class="space-y-5 text-xs">
+                        <input type="hidden" id="editUnitId">
+
+                        <!-- Core Identity -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="sm:col-span-1">
+                                <label class="block font-semibold uppercase text-slate-400 mb-1">Datasheet Name *</label>
+                                <input type="text" id="editUnitName" required placeholder="e.g. Sternguard Veteran Squad" class="w-full bg-void-850 border border-void-600 rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-aquila-gold">
+                            </div>
+                            <div>
+                                <label class="block font-semibold uppercase text-slate-400 mb-1">Faction *</label>
+                                <select id="editUnitFaction" required class="w-full bg-void-850 border border-void-600 rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-aquila-gold">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold uppercase text-slate-400 mb-1">Battlefield Role *</label>
+                                <select id="editUnitRole" required class="w-full bg-void-850 border border-void-600 rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-aquila-gold">
+                                    <option value="Epic Hero">Epic Hero</option>
+                                    <option value="Character">Character</option>
+                                    <option value="Battleline">Battleline</option>
+                                    <option value="Infantry">Infantry</option>
+                                    <option value="Mounted">Mounted</option>
+                                    <option value="Vehicle">Vehicle</option>
+                                    <option value="Monster">Monster</option>
+                                    <option value="Dedicated Transport">Dedicated Transport</option>
+                                    <option value="Fortification">Fortification</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Unit Sizing & Points Tiers -->
+                        <div class="p-3 bg-void-850/60 rounded-lg border border-void-700/80 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                                    <i class="fa-solid fa-calculator text-aquila-gold"></i> Model Size & Point Cost Tiers
+                                </span>
+                                <button type="button" onclick="addModelTierRow()" class="px-2 py-0.5 bg-void-700 hover:bg-void-600 text-aquila-gold rounded text-[11px] flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-[9px]"></i> Add Size Tier
+                                </button>
+                            </div>
+
+                            <div id="modelTiersContainer" class="space-y-2">
+                                <!-- Dynamic tier rows -->
+                            </div>
+                            
+                            <div class="flex items-center gap-4 pt-1">
+                                <label class="inline-flex items-center gap-2 cursor-pointer text-slate-300">
+                                    <input type="checkbox" id="editCanTakeEnhancement" class="accent-aquila-gold w-4 h-4 rounded">
+                                    <span>Eligible for Enhancements (Standard Non-Epic Hero Characters)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Core Statline (M, T, SV, W, LD, OC, Invuln) -->
+                        <div>
+                            <label class="block font-bold uppercase text-slate-300 tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-gauge-high text-aquila-gold"></i> Datasheet Characteristics (Statline)
+                            </label>
+                            <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 uppercase font-mono text-center">M (Move)</span>
+                                    <input type="text" id="editStatM" required placeholder='6"' class="w-full text-center bg-void-850 border border-void-600 rounded py-1.5 text-white font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 uppercase font-mono text-center">T (Toughness)</span>
+                                    <input type="number" id="editStatT" required placeholder="4" class="w-full text-center bg-void-850 border border-void-600 rounded py-1.5 text-white font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 uppercase font-mono text-center">SV (Save)</span>
+                                    <input type="text" id="editStatSV" required placeholder="3+" class="w-full text-center bg-void-850 border border-void-600 rounded py-1.5 text-white font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 uppercase font-mono text-center">W (Wounds)</span>
+                                    <input type="number" id="editStatW" required placeholder="2" class="w-full text-center bg-void-850 border border-void-600 rounded py-1.5 text-white font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 uppercase font-mono text-center">LD (Leadership)</span>
+                                    <input type="text" id="editStatLD" required placeholder="6+" class="w-full text-center bg-void-850 border border-void-600 rounded py-1.5 text-white font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-slate-400 uppercase font-mono text-center">OC (Obj Ctrl)</span>
+                                    <input type="number" id="editStatOC" required placeholder="2" class="w-full text-center bg-void-850 border border-void-600 rounded py-1.5 text-white font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] text-yellow-400 uppercase font-mono text-center">Invulnerable</span>
+                                    <input type="text" id="editStatInvuln" placeholder="4++ or -" class="w-full text-center bg-void-850 border border-yellow-700/60 rounded py-1.5 text-yellow-300 font-mono font-bold focus:outline-none focus:border-aquila-gold">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weapons Builder -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="font-bold uppercase text-slate-300 tracking-wider text-[11px] flex items-center gap-1.5">
+                                    <i class="fa-solid fa-gun text-aquila-gold"></i> Weapon Profiles (Ranged & Melee)
+                                </label>
+                                <button type="button" onclick="addWeaponRow()" class="px-2.5 py-1 bg-void-800 hover:bg-void-700 text-aquila-gold border border-void-600 rounded text-xs flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Add Weapon
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto border border-void-700 rounded-lg">
+                                <table class="w-full text-left border-collapse bg-void-850/40">
+                                    <thead>
+                                        <tr class="bg-void-800 text-[10px] uppercase font-mono text-slate-400 border-b border-void-700">
+                                            <th class="p-2">Weapon Name</th>
+                                            <th class="p-2 w-24">Range</th>
+                                            <th class="p-2 w-14">A</th>
+                                            <th class="p-2 w-16">BS/WS</th>
+                                            <th class="p-2 w-14">S</th>
+                                            <th class="p-2 w-14">AP</th>
+                                            <th class="p-2 w-14">D</th>
+                                            <th class="p-2">Weapon Keywords</th>
+                                            <th class="p-2 w-10 text-center">Del</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="weaponsTableBody" class="divide-y divide-void-800 text-xs font-mono">
+                                        <!-- Dynamic weapon rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Abilities Builder -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="font-bold uppercase text-slate-300 tracking-wider text-[11px] flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bolt text-aquila-gold"></i> Datasheet Abilities & Rules
+                                </label>
+                                <button type="button" onclick="addAbilityRow()" class="px-2.5 py-1 bg-void-800 hover:bg-void-700 text-aquila-gold border border-void-600 rounded text-xs flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Add Ability
+                                </button>
+                            </div>
+                            <div id="abilitiesContainer" class="space-y-2">
+                                <!-- Dynamic ability rows -->
+                            </div>
+                        </div>
+
+                        <!-- Keywords (Comma-separated) -->
+                        <div>
+                            <label class="block font-semibold uppercase text-slate-400 mb-1">
+                                Faction & Unit Keywords (comma-separated)
+                            </label>
+                            <input type="text" id="editKeywords" placeholder="Infantry, Battleline, Imperium, Grenades, Tacticus" class="w-full bg-void-850 border border-void-600 rounded px-2.5 py-1.5 text-white focus:outline-none focus:border-aquila-gold font-mono">
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-void-700">
+                            <button type="button" onclick="cancelEditor()" class="px-4 py-2 bg-void-800 hover:bg-void-700 text-slate-300 text-xs rounded border border-void-600">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-5 py-2 bg-aquila-gold hover:bg-aquila-goldLight text-black font-bold text-xs rounded shadow flex items-center gap-2 active:scale-95 transition">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Datasheet
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Clean Text Export Modal -->
+    <div id="exportModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="bg-void-900 border border-aquila-gold rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-void-700 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-scroll text-aquila-gold"></i>
+                    <h3 class="text-sm sm:text-base font-bold text-white uppercase tracking-wider">Tournament / Discord Roster Export</h3>
+                </div>
+                <button onclick="closeExportModal()" class="text-slate-400 hover:text-white px-2 py-1 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-grow space-y-3">
+                <p class="text-xs text-slate-400">Standard clean text export formatted for BattleScribe/Discord sharing and event roster submission:</p>
+                <textarea id="exportTextArea" readonly class="w-full h-80 bg-void-950 border border-void-700 rounded-lg p-3 text-xs font-mono text-slate-200 select-all focus:outline-none focus:border-aquila-gold leading-relaxed"></textarea>
+                <div id="copySuccessMsg" class="hidden text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i> Copied to clipboard successfully!
+                </div>
+            </div>
+            <div class="p-4 border-t border-void-700 flex flex-wrap justify-between items-center gap-2 bg-void-950/60">
+                <button onclick="window.print()" class="px-3.5 py-1.5 bg-void-800 hover:bg-void-700 text-slate-200 rounded text-xs font-semibold flex items-center gap-1.5 border border-void-600">
+                    <i class="fa-solid fa-print"></i> Print / PDF
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeExportModal()" class="px-3.5 py-1.5 bg-void-800 hover:bg-void-700 text-slate-300 rounded text-xs border border-void-700">Close</button>
+                    <button onclick="copyExportText()" class="px-4 py-1.5 bg-aquila-gold hover:bg-aquila-goldLight text-black font-bold rounded text-xs flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-copy"></i> Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 bg-void-850 border-l-4 border-aquila-gold px-4 py-2.5 rounded shadow-2xl text-xs text-white z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-aquila-gold"></i>
+        <span id="toastMessage">Notification</span>
+    </div>
+
+    <!-- Core App Logic & Database -->
+    <script>
+        // -------------------------------------------------------------
+        // FACTORY 40K 10TH EDITION DATABASE (Pure English)
+        // -------------------------------------------------------------
+        const FACTORY_DATABASE = {
+            factions: {
+                space_marines: {
+                    id: 'space_marines',
+                    name: 'Space Marines (Adeptus Astartes)',
+                    factionAbility: {
+                        name: 'Oath of Moment',
+                        description: 'In your Command phase, select one enemy unit to be your Oath of Moment target until your next Command phase. Each time a model with this ability makes an attack against that target, you can re-roll the Hit roll.'
+                    },
+                    detachments: [
+                        {
+                            id: 'gladius',
+                            name: 'Gladius Task Force',
+                            ruleName: 'Combat Doctrines',
+                            ruleDesc: 'At the start of your Command phase, select one Doctrine: Devastator (Advance and Shoot), Tactical (Fall Back and Shoot/Charge), or Assault (Advance and Charge).',
+                            enhancements: [
+                                { id: 'artificer_armour', name: 'Artificer Armour', points: 10, desc: 'Bearer has a 2+ Save characteristic and a 5+ Feel No Pain ability.' },
+                                { id: 'the_honour_vehement', name: 'The Honour Vehement', points: 15, desc: 'Add 1 to the Attacks and Strength of the bearer melee weapons.' },
+                                { id: 'fire_discipline', name: 'Fire Discipline', points: 30, desc: 'While leading a unit, weapons equipped by models have [SUSTAINED HITS 1]. Critical hits on 5+ in Devastator Doctrine.' }
+                            ]
+                        },
+                        {
+                            id: 'ironstorm',
+                            name: 'Ironstorm Spearhead',
+                            ruleName: 'Armoured Wrath',
+                            ruleDesc: 'Once per phase, one model from your army can re-roll one Hit roll, one Wound roll, or one Damage roll.',
+                            enhancements: [
+                                { id: 'target_augury_web', name: 'Target Augury Web', points: 40, desc: 'Adept vehicles within 6" gain the [LETHAL HITS] ability on ranged weapons.' },
+                                { id: 'adept_of_the_omnissiah', name: 'Adept of the Omnissiah', points: 35, desc: 'Once per battle round, when a friendly vehicle within 6" fails a saving throw, change Damage to 0.' }
+                            ]
+                        }
+                    ]
+                },
+                necrons: {
+                    id: 'necrons',
+                    name: 'Necrons',
+                    factionAbility: {
+                        name: 'Reanimation Protocols',
+                        description: 'At the end of your Command phase, each damaged Necrons unit reanimates D3 wounds, regaining lost wounds or destroyed models.'
+                    },
+                    detachments: [
+                        {
+                            id: 'awakened_dynasty',
+                            name: 'Awakened Dynasty',
+                            ruleName: 'Command Protocols',
+                            ruleDesc: 'Each time a model in a unit that is being led by a Necrons Character model makes an attack, add 1 to the Hit roll.',
+                            enhancements: [
+                                { id: 'veil_of_darkness', name: 'Veil of Darkness', points: 20, desc: 'Once per battle, remove bearer and its unit from the battlefield and set up anywhere more than 9" away.' },
+                                { id: 'hypermaterial_ablator', name: 'Hypermaterial Ablator', points: 25, desc: 'Bearer unit gains the Stealth ability and Benefit of Cover.' }
+                            ]
+                        },
+                        {
+                            id: 'hypercrypt',
+                            name: 'Hypercrypt Legion',
+                            ruleName: 'Hyperphasing',
+                            ruleDesc: 'At the end of your opponent turn, select a number of units based on battle size and place them into Strategic Reserves.',
+                            enhancements: [
+                                { id: 'dimensional_overseer', name: 'Dimensional Overseer', points: 25, desc: 'Allows you to place one additional unit into Strategic Reserves each battle round.' }
+                            ]
+                        }
+                    ]
+                },
+                tyranids: {
+                    id: 'tyranids',
+                    name: 'Tyranids (Hive Mind)',
+                    factionAbility: {
+                        name: 'Synapse & Shadow in the Warp',
+                        description: 'Units within 6" of Synapse roll 3D6 for Battle-shock tests. Once per battle, unleash Shadow in the Warp to force all enemy units to make a Battle-shock test immediately.'
+                    },
+                    detachments: [
+                        {
+                            id: 'invasion_fleet',
+                            name: 'Invasion Fleet',
+                            ruleName: 'Hyper-adaptations',
+                            ruleDesc: 'At the start of the battle round, choose: Swarming Instincts (Sustained Hits vs Infantry), Hyper-aggression (Lethal Hits vs Monsters/Vehicles), or Hive Predators (Precision on Critical Hits).',
+                            enhancements: [
+                                { id: 'adaptive_biology', name: 'Adaptive Biology', points: 25, desc: 'Bearer gains a 5+ Feel No Pain ability, improved to 4+ once it has lost any wounds.' },
+                                { id: 'alien_cunning', name: 'Alien Cunning', points: 30, desc: 'Redeploy up to three friendly Tyranids units after both players have deployed.' }
+                            ]
+                        }
+                    ]
+                },
+                orks: {
+                    id: 'orks',
+                    name: 'Orks (Da Waaagh!)',
+                    factionAbility: {
+                        name: 'Waaagh!',
+                        description: 'Once per battle, declare a Waaagh! at the start of a battle round: friendly Ork units can Advance and Charge, gain +1 Strength and +1 Attack in melee, and receive a 5+ Invulnerable save.'
+                    },
+                    detachments: [
+                        {
+                            id: 'waaagh_tribe',
+                            name: 'Waaagh! Tribe',
+                            ruleName: 'Get Stuck In',
+                            ruleDesc: 'Melee weapons equipped by models from your army have the [SUSTAINED HITS 1] ability.',
+                            enhancements: [
+                                { id: 'follow_me_ladz', name: 'Follow Me Ladz', points: 25, desc: 'While leading a unit, add 2" to the Move characteristic of models in that unit.' },
+                                { id: 'headwhoppa', name: "Headwhoppa's Killchoppa", points: 20, desc: 'Bearer melee weapons have the [DEVASTATING WOUNDS] ability.' }
+                            ]
+                        }
+                    ]
+                }
+            },
+            units: [
+                {
+                    id: 'sm_captain_terminator',
+                    factionId: 'space_marines',
+                    name: 'Captain in Terminator Armour',
+                    role: 'Character',
+                    modelOptions: [{ count: 1, points: 95 }],
+                    stats: { M: '5"', T: 5, SV: '2+', W: 6, LD: '6+', OC: 1, invuln: '4++' },
+                    weapons: [
+                        { name: 'Storm Bolter', range: '24"', A: 2, bs: '2+', S: 4, AP: '0', D: '1', keywords: ['Rapid Fire 2'] },
+                        { name: 'Relic Weapon', range: 'Melee', A: 5, bs: '2+', S: 5, AP: '-2', D: '2', keywords: [] }
+                    ],
+                    abilities: [
+                        { name: 'Rites of Battle', desc: 'Once per battle round, one unit from your army with this ability can be targeted by a Stratagem for 0 CP.' },
+                        { name: 'Finest Hour', desc: 'Once per battle, in the Fight phase, this model attacks with +3 Attacks and Devastating Wounds.' }
+                    ],
+                    canTakeEnhancement: true,
+                    keywords: ['Infantry', 'Character', 'Terminator', 'Captain', 'Imperium']
+                },
+                {
+                    id: 'sm_intercessors',
+                    factionId: 'space_marines',
+                    name: 'Intercessor Squad',
+                    role: 'Battleline',
+                    modelOptions: [
+                        { count: 5, points: 80 },
+                        { count: 10, points: 160 }
+                    ],
+                    stats: { M: '6"', T: 4, SV: '3+', W: 2, LD: '6+', OC: 2, invuln: '-' },
+                    weapons: [
+                        { name: 'Bolt Rifle', range: '24"', A: 2, bs: '3+', S: 4, AP: '-1', D: '1', keywords: ['Assault', 'Heavy'] },
+                        { name: 'Close Combat Weapon', range: 'Melee', A: 3, bs: '3+', S: 4, AP: '0', D: '1', keywords: [] }
+                    ],
+                    abilities: [
+                        { name: 'Sticky Objectives', desc: 'An objective marker remains under your control even if you have no models within range of it.' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Infantry', 'Battleline', 'Tacticus', 'Grenades', 'Imperium']
+                },
+                {
+                    id: 'sm_redemptor',
+                    factionId: 'space_marines',
+                    name: 'Redemptor Dreadnought',
+                    role: 'Vehicle',
+                    modelOptions: [{ count: 1, points: 210 }],
+                    stats: { M: '8"', T: 10, SV: '2+', W: 12, LD: '6+', OC: 4, invuln: '-' },
+                    weapons: [
+                        { name: 'Macro Plasma Incinerator', range: '36"', A: 'D6+1', bs: '3+', S: 8, AP: '-3', D: '3', keywords: ['Blast', 'Hazardous'] },
+                        { name: 'Redemptor Fist', range: 'Melee', A: 5, bs: '3+', S: 12, AP: '-2', D: 'D6+1', keywords: [] }
+                    ],
+                    abilities: [
+                        { name: 'Duty Eternal', desc: 'Each time an attack is allocated to this model, subtract 1 from the Damage characteristic of that attack.' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Vehicle', 'Walker', 'Dreadnought', 'Imperium', 'Smoke']
+                },
+                {
+                    id: 'sm_inceptors',
+                    factionId: 'space_marines',
+                    name: 'Inceptor Squad',
+                    role: 'Infantry',
+                    modelOptions: [
+                        { count: 3, points: 130 },
+                        { count: 6, points: 260 }
+                    ],
+                    stats: { M: '10"', T: 6, SV: '3+', W: 3, LD: '6+', OC: 1, invuln: '-' },
+                    weapons: [
+                        { name: 'Assault Bolters', range: '18"', A: 3, bs: '3+', S: 5, AP: '-1', D: '2', keywords: ['Assault', 'Pistol', 'Twin-linked'] }
+                    ],
+                    abilities: [
+                        { name: 'Meteoric Descent', desc: 'This unit can be set up anywhere on the battlefield that is more than 3" horizontally away from all enemy models.' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Infantry', 'Jump Pack', 'Fly', 'Imperium']
+                },
+                {
+                    id: 'nec_overlord',
+                    factionId: 'necrons',
+                    name: 'Overlord',
+                    role: 'Character',
+                    modelOptions: [{ count: 1, points: 85 }],
+                    stats: { M: '5"', T: 5, SV: '2+', W: 6, LD: '6+', OC: 1, invuln: '4++' },
+                    weapons: [
+                        { name: 'Tachyon Arrow', range: '72"', A: 1, bs: '2+', S: 16, AP: '-5', D: 'D6+2', keywords: ['One Shot'] },
+                        { name: 'Voidscythe', range: 'Melee', A: 3, bs: '3+', S: 12, AP: '-3', D: '3', keywords: ['Devastating Wounds'] }
+                    ],
+                    abilities: [
+                        { name: 'My Will Be Done', desc: 'Once per battle round, one friendly unit within 6" can be targeted with a Stratagem for 0 CP.' }
+                    ],
+                    canTakeEnhancement: true,
+                    keywords: ['Infantry', 'Character', 'Noble', 'Overlord']
+                },
+                {
+                    id: 'nec_warriors',
+                    factionId: 'necrons',
+                    name: 'Necron Warriors',
+                    role: 'Battleline',
+                    modelOptions: [
+                        { count: 10, points: 100 },
+                        { count: 20, points: 200 }
+                    ],
+                    stats: { M: '5"', T: 4, SV: '4+', W: 1, LD: '7+', OC: 2, invuln: '-' },
+                    weapons: [
+                        { name: 'Gauss Flayer', range: '24"', A: 1, bs: '4+', S: 4, AP: '0', D: '1', keywords: ['Lethal Hits', 'Rapid Fire 1'] },
+                        { name: 'Gauss Reaper', range: '12"', A: 2, bs: '4+', S: 5, AP: '-1', D: '1', keywords: ['Lethal Hits', 'Assault'] }
+                    ],
+                    abilities: [
+                        { name: 'Their Number is Legion', desc: 'Each time this unit makes a Reanimation Protocols roll, re-roll a D3 roll of 1. If this unit is within range of an objective marker, reanimate D6 instead.' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Infantry', 'Battleline']
+                },
+                {
+                    id: 'nec_c_tan_nightbringer',
+                    factionId: 'necrons',
+                    name: 'C\'tan Shard of the Nightbringer',
+                    role: 'Epic Hero',
+                    modelOptions: [{ count: 1, points: 295 }],
+                    stats: { M: '7"', T: 11, SV: '4+', W: 12, LD: '6+', OC: 4, invuln: '4++' },
+                    weapons: [
+                        { name: 'Gaze of Death', range: '18"', A: 'D6', bs: '2+', S: 6, AP: '-2', D: 'D3', keywords: ['Blast'] },
+                        { name: 'Scythe of the Nightbringer - Strike', range: 'Melee', A: 6, bs: '2+', S: 14, AP: '-4', D: 'D6', keywords: ['Devastating Wounds'] }
+                    ],
+                    abilities: [
+                        { name: 'Necrodermis', desc: 'Each time an attack is allocated to this model, halve the Damage characteristic of that attack. 5+ Feel No Pain.' },
+                        { name: 'Drain Life', desc: 'At the end of the Fight phase, roll one D6 for each enemy unit within 6": on a 2-5 that unit suffers D3 mortal wounds; on a 6 it suffers 3 mortal wounds.' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Monster', 'Fly', 'Character', 'Epic Hero', 'C\'tan Shard']
+                },
+                {
+                    id: 'tyr_hive_tyrant',
+                    factionId: 'tyranids',
+                    name: 'Hive Tyrant',
+                    role: 'Character',
+                    modelOptions: [{ count: 1, points: 235 }],
+                    stats: { M: '8"', T: 10, SV: '2+', W: 10, LD: '7+', OC: 3, invuln: '4++' },
+                    weapons: [
+                        { name: 'Heavy Venom Cannon', range: '36"', A: 3, bs: '2+', S: 9, AP: '-2', D: '3', keywords: ['Blast'] },
+                        { name: 'Monstrous Bonesword and Lash Whip', range: 'Melee', A: 6, bs: '2+', S: 9, AP: '-2', D: '3', keywords: ['Twin-linked'] }
+                    ],
+                    abilities: [
+                        { name: 'Will of the Hive Mind', desc: 'Once per battle round, one friendly Tyranids unit within 12" can be targeted with a Stratagem for 0 CP.' },
+                        { name: 'Synapse', desc: 'While friendly units are within 6" of this model, they are within Synapse Range.' }
+                    ],
+                    canTakeEnhancement: true,
+                    keywords: ['Monster', 'Character', 'Synapse', 'Leader', 'Great Devourer']
+                },
+                {
+                    id: 'tyr_termagants',
+                    factionId: 'tyranids',
+                    name: 'Termagants',
+                    role: 'Battleline',
+                    modelOptions: [
+                        { count: 10, points: 60 },
+                        { count: 20, points: 120 }
+                    ],
+                    stats: { M: '6"', T: 3, SV: '5+', W: 1, LD: '8+', OC: 2, invuln: '-' },
+                    weapons: [
+                        { name: 'Fleshborer', range: '18"', A: 1, bs: '4+', S: 5, AP: '0', D: '1', keywords: ['Assault'] }
+                    ],
+                    abilities: [
+                        { name: 'Skulking Horrors', desc: 'Once per turn, when an enemy unit ends a Normal, Advance, or Fall Back move within 9", this unit can make a Normal move of up to D6".' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Infantry', 'Battleline', 'Endless Multitude', 'Great Devourer']
+                },
+                {
+                    id: 'ork_warboss',
+                    factionId: 'orks',
+                    name: 'Warboss',
+                    role: 'Character',
+                    modelOptions: [{ count: 1, points: 65 }],
+                    stats: { M: '6"', T: 5, SV: '4+', W: 5, LD: '7+', OC: 1, invuln: '5++' },
+                    weapons: [
+                        { name: 'Kombi-weapon', range: '24"', A: 1, bs: '5+', S: 4, AP: '0', D: '1', keywords: ['Anti-Infantry 4+', 'Devastating Wounds'] },
+                        { name: 'Power Klaw', range: 'Melee', A: 4, bs: '3+', S: 10, AP: '-2', D: '2', keywords: [] }
+                    ],
+                    abilities: [
+                        { name: 'Might is Right', desc: 'While leading a unit, add 1 to Hit rolls made by models in that unit.' }
+                    ],
+                    canTakeEnhancement: true,
+                    keywords: ['Infantry', 'Character', 'Warboss', 'Ork']
+                },
+                {
+                    id: 'ork_boyz',
+                    factionId: 'orks',
+                    name: 'Boyz',
+                    role: 'Battleline',
+                    modelOptions: [
+                        { count: 10, points: 85 },
+                        { count: 20, points: 170 }
+                    ],
+                    stats: { M: '6"', T: 5, SV: '5+', W: 1, LD: '7+', OC: 2, invuln: '-' },
+                    weapons: [
+                        { name: 'Slugga', range: '12"', A: 1, bs: '5+', S: 4, AP: '0', D: '1', keywords: ['Pistol'] },
+                        { name: 'Choppa', range: 'Melee', A: 3, bs: '3+', S: 4, AP: '-1', D: '1', keywords: [] }
+                    ],
+                    abilities: [
+                        { name: 'Break Impasse', desc: 'While within range of an objective marker, this unit has a 5+ Invulnerable save against ranged attacks.' }
+                    ],
+                    canTakeEnhancement: false,
+                    keywords: ['Infantry', 'Battleline', 'Mob', 'Ork']
+                }
+            ]
+        };
+
+        // -------------------------------------------------------------
+        // APPLICATION STATE
+        // -------------------------------------------------------------
+        let currentDatabase = JSON.parse(JSON.stringify(FACTORY_DATABASE));
+        
+        let armyData = {
+            name: "Imperium Strike Force",
+            factionId: "space_marines",
+            detachmentId: "gladius",
+            pointLimit: 2000,
+            units: [] // { instanceId, unitDefId, modelCount, points, isWarlord, enhancementId, isCollapsed }
+        };
+
+        let currentMainView = 'roster'; // 'roster' | 'admin'
+        let editingUnitOriginalId = null;
+
+        // -------------------------------------------------------------
+        // INITIALIZATION & PERSISTENCE
+        // -------------------------------------------------------------
+        window.onload = function() {
+            loadAppState();
+            populateFactionSelects();
+            syncDetachmentDropdown();
+            renderDetachmentInfoBanner();
+            populateQuickAddUnitDropdown();
+            renderRosterList();
+            updateRosterMetrics();
+            renderAdminUnitList();
+            updateAdminUnitCounter();
+        };
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function saveAppState() {
+            try {
+                localStorage.setItem('wh40k_army_state_en', JSON.stringify(armyData));
+                localStorage.setItem('wh40k_custom_db_en', JSON.stringify(currentDatabase));
+            } catch (err) {
+                console.error("Storage error:", err);
+            }
+        }
+
+        function loadAppState() {
+            try {
+                const savedDb = localStorage.getItem('wh40k_custom_db_en');
+                if (savedDb) currentDatabase = JSON.parse(savedDb);
+
+                const savedArmy = localStorage.getItem('wh40k_army_state_en');
+                if (savedArmy) {
+                    const parsed = JSON.parse(savedArmy);
+                    if (currentDatabase.factions[parsed.factionId]) {
+                        armyData = parsed;
+                    }
+                }
+            } catch (e) {
+                console.warn("Storage fallback to defaults", e);
+            }
+            document.getElementById('armyNameInput').value = armyData.name;
+            document.getElementById('customLimitInput').value = armyData.pointLimit;
+        }
+
+        function resetToFactoryDefault() {
+            const confirmed = window.confirm("Reset all custom units and revert to standard factory 40k 10th Edition datasheets? Your current roster will be cleared.");
+            if (!confirmed) return;
+
+            currentDatabase = JSON.parse(JSON.stringify(FACTORY_DATABASE));
+            armyData.units = [];
+            armyData.factionId = 'space_marines';
+            armyData.detachmentId = 'gladius';
+            saveAppState();
+
+            populateFactionSelects();
+            syncDetachmentDropdown();
+            renderDetachmentInfoBanner();
+            populateQuickAddUnitDropdown();
+            renderRosterList();
+            updateRosterMetrics();
+            renderAdminUnitList();
+            updateAdminUnitCounter();
+
+            showToast("Factory 40k datasheets successfully restored!");
+        }
+
+        // -------------------------------------------------------------
+        // JSON IMPORT & EXPORT
+        // -------------------------------------------------------------
+        function exportDatabaseJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentDatabase, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `wh40k_munitorum_database_${Date.now()}.json`);
+            dlAnchorElem.click();
+            showToast("Database JSON backup exported!");
+        }
+
+        function importDatabaseJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.factions && parsed.units && Array.isArray(parsed.units)) {
+                        currentDatabase = parsed;
+                        saveAppState();
+                        populateFactionSelects();
+                        syncDetachmentDropdown();
+                        populateQuickAddUnitDropdown();
+                        renderRosterList();
+                        updateRosterMetrics();
+                        renderAdminUnitList();
+                        updateAdminUnitCounter();
+                        showToast("Datasheet Database successfully imported!");
+                    } else {
+                        showToast("Invalid JSON schema: Missing factions or units tables.");
+                    }
+                } catch (err) {
+                    showToast("Failed to parse JSON file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // -------------------------------------------------------------
+        // VIEW NAVIGATION
+        // -------------------------------------------------------------
+        function switchMainView(targetView) {
+            currentMainView = targetView;
+            const viewRoster = document.getElementById('viewRosterSection');
+            const viewAdmin = document.getElementById('viewAdminSection');
+            const btnRoster = document.getElementById('viewBtnRoster');
+            const btnAdmin = document.getElementById('viewBtnAdmin');
+
+            if (targetView === 'roster') {
+                viewRoster.classList.remove('hidden');
+                viewAdmin.classList.add('hidden');
+                btnRoster.className = 'px-4 py-1.5 rounded-md text-xs sm:text-sm font-bold flex items-center gap-2 transition-all bg-aquila-gold text-black shadow';
+                btnAdmin.className = 'px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium text-slate-400 hover:text-white flex items-center gap-2 transition-all';
+                populateQuickAddUnitDropdown();
+                renderRosterList();
+                updateRosterMetrics();
+            } else {
+                viewRoster.classList.add('hidden');
+                viewAdmin.classList.remove('hidden');
+                btnAdmin.className = 'px-4 py-1.5 rounded-md text-xs sm:text-sm font-bold flex items-center gap-2 transition-all bg-aquila-plasma text-black shadow';
+                btnRoster.className = 'px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium text-slate-400 hover:text-white flex items-center gap-2 transition-all';
+                renderAdminUnitList();
+                updateAdminUnitCounter();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // ROSTER BUILDER ENGINE
+        // -------------------------------------------------------------
+        function populateFactionSelects() {
+            const rSel = document.getElementById('factionSelect');
+            const aSel = document.getElementById('adminFilterFaction');
+            const eSel = document.getElementById('editUnitFaction');
+
+            rSel.innerHTML = '';
+            aSel.innerHTML = '<option value="All">All Factions</option>';
+            eSel.innerHTML = '';
+
+            Object.keys(currentDatabase.factions).forEach(fKey => {
+                const f = currentDatabase.factions[fKey];
+                
+                // Roster selector
+                const optR = document.createElement('option');
+                optR.value = f.id;
+                optR.textContent = f.name;
+                if (f.id === armyData.factionId) optR.selected = true;
+                rSel.appendChild(optR);
+
+                // Admin filter
+                const optA = document.createElement('option');
+                optA.value = f.id;
+                optA.textContent = f.name;
+                aSel.appendChild(optA);
+
+                // Edit unit faction
+                const optE = document.createElement('option');
+                optE.value = f.id;
+                optE.textContent = f.name;
+                eSel.appendChild(optE);
+            });
+        }
+
+        function handleFactionChange(newFactionId) {
+            if (armyData.units.length > 0) {
+                if (!window.confirm("Changing Faction will clear current units from the army roster. Proceed?")) {
+                    document.getElementById('factionSelect').value = armyData.factionId;
+                    return;
+                }
+            }
+            armyData.factionId = newFactionId;
+            armyData.units = [];
+            const faction = currentDatabase.factions[newFactionId];
+            armyData.detachmentId = faction.detachments[0]?.id || '';
+
+            syncDetachmentDropdown();
+            renderDetachmentInfoBanner();
+            populateQuickAddUnitDropdown();
+            renderRosterList();
+            updateRosterMetrics();
+            saveAppState();
+            showToast(`${faction.name} chosen as army Faction.`);
+        }
+
+        function syncDetachmentDropdown() {
+            const faction = currentDatabase.factions[armyData.factionId];
+            const sel = document.getElementById('detachmentSelect');
+            sel.innerHTML = '';
+            if (!faction || !faction.detachments) return;
+
+            faction.detachments.forEach(det => {
+                const opt = document.createElement('option');
+                opt.value = det.id;
+                opt.textContent = det.name;
+                if (det.id === armyData.detachmentId) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function handleDetachmentChange(detId) {
+            armyData.detachmentId = detId;
+            // Clear detachment-specific enhancements that no longer exist
+            armyData.units.forEach(u => { u.enhancementId = null; });
+            renderDetachmentInfoBanner();
+            renderRosterList();
+            updateRosterMetrics();
+            saveAppState();
+            showToast("Detachment updated.");
+        }
+
+        function renderDetachmentInfoBanner() {
+            const faction = currentDatabase.factions[armyData.factionId];
+            if (!faction) return;
+            const det = (faction.detachments || []).find(d => d.id === armyData.detachmentId) || faction.detachments?.[0];
+            const box = document.getElementById('detachmentRuleCard');
+            if (!det) {
+                box.innerHTML = `<span class="text-slate-400">No active Detachment available.</span>`;
+                return;
+            }
+
+            box.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <div>
+                        <span class="text-[10px] font-mono uppercase bg-aquila-gold/20 text-aquila-gold px-2 py-0.5 rounded font-bold mr-2">${faction.factionAbility?.name || 'Faction Rule'}</span>
+                        <span class="font-bold text-white text-xs sm:text-sm">${det.ruleName}</span>
+                    </div>
+                    <span class="text-[11px] font-mono text-slate-400">${det.name}</span>
+                </div>
+                <p class="text-slate-300 text-xs mt-1.5">${det.ruleDesc}</p>
+                <div class="text-[11px] text-slate-400 mt-1 border-t border-void-700/60 pt-1">
+                    <strong class="text-aquila-gold">Faction Army Rule:</strong> ${faction.factionAbility?.description || '-'}
+                </div>
+            `;
+        }
+
+        function handleLimitPreset(val) {
+            const input = document.getElementById('customLimitInput');
+            if (val === 'custom') {
+                input.focus();
+                return;
+            }
+            const pts = parseInt(val, 10);
+            armyData.pointLimit = pts;
+            input.value = pts;
+            updateRosterMetrics();
+            saveAppState();
+        }
+
+        function handleCustomLimit(val) {
+            armyData.pointLimit = parseInt(val, 10) || 2000;
+            updateRosterMetrics();
+            saveAppState();
+        }
+
+        // Quick Add Unit Dropdown Population
+        function populateQuickAddUnitDropdown() {
+            const roleFilter = document.getElementById('quickAddRoleFilter').value;
+            const select = document.getElementById('quickAddUnitSelect');
+            select.innerHTML = '';
+
+            const availableUnits = currentDatabase.units.filter(u => {
+                const matchFaction = (u.factionId === armyData.factionId);
+                const matchRole = (roleFilter === 'All') || (u.role === roleFilter);
+                return matchFaction && matchRole;
+            });
+
+            if (availableUnits.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '-- No datasheets found for this filter --';
+                select.appendChild(opt);
+                document.getElementById('btnConfirmAddUnit').disabled = true;
+                updateQuickUnitPreview();
+                return;
+            }
+
+            document.getElementById('btnConfirmAddUnit').disabled = false;
+            availableUnits.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                const basePts = u.modelOptions?.[0]?.points || 0;
+                opt.textContent = `${u.name} (${basePts} pts - ${u.role})`;
+                select.appendChild(opt);
+            });
+
+            updateQuickUnitPreview();
+        }
+
+        function updateQuickUnitPreview() {
+            const unitId = document.getElementById('quickAddUnitSelect').value;
+            const previewBox = document.getElementById('quickUnitPreviewBox');
+            const unit = currentDatabase.units.find(u => u.id === unitId);
+
+            if (!unit) {
+                previewBox.innerHTML = `<span class="text-slate-500 italic">Select a datasheet to preview characteristics</span>`;
+                return;
+            }
+
+            const inRoster = armyData.units.filter(u => u.unitDefId === unit.id).length;
+            previewBox.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-white text-xs">${unit.name}</span>
+                    <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-void-800 text-aquila-gold border border-void-700">${unit.role}</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1 text-center font-mono text-[10px] my-1">
+                    <div class="bg-void-900 p-1 rounded">M: ${unit.stats.M}</div>
+                    <div class="bg-void-900 p-1 rounded">T: ${unit.stats.T}</div>
+                    <div class="bg-void-900 p-1 rounded">SV: ${unit.stats.SV}</div>
+                    <div class="bg-void-900 p-1 rounded">W: ${unit.stats.W}</div>
+                    <div class="bg-void-900 p-1 rounded">LD: ${unit.stats.LD}</div>
+                    <div class="bg-void-900 p-1 rounded">OC: ${unit.stats.OC}</div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>In Roster: <strong class="text-white">${inRoster}x</strong></span>
+                    <span class="text-aquila-gold font-bold font-mono">Base: ${unit.modelOptions?.[0]?.points || 0} pts</span>
+                </div>
+            `;
+        }
+
+        function addSelectedUnitToRoster() {
+            const unitId = document.getElementById('quickAddUnitSelect').value;
+            const unitDef = currentDatabase.units.find(u => u.id === unitId);
+            if (!unitDef) return;
+
+            const existingCount = armyData.units.filter(u => u.unitDefId === unitId).length;
+            const maxAllowed = (unitDef.role === 'Battleline' || unitDef.role === 'Dedicated Transport') ? 6 : 3;
+
+            if (unitDef.role === 'Epic Hero' && existingCount >= 1) {
+                showToast("Only 1 instance of each Epic Hero is permitted per army!");
+                return;
+            }
+            if (existingCount >= maxAllowed) {
+                showToast(`Rule of 3/6 limit: max ${maxAllowed} copies of ${unitDef.name} allowed!`);
+                return;
+            }
+
+            const initialOption = unitDef.modelOptions?.[0] || { count: 1, points: 0 };
+            const hasWarlord = armyData.units.some(u => u.isWarlord);
+            const isEligibleWarlord = (unitDef.role === 'Character' || unitDef.role === 'Epic Hero') && !hasWarlord;
+
+            armyData.units.push({
+                instanceId: 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                unitDefId: unitDef.id,
+                modelCount: initialOption.count,
+                points: initialOption.points,
+                isWarlord: isEligibleWarlord,
+                enhancementId: null,
+                isCollapsed: false
+            });
+
+            updateRosterMetrics();
+            renderRosterList();
+            updateQuickUnitPreview();
+            saveAppState();
+            showToast(`${unitDef.name} enlisted into the Strike Force!`);
+        }
+
+        function removeRosterUnit(instanceId) {
+            const idx = armyData.units.findIndex(u => u.instanceId === instanceId);
+            if (idx !== -1) {
+                armyData.units.splice(idx, 1);
+                updateRosterMetrics();
+                renderRosterList();
+                updateQuickUnitPreview();
+                saveAppState();
+                showToast("Unit dismissed from Strike Force.");
+            }
+        }
+
+        function duplicateRosterUnit(instanceId) {
+            const orig = armyData.units.find(u => u.instanceId === instanceId);
+            if (!orig) return;
+            const unitDef = currentDatabase.units.find(u => u.id === orig.unitDefId);
+            if (!unitDef) return;
+
+            const existingCount = armyData.units.filter(u => u.unitDefId === unitDef.id).length;
+            const maxAllowed = (unitDef.role === 'Battleline' || unitDef.role === 'Dedicated Transport') ? 6 : 3;
+
+            if (unitDef.role === 'Epic Hero' || existingCount >= maxAllowed) {
+                showToast("Cannot duplicate: Limit reached or Epic Hero unique restriction.");
+                return;
+            }
+
+            armyData.units.push({
+                instanceId: 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                unitDefId: orig.unitDefId,
+                modelCount: orig.modelCount,
+                points: orig.points,
+                isWarlord: false,
+                enhancementId: null,
+                isCollapsed: false
+            });
+
+            updateRosterMetrics();
+            renderRosterList();
+            updateQuickUnitPreview();
+            saveAppState();
+            showToast(`${unitDef.name} duplicated!`);
+        }
+
+        function toggleWarlord(instanceId) {
+            const item = armyData.units.find(u => u.instanceId === instanceId);
+            if (!item) return;
+
+            if (item.isWarlord) {
+                item.isWarlord = false;
+            } else {
+                armyData.units.forEach(u => { u.isWarlord = false; });
+                item.isWarlord = true;
+                const def = currentDatabase.units.find(u => u.id === item.unitDefId);
+                showToast(`${def?.name || 'Unit'} designated as Army Warlord!`);
+            }
+
+            updateRosterMetrics();
+            renderRosterList();
+            saveAppState();
+        }
+
+        function setRosterUnitModelCount(instanceId, count) {
+            const item = armyData.units.find(u => u.instanceId === instanceId);
+            if (!item) return;
+            const def = currentDatabase.units.find(u => u.id === item.unitDefId);
+            if (!def) return;
+
+            const opt = def.modelOptions.find(o => o.count == count);
+            if (opt) {
+                item.modelCount = opt.count;
+                item.points = opt.points;
+                updateRosterMetrics();
+                renderRosterList();
+                saveAppState();
+            }
+        }
+
+        function setRosterUnitEnhancement(instanceId, enhId) {
+            const item = armyData.units.find(u => u.instanceId === instanceId);
+            if (!item) return;
+
+            if (enhId) {
+                // Check cap 3
+                const activeCount = armyData.units.filter(u => u.enhancementId && u.instanceId !== instanceId).length;
+                if (activeCount >= 3) {
+                    showToast("Maximum 3 Enhancements permitted in an army!");
+                    return;
+                }
+                const taken = armyData.units.some(u => u.enhancementId === enhId && u.instanceId !== instanceId);
+                if (taken) {
+                    showToast("Each Enhancement can only be assigned once per army!");
+                    return;
+                }
+            }
+
+            item.enhancementId = enhId || null;
+            updateRosterMetrics();
+            renderRosterList();
+            saveAppState();
+        }
+
+        function toggleRosterUnitCollapse(instanceId) {
+            const item = armyData.units.find(u => u.instanceId === instanceId);
+            if (item) {
+                item.isCollapsed = !item.isCollapsed;
+                renderRosterList();
+            }
+        }
+
+        function clearCurrentRoster() {
+            if (window.confirm("Are you sure you want to completely clear this army roster?")) {
+                armyData.units = [];
+                updateRosterMetrics();
+                renderRosterList();
+                updateQuickUnitPreview();
+                saveAppState();
+                showToast("Roster cleared.");
+            }
+        }
+
+        // Render Roster Accordion
+        function renderRosterList() {
+            const container = document.getElementById('rosterCardsContainer');
+            const placeholder = document.getElementById('rosterEmptyPlaceholder');
+            const subTitle = document.getElementById('rosterUnitCountSubtitle');
+            const filterRole = document.getElementById('rosterDisplayFilter').value;
+
+            if (armyData.units.length === 0) {
+                placeholder.classList.remove('hidden');
+                container.innerHTML = '';
+                subTitle.innerText = "0 units enrolled";
+                return;
+            }
+
+            placeholder.classList.add('hidden');
+            subTitle.innerText = `${armyData.units.length} unit(s) enrolled`;
+
+            const faction = currentDatabase.factions[armyData.factionId];
+            const detachment = faction?.detachments?.find(d => d.id === armyData.detachmentId) || faction?.detachments?.[0];
+
+            let list = armyData.units;
+            if (filterRole !== 'All') {
+                list = list.filter(u => {
+                    const def = currentDatabase.units.find(d => d.id === u.unitDefId);
+                    return def && def.role === filterRole;
+                });
+            }
+
+            container.innerHTML = list.map(item => {
+                const def = currentDatabase.units.find(d => d.id === item.unitDefId);
+                if (!def) return '';
+
+                let enhancementCost = 0;
+                let enhancementObj = null;
+                if (item.enhancementId && detachment?.enhancements) {
+                    enhancementObj = detachment.enhancements.find(e => e.id === item.enhancementId);
+                    if (enhancementObj) enhancementCost = enhancementObj.points;
+                }
+                const totalUnitPoints = item.points + enhancementCost;
+
+                return `
+                    <div class="bg-void-950 border ${item.isWarlord ? 'border-aquila-gold grimdark-glow' : 'border-void-700'} rounded-xl overflow-hidden transition-all">
+                        
+                        <!-- Header -->
+                        <div class="p-3.5 bg-void-850 flex flex-wrap items-center justify-between gap-2 border-b border-void-700">
+                            <div class="flex items-center gap-2.5">
+                                <button onclick="toggleRosterUnitCollapse('${item.instanceId}')" class="text-slate-400 hover:text-white p-1">
+                                    <i class="fa-solid ${item.isCollapsed ? 'fa-chevron-right' : 'fa-chevron-down'} text-xs"></i>
+                                </button>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-bold text-sm text-white font-display tracking-wide">${def.name}</h3>
+                                        ${item.isWarlord ? `
+                                            <span class="bg-aquila-gold/20 text-aquila-gold border border-aquila-gold/60 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                                <i class="fa-solid fa-crown text-[9px]"></i> WARLORD
+                                            </span>
+                                        ` : ''}
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 flex items-center gap-2">
+                                        <span class="uppercase font-mono">${def.role}</span>
+                                        <span>•</span>
+                                        <span>${item.modelCount} Model(s)</span>
+                                        ${enhancementObj ? `<span>• <span class="text-amber-400 font-semibold">${enhancementObj.name} (+${enhancementObj.points} pts)</span></span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <span class="font-mono text-aquila-gold font-bold text-xs sm:text-sm bg-void-900 px-2.5 py-1 rounded border border-void-700">
+                                    ${totalUnitPoints} pts
+                                </span>
+
+                                <!-- Warlord Toggle -->
+                                ${(def.role === 'Character' || def.role === 'Epic Hero') ? `
+                                    <button onclick="toggleWarlord('${item.instanceId}')" title="${item.isWarlord ? 'Revoke Warlord status' : 'Designate as Army Warlord'}" class="px-2 py-1 text-xs rounded border transition ${item.isWarlord ? 'bg-aquila-gold text-black border-yellow-300 font-bold' : 'bg-void-800 text-slate-300 border-void-600'}">
+                                        <i class="fa-solid fa-crown"></i>
+                                    </button>
+                                ` : ''}
+
+                                <!-- Edit in CMS shortcut -->
+                                <button onclick="openUnitInCMS('${def.id}')" title="Edit datasheet in CMS" class="p-1.5 text-slate-400 hover:text-aquila-plasma transition">
+                                    <i class="fa-solid fa-pen-ruler text-xs"></i>
+                                </button>
+
+                                <!-- Duplicate -->
+                                <button onclick="duplicateRosterUnit('${item.instanceId}')" title="Duplicate unit" class="p-1.5 text-slate-400 hover:text-white transition">
+                                    <i class="fa-solid fa-clone text-xs"></i>
+                                </button>
+
+                                <!-- Delete -->
+                                <button onclick="removeRosterUnit('${item.instanceId}')" title="Remove unit" class="p-1.5 text-slate-400 hover:text-red-400 transition">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Datasheet Expanded Body -->
+                        ${!item.isCollapsed ? `
+                            <div class="p-4 space-y-4 text-xs">
+                                
+                                <!-- Unit options: Count & Enhancements -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 bg-void-850/50 rounded-lg border border-void-700/60">
+                                    <div>
+                                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Unit Model Count</label>
+                                        <select onchange="setRosterUnitModelCount('${item.instanceId}', this.value)" class="w-full bg-void-900 border border-void-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-aquila-gold">
+                                            ${(def.modelOptions || []).map(opt => `
+                                                <option value="${opt.count}" ${item.modelCount === opt.count ? 'selected' : ''}>
+                                                    ${opt.count} Models (${opt.points} pts)
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Detachment Enhancement</label>
+                                        ${def.canTakeEnhancement ? `
+                                            <select onchange="setRosterUnitEnhancement('${item.instanceId}', this.value)" class="w-full bg-void-900 border border-void-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-aquila-gold">
+                                                <option value="">None (0 pts)</option>
+                                                ${(detachment?.enhancements || []).map(enh => `
+                                                    <option value="${enh.id}" ${item.enhancementId === enh.id ? 'selected' : ''}>
+                                                        ${enh.name} (+${enh.points} pts)
+                                                    </option>
+                                                `).join('')}
+                                            </select>
+                                        ` : `
+                                            <div class="text-[11px] text-slate-500 italic py-1">Not eligible for Enhancements</div>
+                                        `}
+                                    </div>
+                                </div>
+
+                                <!-- Characteristic Stats Bar (M, T, SV, W, LD, OC, Invuln) -->
+                                <div class="grid grid-cols-7 gap-1.5 text-center font-mono">
+                                    <div class="stat-cell p-1.5 rounded">
+                                        <div class="text-[9px] text-slate-400 uppercase">M</div>
+                                        <div class="font-bold text-white text-xs sm:text-sm">${def.stats.M}</div>
+                                    </div>
+                                    <div class="stat-cell p-1.5 rounded">
+                                        <div class="text-[9px] text-slate-400 uppercase">T</div>
+                                        <div class="font-bold text-white text-xs sm:text-sm">${def.stats.T}</div>
+                                    </div>
+                                    <div class="stat-cell p-1.5 rounded">
+                                        <div class="text-[9px] text-slate-400 uppercase">SV</div>
+                                        <div class="font-bold text-white text-xs sm:text-sm">${def.stats.SV}</div>
+                                    </div>
+                                    <div class="stat-cell p-1.5 rounded">
+                                        <div class="text-[9px] text-slate-400 uppercase">W</div>
+                                        <div class="font-bold text-white text-xs sm:text-sm">${def.stats.W}</div>
+                                    </div>
+                                    <div class="stat-cell p-1.5 rounded">
+                                        <div class="text-[9px] text-slate-400 uppercase">LD</div>
+                                        <div class="font-bold text-white text-xs sm:text-sm">${def.stats.LD}</div>
+                                    </div>
+                                    <div class="stat-cell p-1.5 rounded">
+                                        <div class="text-[9px] text-slate-400 uppercase">OC</div>
+                                        <div class="font-bold text-white text-xs sm:text-sm">${def.stats.OC}</div>
+                                    </div>
+                                    <div class="stat-cell p-1.5 rounded bg-yellow-950/20 border-yellow-700/60">
+                                        <div class="text-[9px] text-yellow-400 uppercase">INVULN</div>
+                                        <div class="font-bold text-yellow-300 text-xs sm:text-sm">${def.stats.invuln || '-'}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Weapons Profile Table -->
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-void-700 text-[10px] uppercase font-mono text-slate-400">
+                                                <th class="py-1 px-2">Weapon</th>
+                                                <th class="py-1 px-1 text-center">Range</th>
+                                                <th class="py-1 px-1 text-center">A</th>
+                                                <th class="py-1 px-1 text-center">BS/WS</th>
+                                                <th class="py-1 px-1 text-center">S</th>
+                                                <th class="py-1 px-1 text-center">AP</th>
+                                                <th class="py-1 px-1 text-center">D</th>
+                                                <th class="py-1 px-2">Keywords</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-void-800 text-[11px] font-mono">
+                                            ${(def.weapons || []).map(w => `
+                                                <tr class="hover:bg-void-900/60">
+                                                    <td class="py-1 px-2 font-semibold text-white font-sans">${w.name}</td>
+                                                    <td class="py-1 px-1 text-center text-slate-300">${w.range}</td>
+                                                    <td class="py-1 px-1 text-center text-slate-300">${w.A}</td>
+                                                    <td class="py-1 px-1 text-center text-slate-300">${w.bs}</td>
+                                                    <td class="py-1 px-1 text-center text-slate-300">${w.S}</td>
+                                                    <td class="py-1 px-1 text-center text-slate-300">${w.AP}</td>
+                                                    <td class="py-1 px-1 text-center text-slate-300">${w.D}</td>
+                                                    <td class="py-1 px-2 text-[10px] text-yellow-300 font-sans">
+                                                        ${(w.keywords && w.keywords.length) ? w.keywords.join(', ') : '-'}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Abilities -->
+                                <div class="space-y-1.5 pt-2 border-t border-void-700/60">
+                                    <div class="text-[10px] uppercase font-bold text-slate-400">Abilities & Rules:</div>
+                                    ${(def.abilities || []).map(a => `
+                                        <div class="bg-void-900 p-2 rounded border border-void-700/80">
+                                            <strong class="text-aquila-gold">${a.name}:</strong> 
+                                            <span class="text-slate-300">${a.desc}</span>
+                                        </div>
+                                    `).join('')}
+
+                                    ${enhancementObj ? `
+                                        <div class="bg-amber-950/20 p-2 rounded border border-amber-600/40">
+                                            <strong class="text-amber-400"><i class="fa-solid fa-gem mr-1"></i>Enhancement: ${enhancementObj.name} (+${enhancementObj.points} pts):</strong> 
+                                            <span class="text-slate-300">${enhancementObj.desc}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+
+                                <!-- Keywords -->
+                                <div class="flex flex-wrap gap-1 pt-1">
+                                    ${(def.keywords || []).map(k => `
+                                        <span class="text-[10px] px-2 py-0.5 rounded bg-void-850 text-slate-400 border border-void-700 font-mono">
+                                            ${k}
+                                        </span>
+                                    `).join('')}
+                                </div>
+
+                            </div>
+                        ` : ''}
+
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Live calculation of metrics and Rule Validation
+        function updateRosterMetrics() {
+            const faction = currentDatabase.factions[armyData.factionId];
+            const detachment = faction?.detachments?.find(d => d.id === armyData.detachmentId) || faction?.detachments?.[0];
+
+            let totalPoints = 0;
+            let totalEnhancements = 0;
+            let currentWarlordName = "None";
+            let hasWarlord = false;
+            const validationErrors = [];
+
+            // Unit count tracking for Rule of 3/6
+            const unitCounts = {};
+
+            armyData.units.forEach(u => {
+                let unitPts = u.points;
+                if (u.enhancementId && detachment?.enhancements) {
+                    const enh = detachment.enhancements.find(e => e.id === u.enhancementId);
+                    if (enh) {
+                        unitPts += enh.points;
+                        totalEnhancements++;
+                    }
+                }
+                totalPoints += unitPts;
+
+                unitCounts[u.unitDefId] = (unitCounts[u.unitDefId] || 0) + 1;
+
+                if (u.isWarlord) {
+                    hasWarlord = true;
+                    const def = currentDatabase.units.find(d => d.id === u.unitDefId);
+                    if (def) currentWarlordName = def.name;
+                }
+            });
+
+            // Rules Validations
+            if (totalPoints > armyData.pointLimit) {
+                validationErrors.push(`Points limit exceeded: Current ${totalPoints} pts > Maximum ${armyData.pointLimit} pts.`);
+            }
+            if (armyData.units.length > 0 && !hasWarlord) {
+                validationErrors.push("No Warlord assigned. Designate 1 eligible Character as your Army Warlord.");
+            }
+            if (totalEnhancements > 3) {
+                validationErrors.push(`Enhancements limit exceeded: Max 3 permitted (currently ${totalEnhancements}).`);
+            }
+
+            // Check Rule of 3 / 6 / Unique
+            Object.keys(unitCounts).forEach(defId => {
+                const def = currentDatabase.units.find(d => d.id === defId);
+                if (def) {
+                    const count = unitCounts[defId];
+                    if (def.role === 'Epic Hero' && count > 1) {
+                        validationErrors.push(`Epic Hero restriction: ${def.name} included ${count}x (Max 1 allowed).`);
+                    } else if (def.role === 'Battleline' || def.role === 'Dedicated Transport') {
+                        if (count > 6) {
+                            validationErrors.push(`Rule of 6 violation: ${def.name} included ${count}x (Max 6 allowed).`);
+                        }
+                    } else {
+                        if (count > 3) {
+                            validationErrors.push(`Rule of 3 violation: ${def.name} included ${count}x (Max 3 allowed).`);
+                        }
+                    }
+                }
+            });
+
+            // Update Validation Box UI
+            const valAlerts = document.getElementById('armyValidationAlerts');
+            if (validationErrors.length > 0) {
+                valAlerts.classList.remove('hidden');
+                valAlerts.innerHTML = `
+                    <div class="font-bold flex items-center gap-1.5 mb-1 text-red-400">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Army Roster Validation Warnings:
+                    </div>
+                    <ul class="list-disc list-inside space-y-0.5">
+                        ${validationErrors.map(e => `<li>${e}</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                valAlerts.classList.add('hidden');
+                valAlerts.innerHTML = '';
+            }
+
+            // Update Metric Gauges
+            const ratioBadge = document.getElementById('pointsRatioBadge');
+            const pBar = document.getElementById('pointsProgressBar');
+            const overflowNotice = document.getElementById('pointsOverflowNotice');
+            const unitCountDisplay = document.getElementById('unitCountDisplay');
+            const enhancementCountDisplay = document.getElementById('enhancementCountDisplay');
+            const warlordStatusName = document.getElementById('warlordStatusName');
+            const warlordStatusIcon = document.getElementById('warlordStatusIcon');
+
+            ratioBadge.innerText = `${totalPoints} / ${armyData.pointLimit} pts`;
+            unitCountDisplay.innerText = armyData.units.length;
+            enhancementCountDisplay.innerText = `${totalEnhancements} / 3`;
+            warlordStatusName.innerText = currentWarlordName;
+
+            if (hasWarlord) {
+                warlordStatusIcon.className = "w-8 h-8 rounded-full bg-aquila-gold/20 flex items-center justify-center text-aquila-gold border border-aquila-gold";
+            } else {
+                warlordStatusIcon.className = "w-8 h-8 rounded-full bg-void-850 flex items-center justify-center text-slate-500 border border-void-700";
+            }
+
+            const percentage = Math.min((totalPoints / armyData.pointLimit) * 100, 100);
+            pBar.style.width = percentage + '%';
+
+            if (totalPoints > armyData.pointLimit) {
+                pBar.className = "h-2.5 rounded-full bg-red-600 transition-all duration-300";
+                ratioBadge.className = "font-mono text-xs text-red-400 font-bold";
+                overflowNotice.classList.remove('hidden');
+            } else {
+                pBar.className = "h-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-aquila-gold transition-all duration-300";
+                ratioBadge.className = "font-mono text-xs text-aquila-gold font-bold";
+                overflowNotice.classList.add('hidden');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // DATASHEET CMS / DATABASE MANAGEMENT
+        // -------------------------------------------------------------
+        function updateAdminUnitCounter() {
+            const count = currentDatabase.units.length;
+            document.getElementById('adminBadgeUnitsCount').innerText = count;
+            document.getElementById('adminListCounter').innerText = `${count} units in database`;
+        }
+
+        function renderAdminUnitList() {
+            const container = document.getElementById('adminUnitListContainer');
+            const filterFaction = document.getElementById('adminFilterFaction').value;
+            const filterRole = document.getElementById('adminFilterRole').value;
+            const search = document.getElementById('adminSearchInput').value.toLowerCase().trim();
+
+            const filtered = currentDatabase.units.filter(u => {
+                const matchFaction = (filterFaction === 'All') || (u.factionId === filterFaction);
+                const matchRole = (filterRole === 'All') || (u.role === filterRole);
+                const matchSearch = u.name.toLowerCase().includes(search) || 
+                                    (u.keywords || []).some(k => k.toLowerCase().includes(search));
+                return matchFaction && matchRole && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-500 text-xs">No datasheets match criteria.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(unit => {
+                const isSelected = (editingUnitOriginalId === unit.id);
+                const factionName = currentDatabase.factions[unit.factionId]?.name || unit.factionId;
+                const basePts = unit.modelOptions?.[0]?.points || 0;
+
+                return `
+                    <div class="p-2.5 rounded-lg border transition ${isSelected ? 'bg-void-800 border-aquila-plasma' : 'bg-void-850 border-void-700 hover:border-slate-500'}">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs truncate max-w-[170px]">${unit.name}</span>
+                            <span class="text-[10px] font-mono text-aquila-gold font-semibold">${basePts} pts</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-0.5 truncate">${factionName} • <span class="uppercase">${unit.role}</span></div>
+                        <div class="flex items-center justify-end gap-1.5 mt-2">
+                            <button onclick="openUnitInCMS('${unit.id}')" class="px-2 py-0.5 bg-void-700 hover:bg-aquila-plasma hover:text-black rounded text-[10px] text-slate-200 transition">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </button>
+                            <button onclick="cloneUnitInCMS('${unit.id}')" class="px-2 py-0.5 bg-void-700 hover:bg-slate-600 rounded text-[10px] text-slate-200 transition" title="Clone Datasheet">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                            <button onclick="deleteUnitInCMS('${unit.id}')" class="px-2 py-0.5 bg-red-950 hover:bg-red-900 text-red-300 rounded text-[10px] transition" title="Delete Datasheet">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function prepareCreateUnit() {
+            editingUnitOriginalId = null;
+            document.getElementById('editorFormBadge').className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-900/60 text-emerald-300 border border-emerald-700';
+            document.getElementById('editorFormBadge').innerText = 'NEW UNIT';
+            document.getElementById('editorFormTitle').innerText = 'Create New Datasheet';
+
+            document.getElementById('editUnitId').value = '';
+            document.getElementById('editUnitName').value = 'New Battle Unit';
+            document.getElementById('editUnitFaction').value = armyData.factionId;
+            document.getElementById('editUnitRole').value = 'Infantry';
+            document.getElementById('editCanTakeEnhancement').checked = false;
+
+            document.getElementById('editStatM').value = '6"';
+            document.getElementById('editStatT').value = 4;
+            document.getElementById('editStatSV').value = '3+';
+            document.getElementById('editStatW').value = 2;
+            document.getElementById('editStatLD').value = '6+';
+            document.getElementById('editStatOC').value = 1;
+            document.getElementById('editStatInvuln').value = '-';
+
+            document.getElementById('editKeywords').value = 'Infantry, Imperium';
+
+            // Clear and add 1 default tier
+            const tierCont = document.getElementById('modelTiersContainer');
+            tierCont.innerHTML = '';
+            addModelTierRow(5, 90);
+
+            // Clear and add 1 default weapon
+            document.getElementById('weaponsTableBody').innerHTML = '';
+            addWeaponRow({ name: 'Bolter', range: '24"', A: '2', bs: '3+', S: '4', AP: '0', D: '1', keywords: ['Rapid Fire 1'] });
+
+            // Clear and add 1 default ability
+            document.getElementById('abilitiesContainer').innerHTML = '';
+            addAbilityRow({ name: 'Combat Specialty', desc: 'Describe unit special rules or auras here...' });
+
+            renderAdminUnitList();
+        }
+
+        function openUnitInCMS(unitId) {
+            switchMainView('admin');
+            const unit = currentDatabase.units.find(u => u.id === unitId);
+            if (!unit) return;
+
+            editingUnitOriginalId = unit.id;
+            document.getElementById('editorFormBadge').className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-900/60 text-blue-300 border border-blue-700';
+            document.getElementById('editorFormBadge').innerText = 'EDITING';
+            document.getElementById('editorFormTitle').innerText = `Editing ${unit.name}`;
+
+            document.getElementById('editUnitId').value = unit.id;
+            document.getElementById('editUnitName').value = unit.name;
+            document.getElementById('editUnitFaction').value = unit.factionId;
+            document.getElementById('editUnitRole').value = unit.role;
+            document.getElementById('editCanTakeEnhancement').checked = !!unit.canTakeEnhancement;
+
+            document.getElementById('editStatM').value = unit.stats.M;
+            document.getElementById('editStatT').value = unit.stats.T;
+            document.getElementById('editStatSV').value = unit.stats.SV;
+            document.getElementById('editStatW').value = unit.stats.W;
+            document.getElementById('editStatLD').value = unit.stats.LD;
+            document.getElementById('editStatOC').value = unit.stats.OC;
+            document.getElementById('editStatInvuln').value = unit.stats.invuln || '-';
+
+            document.getElementById('editKeywords').value = (unit.keywords || []).join(', ');
+
+            // Populate Model Tiers
+            const tierCont = document.getElementById('modelTiersContainer');
+            tierCont.innerHTML = '';
+            (unit.modelOptions || [{ count: 1, points: 100 }]).forEach(opt => {
+                addModelTierRow(opt.count, opt.points);
+            });
+
+            // Populate Weapons
+            const wBody = document.getElementById('weaponsTableBody');
+            wBody.innerHTML = '';
+            (unit.weapons || []).forEach(w => {
+                addWeaponRow(w);
+            });
+
+            // Populate Abilities
+            const aCont = document.getElementById('abilitiesContainer');
+            aCont.innerHTML = '';
+            (unit.abilities || []).forEach(a => {
+                addAbilityRow(a);
+            });
+
+            renderAdminUnitList();
+        }
+
+        function cloneUnitInCMS(unitId) {
+            const original = currentDatabase.units.find(u => u.id === unitId);
+            if (!original) return;
+
+            const cloned = JSON.parse(JSON.stringify(original));
+            cloned.id = 'unit_' + Date.now();
+            cloned.name = original.name + ' (Copy)';
+            currentDatabase.units.push(cloned);
+            saveAppState();
+            updateAdminUnitCounter();
+            renderAdminUnitList();
+            openUnitInCMS(cloned.id);
+            showToast("Datasheet cloned successfully!");
+        }
+
+        function deleteUnitInCMS(unitId) {
+            const unit = currentDatabase.units.find(u => u.id === unitId);
+            if (!unit) return;
+            if (!window.confirm(`Permanently delete "${unit.name}" from the database?`)) return;
+
+            currentDatabase.units = currentDatabase.units.filter(u => u.id !== unitId);
+            // Also cleanup active roster from this unit
+            armyData.units = armyData.units.filter(u => u.unitDefId !== unitId);
+
+            saveAppState();
+            updateAdminUnitCounter();
+            renderAdminUnitList();
+            updateRosterMetrics();
+            renderRosterList();
+
+            if (editingUnitOriginalId === unitId) {
+                prepareCreateUnit();
+            }
+            showToast("Datasheet deleted from database!");
+        }
+
+        // Form Row Builders (Tiers, Weapons, Abilities)
+        function addModelTierRow(count = 5, points = 100) {
+            const container = document.getElementById('modelTiersContainer');
+            const div = document.createElement('div');
+            div.className = 'tier-row flex items-center gap-3 bg-void-900 p-2 rounded border border-void-700';
+            div.innerHTML = `
+                <div class="flex items-center gap-1.5 flex-1">
+                    <span class="text-slate-400 text-[10px]">Model Count:</span>
+                    <input type="number" min="1" max="100" value="${count}" class="tier-count w-20 bg-void-850 border border-void-600 rounded px-2 py-1 text-white font-mono text-center">
+                    <span class="text-slate-400 text-[10px]">models</span>
+                </div>
+                <div class="flex items-center gap-1.5 flex-1">
+                    <span class="text-slate-400 text-[10px]">Points Cost:</span>
+                    <input type="number" min="0" max="5000" step="5" value="${points}" class="tier-points w-24 bg-void-850 border border-void-600 rounded px-2 py-1 text-white font-mono text-center text-aquila-gold font-bold">
+                    <span class="text-slate-400 text-[10px]">pts</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-red-400 px-2 py-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addWeaponRow(weapon = null) {
+            const body = document.getElementById('weaponsTableBody');
+            const tr = document.createElement('tr');
+            tr.className = 'weapon-row border-b border-void-800 hover:bg-void-900/50';
+
+            const w = weapon || {
+                name: 'New Weapon', range: '24"', A: '1', bs: '3+', S: '4', AP: '0', D: '1', keywords: []
+            };
+
+            tr.innerHTML = `
+                <td class="p-1"><input type="text" value="${w.name}" class="w-name w-full bg-void-900 border border-void-700 rounded px-1.5 py-1 text-white font-sans text-xs"></td>
+                <td class="p-1"><input type="text" value="${w.range}" class="w-range w-full bg-void-900 border border-void-700 rounded px-1 py-1 text-center text-xs"></td>
+                <td class="p-1"><input type="text" value="${w.A}" class="w-a w-full bg-void-900 border border-void-700 rounded px-1 py-1 text-center text-xs"></td>
+                <td class="p-1"><input type="text" value="${w.bs}" class="w-bs w-full bg-void-900 border border-void-700 rounded px-1 py-1 text-center text-xs"></td>
+                <td class="p-1"><input type="text" value="${w.S}" class="w-s w-full bg-void-900 border border-void-700 rounded px-1 py-1 text-center text-xs"></td>
+                <td class="p-1"><input type="text" value="${w.AP}" class="w-ap w-full bg-void-900 border border-void-700 rounded px-1 py-1 text-center text-xs"></td>
+                <td class="p-1"><input type="text" value="${w.D}" class="w-d w-full bg-void-900 border border-void-700 rounded px-1 py-1 text-center text-xs"></td>
+                <td class="p-1"><input type="text" value="${(w.keywords || []).join(', ')}" placeholder="Blast, Heavy, Lethal Hits..." class="w-kw w-full bg-void-900 border border-void-700 rounded px-1.5 py-1 text-yellow-300 font-sans text-xs"></td>
+                <td class="p-1 text-center">
+                    <button type="button" onclick="this.closest('tr').remove()" class="text-slate-400 hover:text-red-400">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </td>
+            `;
+            body.appendChild(tr);
+        }
+
+        function addAbilityRow(ability = null) {
+            const container = document.getElementById('abilitiesContainer');
+            const div = document.createElement('div');
+            div.className = 'ability-row p-2.5 bg-void-850 rounded border border-void-700 space-y-1.5';
+
+            const a = ability || { name: 'Ability Name', desc: 'Rule description text...' };
+
+            div.innerHTML = `
+                <div class="flex items-center justify-between gap-2">
+                    <input type="text" value="${a.name}" placeholder="Ability Title (e.g. Rites of Battle)" class="a-name w-1/2 bg-void-900 border border-void-600 rounded px-2 py-1 text-white font-bold text-xs">
+                    <button type="button" onclick="this.closest('.ability-row').remove()" class="text-slate-400 hover:text-red-400 px-2">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <textarea placeholder="Exact rules wording..." class="a-desc w-full bg-void-900 border border-void-600 rounded p-1.5 text-xs text-slate-300 h-14 focus:outline-none focus:border-aquila-gold">${a.desc}</textarea>
+            `;
+            container.appendChild(div);
+        }
+
+        function cancelEditor() {
+            if (editingUnitOriginalId) {
+                openUnitInCMS(editingUnitOriginalId);
+            } else {
+                prepareCreateUnit();
+            }
+        }
+
+        // Save Unit from CMS Form
+        function saveUnitFromForm() {
+            const unitName = document.getElementById('editUnitName').value.trim();
+            if (!unitName) {
+                showToast("Please enter a valid Datasheet Name.");
+                return;
+            }
+
+            // Gather model tiers
+            const tierRows = document.querySelectorAll('.tier-row');
+            const modelOptions = [];
+            tierRows.forEach(row => {
+                const c = parseInt(row.querySelector('.tier-count').value, 10) || 1;
+                const p = parseInt(row.querySelector('.tier-points').value, 10) || 0;
+                modelOptions.push({ count: c, points: p });
+            });
+            if (modelOptions.length === 0) {
+                modelOptions.push({ count: 1, points: 100 });
+            }
+
+            // Gather weapons
+            const weaponRows = document.querySelectorAll('.weapon-row');
+            const weapons = [];
+            weaponRows.forEach(row => {
+                const name = row.querySelector('.w-name').value.trim();
+                if (name) {
+                    const range = row.querySelector('.w-range').value.trim() || 'Melee';
+                    const A = row.querySelector('.w-a').value.trim() || '1';
+                    const bs = row.querySelector('.w-bs').value.trim() || '3+';
+                    const S = row.querySelector('.w-s').value.trim() || '4';
+                    const AP = row.querySelector('.w-ap').value.trim() || '0';
+                    const D = row.querySelector('.w-d').value.trim() || '1';
+                    const kwRaw = row.querySelector('.w-kw').value.trim();
+                    const keywords = kwRaw ? kwRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+                    weapons.push({ name, range, A, bs, S, AP, D, keywords });
+                }
+            });
+
+            // Gather abilities
+            const abilityRows = document.querySelectorAll('.ability-row');
+            const abilities = [];
+            abilityRows.forEach(row => {
+                const name = row.querySelector('.a-name').value.trim();
+                const desc = row.querySelector('.a-desc').value.trim();
+                if (name) {
+                    abilities.push({ name, desc });
+                }
+            });
+
+            // Gather Keywords
+            const kwRaw = document.getElementById('editKeywords').value.trim();
+            const keywords = kwRaw ? kwRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            const unitId = document.getElementById('editUnitId').value || ('unit_' + Date.now());
+
+            const updatedUnit = {
+                id: unitId,
+                name: unitName,
+                factionId: document.getElementById('editUnitFaction').value,
+                role: document.getElementById('editUnitRole').value,
+                modelOptions: modelOptions,
+                canTakeEnhancement: document.getElementById('editCanTakeEnhancement').checked,
+                stats: {
+                    M: document.getElementById('editStatM').value.trim() || '6"',
+                    T: parseInt(document.getElementById('editStatT').value, 10) || 4,
+                    SV: document.getElementById('editStatSV').value.trim() || '3+',
+                    W: parseInt(document.getElementById('editStatW').value, 10) || 2,
+                    LD: document.getElementById('editStatLD').value.trim() || '6+',
+                    OC: parseInt(document.getElementById('editStatOC').value, 10) || 1,
+                    invuln: document.getElementById('editStatInvuln').value.trim() || '-'
+                },
+                weapons: weapons,
+                abilities: abilities,
+                keywords: keywords
+            };
+
+            const existingIdx = currentDatabase.units.findIndex(u => u.id === unitId);
+            if (existingIdx !== -1) {
+                currentDatabase.units[existingIdx] = updatedUnit;
+            } else {
+                currentDatabase.units.push(updatedUnit);
+            }
+
+            // Sync currently enlisted units with new definitions
+            armyData.units.forEach(u => {
+                if (u.unitDefId === unitId) {
+                    const matchOpt = updatedUnit.modelOptions.find(o => o.count === u.modelCount);
+                    if (matchOpt) {
+                        u.points = matchOpt.points;
+                    } else {
+                        u.modelCount = updatedUnit.modelOptions[0].count;
+                        u.points = updatedUnit.modelOptions[0].points;
+                    }
+                }
+            });
+
+            saveAppState();
+            updateAdminUnitCounter();
+            renderAdminUnitList();
+            populateQuickAddUnitDropdown();
+            renderRosterList();
+            updateRosterMetrics();
+
+            editingUnitOriginalId = updatedUnit.id;
+            document.getElementById('editUnitId').value = updatedUnit.id;
+            document.getElementById('editorFormBadge').className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-900/60 text-blue-300 border border-blue-700';
+            document.getElementById('editorFormBadge').innerText = 'EDITING';
+            document.getElementById('editorFormTitle').innerText = `Editing ${updatedUnit.name}`;
+
+            showToast(`Datasheet "${updatedUnit.name}" saved!`);
+        }
+
+        // -------------------------------------------------------------
+        // EXPORT MODAL & BATTLESCRIBE-READY OUTPUT
+        // -------------------------------------------------------------
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            const txtArea = document.getElementById('exportTextArea');
+            document.getElementById('copySuccessMsg').classList.add('hidden');
+
+            const faction = currentDatabase.factions[armyData.factionId];
+            const detachment = faction?.detachments?.find(d => d.id === armyData.detachmentId) || faction?.detachments?.[0];
+
+            let totalPoints = 0;
+            armyData.units.forEach(u => {
+                totalPoints += u.points;
+                if (u.enhancementId && detachment?.enhancements) {
+                    const enh = detachment.enhancements.find(e => e.id === u.enhancementId);
+                    if (enh) totalPoints += enh.points;
+                }
+            });
+
+            let out = `========================================================\n`;
+            out += `WARHAMMER 40,000 (10TH EDITION) - STRIKE FORCE ROSTER\n`;
+            out += `========================================================\n`;
+            out += `Army Name: ${armyData.name || 'Unnamed Force'}\n`;
+            out += `Faction: ${faction?.name || armyData.factionId}\n`;
+            out += `Detachment: ${detachment?.name || '-'} (${detachment?.ruleName || '-'})\n`;
+            out += `Battle Size Limit: ${armyData.pointLimit} pts\n`;
+            out += `Total Points: ${totalPoints} pts\n`;
+            out += `Total Units: ${armyData.units.length}\n`;
+            out += `--------------------------------------------------------\n\n`;
+
+            const roles = ['Epic Hero', 'Character', 'Battleline', 'Infantry', 'Mounted', 'Vehicle', 'Monster', 'Dedicated Transport', 'Fortification'];
+            roles.forEach(role => {
+                const inRole = armyData.units.filter(u => {
+                    const def = currentDatabase.units.find(d => d.id === u.unitDefId);
+                    return def && def.role === role;
+                });
+
+                if (inRole.length > 0) {
+                    out += `== ${role.toUpperCase()} ==\n`;
+                    inRole.forEach(u => {
+                        const def = currentDatabase.units.find(d => d.id === u.unitDefId);
+                        let enhCost = 0;
+                        let enhStr = '';
+                        if (u.enhancementId && detachment?.enhancements) {
+                            const enh = detachment.enhancements.find(e => e.id === u.enhancementId);
+                            if (enh) {
+                                enhCost = enh.points;
+                                enhStr = ` | Enhancement: ${enh.name} (+${enh.points} pts)`;
+                            }
+                        }
+                        const pts = u.points + enhCost;
+                        const warlordStr = u.isWarlord ? ' [WARLORD]' : '';
+
+                        out += ` • ${def.name} (${u.modelCount} models) - ${pts} pts${warlordStr}${enhStr}\n`;
+                        out += `   Stats: M:${def.stats.M} T:${def.stats.T} SV:${def.stats.SV} W:${def.stats.W} LD:${def.stats.LD} OC:${def.stats.OC} (Inv: ${def.stats.invuln || '-'})\n`;
+                    });
+                    out += `\n`;
+                }
+            });
+
+            out += `--------------------------------------------------------\n`;
+            out += `Generated by Munitorum Engine - 10th Edition Army Builder\n`;
+            out += `========================================================`;
+
+            txtArea.value = out;
+            modal.classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+        }
+
+        function copyExportText() {
+            const txtArea = document.getElementById('exportTextArea');
+            txtArea.select();
+            document.execCommand('copy');
+            const msg = document.getElementById('copySuccessMsg');
+            msg.classList.remove('hidden');
+            setTimeout(() => {
+                msg.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
