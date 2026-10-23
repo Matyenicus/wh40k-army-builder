@@ -1,1439 +1,986 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Warhammer 40k: 11th Edition Army Builder & CMS</title>
+  <title>Matyenicus Army Builder | 11th Edition Cogitator</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
-    body { font-family: 'Rajdhani', sans-serif; background-color: #080c10; color: #d1d5db; }
-    .font-header { font-family: 'Orbitron', sans-serif; }
-    .font-mono-tech { font-family: 'Share Tech Mono', monospace; }
-    .scanline {
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-      background-size: 100% 3px, 6px 100%;
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap');
+    
+    :root {
+      --mech-red: #8b1e1e;
+      --mech-crimson: #b91c1c;
+      --mech-brass: #c59b27;
+      --mech-bg: #0b0c0e;
+      --mech-panel: #121418;
     }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background-color: var(--mech-bg);
+      color: #d4d4d8;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(139, 30, 30, 0.18) 0%, transparent 60%),
+        linear-gradient(rgba(18, 20, 24, 0.96), rgba(11, 12, 14, 0.98)),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(197, 155, 39, 0.02) 3px);
+      background-attachment: fixed;
+    }
+
+    .font-imperial { font-family: 'Cinzel', serif; }
+    .font-cogitator { font-family: 'Share Tech Mono', monospace; }
+
+    .mech-border {
+      border: 1px solid rgba(197, 155, 39, 0.35);
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7);
+    }
+
+    .mech-border-red {
+      border: 1px solid rgba(185, 28, 28, 0.5);
+    }
+
+    .cog-spin {
+      animation: slowSpin 40s linear infinite;
+    }
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0c0e; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c59b27; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col scanline">
+<body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
 
-  <!-- TOP NAV BAR -->
-  <header class="border-b border-amber-500/30 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-4 py-3">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/50 flex items-center justify-center text-amber-400 text-xl font-header font-bold">
-          XI
-        </div>
-        <div>
-          <h1 class="text-xl font-bold tracking-wider text-amber-400 font-header uppercase flex items-center gap-2">
-            Muster of War <span class="text-xs px-2 py-0.5 rounded bg-amber-950/80 border border-amber-600/60 text-amber-300">11TH ED</span>
-          </h1>
-          <p class="text-xs text-slate-400 font-mono-tech">COMMAND TERMINAL & DATASHEET CMS</p>
-        </div>
+  <!-- =====================================================================
+       CENTERED MECHANICUS HEADER
+       ===================================================================== -->
+  <header class="py-6 px-4 border-b border-amber-500/20 bg-gradient-to-b from-red-950/20 to-transparent text-center relative overflow-hidden">
+    <div class="max-w-xl mx-auto flex flex-col items-center">
+      <!-- Mechanicus Cog-Skull SVG Emblem -->
+      <div class="relative w-20 h-20 flex items-center justify-center mb-2">
+        <svg class="w-20 h-20 text-amber-500/80 cog-spin absolute inset-0" viewBox="0 0 100 100" fill="currentColor">
+          <path d="M94.5,43.5 L86.8,42.2 C85.8,38.8 84.4,35.6 82.7,32.6 L87.3,26.2 C88.1,25.1 88,23.6 87,22.6 L80.4,16 C79.4,15 77.9,14.9 76.8,15.7 L70.4,20.3 C67.4,18.6 64.2,17.2 60.8,16.2 L59.5,8.5 C59.3,7.2 58.1,6.2 56.8,6.2 L47.2,6.2 C45.9,6.2 44.7,7.2 44.5,8.5 L43.2,16.2 C39.8,17.2 36.6,18.6 33.6,20.3 L27.2,15.7 C26.1,14.9 24.6,15 23.6,16 L17,22.6 C16,23.6 15.9,25.1 16.7,26.2 L21.3,32.6 C19.6,35.6 18.2,38.8 17.2,42.2 L9.5,43.5 C8.2,43.7 7.2,44.9 7.2,46.2 L7.2,55.8 C7.2,57.1 8.2,58.3 9.5,58.5 L17.2,59.8 C18.2,63.2 19.6,66.4 21.3,69.4 L16.7,75.8 C15.9,76.9 16,78.4 17,79.4 L23.6,86 C24.6,87 26.1,87.1 27.2,86.3 L33.6,81.7 C36.6,83.4 39.8,84.8 43.2,85.8 L44.5,93.5 C44.7,94.8 45.9,95.8 47.2,95.8 L56.8,95.8 C58.1,95.8 59.3,94.8 59.5,93.5 L60.8,85.8 C64.2,84.8 67.4,83.4 70.4,81.7 L76.8,86.3 C77.9,87.1 79.4,87 80.4,86 L87,79.4 C88,78.4 88.1,76.9 87.3,75.8 L82.7,69.4 C84.4,66.4 85.8,63.2 86.8,59.8 L94.5,58.5 C95.8,58.3 96.8,57.1 96.8,55.8 L96.8,46.2 C96.8,44.9 95.8,43.7 94.5,43.5 Z M52,74 C39.3,74 29,63.7 29,51 C29,38.3 39.3,28 52,28 C64.7,28 75,38.3 75,51 C75,63.7 64.7,74 52,74 Z"/>
+        </svg>
+        <i class="fa-solid fa-skull text-3xl text-zinc-200 z-10 drop-shadow-[0_2px_6px_rgba(185,28,28,0.8)]"></i>
       </div>
-
-      <!-- Navigation Tabs -->
-      <div class="flex items-center bg-slate-950 p-1 rounded border border-slate-800">
-        <button id="btnTabRoster" onclick="switchTab('roster')" class="px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition bg-amber-500 text-slate-950 font-header flex items-center gap-2">
-          <i class="fa-solid fa-list-check"></i> Roster Builder
-        </button>
-        <button id="btnTabCMS" onclick="switchTab('cms')" class="px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition text-slate-400 hover:text-white font-header flex items-center gap-2">
-          <i class="fa-solid fa-database"></i> Datasheets CMS
-        </button>
-      </div>
-
-      <!-- Quick Action Buttons -->
-      <div class="flex items-center gap-2">
-        <button onclick="exportArmyText()" class="px-3 py-1.5 rounded border border-slate-700 bg-slate-800/80 text-xs font-mono-tech hover:border-amber-400 hover:text-amber-400 flex items-center gap-1.5">
-          <i class="fa-solid fa-share-nodes"></i> Export List
-        </button>
-        <button onclick="clearCurrentRoster()" class="px-3 py-1.5 rounded border border-red-900/40 bg-red-950/20 text-xs font-mono-tech text-red-400 hover:bg-red-900/40 flex items-center gap-1.5">
-          <i class="fa-solid fa-trash-can"></i> Reset
-        </button>
+      <h1 class="text-2xl md:text-3xl font-extrabold font-imperial tracking-widest text-amber-500 uppercase drop-shadow">
+        Matyenicus Army Builder
+      </h1>
+      <div class="w-48 h-0.5 bg-gradient-to-r from-transparent via-red-700 to-transparent mt-1"></div>
+      <div class="flex items-center gap-2 mt-1.5">
+        <span id="noosphereStatusDot" class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+        <p id="noosphereStatusText" class="text-[11px] font-cogitator text-zinc-400 tracking-widest uppercase">
+          ESTABLISHING NOOSPHERIC LINK TO DATA-SLATE...
+        </p>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto p-4 w-full flex-grow">
+  <!-- =====================================================================
+       MAIN TWO-COLUMN WORKSPACE (Left: Configuration, Right: Ready Army)
+       ===================================================================== -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <!-- VIEW 1: ROSTER BUILDER -->
-    <div id="viewRoster" class="space-y-6">
-      
-      <!-- Top Command Console: Parameters & Counters -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-900/80 border border-slate-800 p-4 rounded-lg shadow-lg">
-        
-        <!-- Faction Select -->
-        <div>
-          <label class="block text-xs font-mono-tech text-amber-400 uppercase tracking-wider mb-1">Faction Allegiance</label>
-          <select id="selFaction" onchange="onFactionChange()" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-            <!-- Populated via JS -->
-          </select>
-        </div>
+      <!-- =================================================================
+           LEFT COLUMN: STEP-BY-STEP MUSTER CONFIGURATION
+           ================================================================= -->
+      <section class="lg:col-span-6 space-y-5">
 
-        <!-- Battle Size & Points Target -->
-        <div>
-          <label class="block text-xs font-mono-tech text-amber-400 uppercase tracking-wider mb-1">Battle Battle Size / Target</label>
-          <select id="selPointsLimit" onchange="updateBattleLimits()" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
-            <option value="500">Combat Patrol (500 pts | 1 DP)</option>
-            <option value="1000">Incursion (1000 pts | 2 DP)</option>
-            <option value="2000" selected>Strike Force (2000 pts | 3 DP)</option>
-            <option value="3000">Onslaught (3000 pts | 4 DP)</option>
-          </select>
-        </div>
-
-        <!-- Points Tracker -->
-        <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex flex-col justify-between">
-          <div class="flex justify-between items-center text-xs font-mono-tech">
-            <span class="text-slate-400">Total Points</span>
-            <span id="pointsDisplay" class="font-bold text-amber-400 text-sm">0 / 2000 pts</span>
+        <!-- STEP 1 & 2: FACTION & POINTS SELECTION -->
+        <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-gears text-red-600"></i> I. Primary Directives
+            </h2>
+            <span class="text-[11px] font-cogitator text-zinc-500">STEP 1 & 2</span>
           </div>
-          <div class="w-full bg-slate-800 h-2 rounded overflow-hidden mt-1">
-            <div id="pointsProgressBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
-          </div>
-          <div id="pointsStatusBadge" class="text-[10px] uppercase font-mono-tech text-emerald-400 mt-1">Within Point Limit</div>
-        </div>
 
-        <!-- 11th Edition Detachment Points (DP) Budget -->
-        <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex flex-col justify-between">
-          <div class="flex justify-between items-center text-xs font-mono-tech">
-            <span class="text-slate-400">Detachment Points (11th DP)</span>
-            <span id="dpDisplay" class="font-bold text-cyan-400 text-sm">0 / 3 DP</span>
-          </div>
-          <div class="w-full bg-slate-800 h-2 rounded overflow-hidden mt-1">
-            <div id="dpProgressBar" class="bg-cyan-500 h-full transition-all duration-300" style="width: 0%"></div>
-          </div>
-          <div id="dpStatusBadge" class="text-[10px] uppercase font-mono-tech text-emerald-400 mt-1">DP Budget Legal</div>
-        </div>
-
-      </div>
-
-      <!-- Faction Rule Banner & Detachments Selection -->
-      <div class="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-3 mb-3">
-          <div>
-            <div class="text-xs font-mono-tech text-slate-400">11th Edition Army Rules</div>
-            <div id="factionRuleTitle" class="text-base font-bold text-amber-400 font-header">Oath of Moment</div>
-            <div id="factionRuleDesc" class="text-xs text-slate-300 mt-0.5">Select one enemy unit per battle round. Reroll Hit rolls against that target.</div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-mono-tech text-slate-400">Stack Detachments:</span>
-            <select id="selAddDetachment" class="bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded focus:outline-none focus:border-amber-500">
-              <!-- Detachments options populated dynamically -->
-            </select>
-            <button onclick="addSelectedDetachment()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded text-xs uppercase font-header">
-              + Add Detachment
-            </button>
-          </div>
-        </div>
-
-        <!-- Active Detachments Chips -->
-        <div id="activeDetachmentsList" class="flex flex-wrap gap-2">
-          <!-- Active Detachments populated via JS -->
-        </div>
-      </div>
-
-      <!-- Main Columns: Unit Catalog vs Active Army Roster -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- Left Column: Add Units (Catalog) -->
-        <div class="lg:col-span-5 space-y-4">
-          <div class="bg-slate-900/90 border border-slate-800 rounded-lg p-4 sticky top-20">
-            <div class="flex justify-between items-center mb-3">
-              <h2 class="text-sm font-bold font-header uppercase tracking-wider text-amber-400 flex items-center gap-2">
-                <i class="fa-solid fa-person-military-pointing"></i> Faction Armory
-              </h2>
-              <span id="armoryCountBadge" class="text-xs font-mono-tech px-2 py-0.5 bg-slate-800 text-slate-300 rounded">0 Available</span>
-            </div>
-
-            <!-- Search & Role Filter -->
-            <div class="flex gap-2 mb-3">
-              <input type="text" id="unitSearchInput" oninput="renderArmoryCatalog()" placeholder="Search unit name..." class="w-full bg-slate-950 border border-slate-700 text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-amber-500">
-              <select id="roleFilterSelect" onchange="renderArmoryCatalog()" class="bg-slate-950 border border-slate-700 text-xs px-2 py-1.5 rounded focus:outline-none focus:border-amber-500">
-                <option value="ALL">All Roles</option>
-                <option value="Epic Hero">Epic Hero</option>
-                <option value="Character">Character</option>
-                <option value="Battleline">Battleline</option>
-                <option value="Infantry">Infantry</option>
-                <option value="Vehicle">Vehicle</option>
-                <option value="Monster">Monster</option>
-                <option value="Dedicated Transport">Transport</option>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- 1. Select Faction -->
+            <div>
+              <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">1. Select Faction</label>
+              <select id="selFaction" onchange="onSelectFaction()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="">-- Choose Faction --</option>
               </select>
             </div>
 
-            <!-- Catalog Scroll Box -->
-            <div id="armoryCatalogContainer" class="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-              <!-- Units populated dynamically via JS -->
+            <!-- 2. Select Points Limit -->
+            <div id="stepPointsWrapper" class="opacity-40 pointer-events-none transition">
+              <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">2. Battle Size (Points)</label>
+              <select id="selPoints" onchange="onSelectPoints()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="">-- Choose Points --</option>
+                <option value="500">500 pts</option>
+                <option value="1000">1000 pts</option>
+                <option value="1500">1500 pts</option>
+                <option value="2000">2000 pts</option>
+                <option value="2500">2500 pts</option>
+                <option value="3000">3000 pts</option>
+              </select>
             </div>
+          </div>
+
+          <!-- Faction Rule Display -->
+          <div id="factionRuleBox" class="hidden bg-zinc-950/80 border-l-2 border-red-700 p-3 rounded text-xs space-y-1">
+            <div class="font-cogitator text-[10px] text-red-400 uppercase">Faction Army Rule</div>
+            <div id="factionRuleName" class="font-bold text-amber-400 text-sm"></div>
+            <p id="factionRuleDesc" class="text-zinc-300 leading-relaxed"></p>
           </div>
         </div>
 
-        <!-- Right Column: Army Roster Cards -->
-        <div class="lg:col-span-7 space-y-4">
-          <div class="bg-slate-900/90 border border-slate-800 rounded-lg p-4">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-sm font-bold font-header uppercase tracking-wider text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-amber-400"></i> Active Force Org Roster
-              </h2>
-              <span id="rosterUnitCount" class="text-xs font-mono-tech px-2 py-0.5 bg-slate-800 text-slate-400 rounded">0 Units</span>
-            </div>
+        <!-- STEP 3: DETACHMENT SELECTION & 11TH ED OVERVIEW -->
+        <div id="stepDetachmentCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-scroll text-red-600"></i> II. 11th Edition Detachment Doctrine
+            </h2>
+            <span class="text-[11px] font-cogitator text-zinc-500">STEP 3</span>
+          </div>
 
-            <!-- Validation Warnings Box -->
-            <div id="rosterValidationAlerts" class="hidden mb-4 p-3 bg-red-950/40 border border-red-800 rounded text-xs space-y-1 text-red-200 font-mono-tech">
-              <!-- Alerts generated dynamically -->
-            </div>
+          <!-- Overview of all available detachments for this faction -->
+          <div class="space-y-2">
+            <div class="text-xs font-cogitator text-zinc-400 uppercase">Available Detachments & Rules:</div>
+            <div id="detachmentOverviewList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+          </div>
 
-            <!-- Roster Unit Cards -->
-            <div id="rosterListContainer" class="space-y-3">
-              <!-- Empty state default -->
-              <div class="text-center py-12 border-2 border-dashed border-slate-800 rounded-lg text-slate-500">
-                <i class="fa-solid fa-dungeon text-4xl mb-2 opacity-40"></i>
-                <p class="font-mono-tech text-sm">NO DETACHMENTS MOBILIZED</p>
-                <p class="text-xs text-slate-600 mt-1">Select units from the Armory to enlist them into your 11th Edition Strike Force.</p>
+          <!-- Active Detachment Dropdown -->
+          <div class="pt-2 border-t border-zinc-800">
+            <label class="block text-xs font-cogitator text-amber-500 uppercase mb-1">3. Select Active Detachment</label>
+            <select id="selDetachment" onchange="onSelectDetachment()" class="w-full bg-zinc-950 border border-amber-600/60 rounded px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
+              <option value="">-- Select Active Detachment --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- STEP 4: SELECT WARLORD (CHARACTER ONLY) -->
+        <div id="stepWarlordCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-crown text-amber-500"></i> III. Designate Supreme Warlord
+            </h2>
+            <span class="text-[11px] font-cogitator text-zinc-500">CHARACTER KEYWORD REQUIRED</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-cogitator text-zinc-400 uppercase mb-1">4. Choose Warlord Unit (Characters Only)</label>
+            <select id="selWarlordUnit" onchange="onChangeBuilderUnit('warlord')" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+              <option value="">-- Select Character as Warlord --</option>
+            </select>
+          </div>
+
+          <!-- Dynamic Warlord Customisation Area -->
+          <div id="warlordConfigPanel" class="hidden"></div>
+        </div>
+
+        <!-- STEP 5: ENLIST FORCE UNITS & WARGEAR -->
+        <div id="stepUnitsCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-red-600"></i> IV. Force Requisition (Units & Wargear)
+            </h2>
+            <span class="text-[11px] font-cogitator text-zinc-500">STEP 5</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-cogitator text-zinc-400 uppercase mb-1">5. Select Unit to Customise & Enlist</label>
+            <select id="selRegularUnit" onchange="onChangeBuilderUnit('regular')" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+              <option value="">-- Choose Unit from Datasheets --</option>
+            </select>
+          </div>
+
+          <!-- Dynamic Unit Customisation Area -->
+          <div id="regularUnitConfigPanel" class="hidden"></div>
+        </div>
+
+      </section>
+
+      <!-- =================================================================
+           RIGHT COLUMN: MOBILISED ARMY ROSTER & VALIDATION
+           ================================================================= -->
+      <section class="lg:col-span-6 space-y-4 lg:sticky lg:top-6">
+        <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+
+          <!-- Roster Header & Points Progress -->
+          <div class="border-b border-zinc-800 pb-3 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+                  <i class="fa-solid fa-clipboard-check text-red-600"></i> Mobilised Battle-Forged Roster
+                </h2>
+                <p id="rosterSubtitle" class="text-xs font-cogitator text-zinc-400">AWAITING INITIAL DIRECTIVES...</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="copyRosterToClipboard()" class="px-2.5 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-xs font-cogitator text-zinc-300 hover:text-amber-400 transition">
+                  <i class="fa-solid fa-copy"></i> Copy Text
+                </button>
+                <button onclick="clearArmyRoster()" class="px-2.5 py-1 rounded bg-red-950/40 border border-red-800/60 hover:bg-red-900/50 text-xs font-cogitator text-red-300 transition">
+                  <i class="fa-solid fa-trash-can"></i> Purge
+                </button>
               </div>
             </div>
 
+            <!-- Points Bar -->
+            <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+              <div class="flex justify-between items-center text-xs font-cogitator mb-1">
+                <span class="text-zinc-400">REQUISITIONED POINTS TOTAL</span>
+                <span id="rosterPointsText" class="text-sm font-bold text-amber-400">0 / 0 pts</span>
+              </div>
+              <div class="w-full bg-zinc-900 h-2.5 rounded overflow-hidden">
+                <div id="rosterPointsBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
           </div>
-        </div>
 
-      </div>
+          <!-- COGITATOR ERROR / VALIDATION ALERTS -->
+          <div id="cogitatorErrorBox" class="hidden p-3 bg-red-950/70 mech-border-red rounded text-xs font-cogitator text-red-200 space-y-1"></div>
+
+          <!-- Active Detachment Summary Pill -->
+          <div id="rosterDetachmentPill" class="hidden bg-zinc-950 border border-amber-600/30 p-3 rounded text-xs space-y-1"></div>
+
+          <!-- Enlisted Units Container -->
+          <div id="enlistedUnitsContainer" class="space-y-3">
+            <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+              <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
+              <p>NO UNITS AUTHORISED IN ROSTER</p>
+              <p class="text-[11px] mt-1">Configure your Warlord and Units on the left panel to mobilise your force.</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
 
     </div>
-
-    <!-- VIEW 2: DATASHEET CMS & BACKEND EDITOR -->
-    <div id="viewCMS" class="hidden space-y-6">
-      
-      <!-- CMS Header -->
-      <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-lg flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h2 class="text-lg font-bold font-header text-amber-400 flex items-center gap-2">
-            <i class="fa-solid fa-pen-to-square"></i> Datasheet & Formation CMS
-          </h2>
-          <p class="text-xs text-slate-400 font-mono-tech">MODIFY PROFILES, DETACHMENTS, WEAPONS & TIERS</p>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button onclick="openNewUnitModal()" class="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-xs font-bold font-header uppercase flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i> Create Unit
-          </button>
-          <button onclick="exportJsonFile()" class="px-3 py-1.5 rounded border border-slate-700 bg-slate-800 text-xs font-mono-tech hover:border-slate-500 text-slate-300 flex items-center gap-1.5">
-            <i class="fa-solid fa-download"></i> Export JSON
-          </button>
-          <label class="px-3 py-1.5 rounded border border-slate-700 bg-slate-800 text-xs font-mono-tech hover:border-slate-500 text-slate-300 cursor-pointer flex items-center gap-1.5">
-            <i class="fa-solid fa-upload"></i> Import JSON
-            <input type="file" id="cmsImportInput" onchange="importJsonFile(event)" class="hidden" accept=".json">
-          </label>
-          <button onclick="factoryResetDatabase()" class="px-3 py-1.5 rounded border border-red-900/60 bg-red-950/20 text-xs font-mono-tech hover:bg-red-900/40 text-red-400 flex items-center gap-1.5">
-            <i class="fa-solid fa-arrow-rotate-left"></i> Reset Defaults
-          </button>
-        </div>
-      </div>
-
-      <!-- CMS Table Navigation / Filter -->
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex gap-2">
-          <button id="cmsFilterFactionAll" onclick="setCMSFactionFilter('ALL')" class="px-3 py-1 rounded text-xs font-mono-tech bg-amber-500 text-slate-950 font-bold">ALL</button>
-          <button id="cmsFilterFactionSM" onclick="setCMSFactionFilter('Space Marines')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">SPACE MARINES</button>
-          <button id="cmsFilterFactionNecron" onclick="setCMSFactionFilter('Necrons')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">NECRONS</button>
-          <button id="cmsFilterFactionNids" onclick="setCMSFactionFilter('Tyranids')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">TYRANIDS</button>
-          <button id="cmsFilterFactionOrks" onclick="setCMSFactionFilter('Orks')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">ORKS</button>
-          <button id="cmsFilterFactionAdMech" onclick="setCMSFactionFilter('Adeptus Mechanicus')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">AD MECH</button>
-          <button id="cmsFilterFactionTau" onclick="setCMSFactionFilter('T\'au Empire')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">T'AU</button>
-          <button id="cmsFilterFactionDrukhari" onclick="setCMSFactionFilter('Drukhari')" class="px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white">DRUKHARI</button>
-        </div>
-        <div class="w-64">
-          <input type="text" id="cmsSearchInput" oninput="renderCMSTable()" placeholder="Search database..." class="w-full bg-slate-900 border border-slate-700 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-amber-500">
-        </div>
-      </div>
-
-      <!-- CMS Units Table -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-lg overflow-x-auto shadow-xl">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-950 text-slate-400 uppercase font-mono-tech border-b border-slate-800">
-            <tr>
-              <th class="p-3">Unit Name</th>
-              <th class="p-3">Faction</th>
-              <th class="p-3">Role</th>
-              <th class="p-3">Profiles (M/T/SV/W/LD/OC/INV)</th>
-              <th class="p-3">Tiers & Points</th>
-              <th class="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="cmsTableBody" class="divide-y divide-slate-800/60 font-mono-tech">
-            <!-- Populated via JS -->
-          </tbody>
-        </table>
-      </div>
-
-    </div>
-
   </main>
 
-  <!-- MODAL: UNIT EDITOR (CMS) -->
-  <div id="unitEditorModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 id="modalEditorTitle" class="text-base font-bold font-header text-amber-400 uppercase">Edit Unit Datasheet</h3>
-        <button onclick="closeUnitModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <input type="hidden" id="editUnitId">
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div>
-          <label class="block text-xs font-mono-tech text-slate-400 mb-1">Unit Name</label>
-          <input type="text" id="editUnitName" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
-        </div>
-        <div>
-          <label class="block text-xs font-mono-tech text-slate-400 mb-1">Faction</label>
-          <select id="editUnitFaction" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
-            <option value="Space Marines">Space Marines</option>
-            <option value="Necrons">Necrons</option>
-            <option value="Tyranids">Tyranids</option>
-            <option value="Orks">Orks</option>
-            <option value="Adeptus Mechanicus">Adeptus Mechanicus</option>
-            <option value="T'au Empire">T'au Empire</option>
-            <option value="Drukhari">Drukhari</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-mono-tech text-slate-400 mb-1">Battlefield Role</label>
-          <select id="editUnitRole" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500">
-            <option value="Epic Hero">Epic Hero</option>
-            <option value="Character">Character</option>
-            <option value="Battleline">Battleline</option>
-            <option value="Infantry">Infantry</option>
-            <option value="Vehicle">Vehicle</option>
-            <option value="Monster">Monster</option>
-            <option value="Dedicated Transport">Dedicated Transport</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-7 gap-2 bg-slate-950 p-3 rounded border border-slate-800">
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">M</label>
-          <input type="text" id="editM" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">T</label>
-          <input type="number" id="editT" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">SV</label>
-          <input type="text" id="editSV" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">W</label>
-          <input type="number" id="editW" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">LD</label>
-          <input type="text" id="editLD" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">OC</label>
-          <input type="number" id="editOC" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-        <div>
-          <label class="block text-[10px] font-mono-tech text-center text-slate-400">INVULN</label>
-          <input type="text" id="editInvuln" placeholder="-" class="w-full bg-slate-900 border border-slate-700 text-center text-xs py-1 text-white rounded">
-        </div>
-      </div>
-
-      <!-- Tiers & Points Editor -->
-      <div class="border border-slate-800 rounded p-3">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-xs font-mono-tech text-amber-400 uppercase">Unit Sizes & Points Tiers</span>
-          <button onclick="addModalTierRow()" class="text-xs bg-slate-800 px-2 py-0.5 rounded text-amber-400 hover:bg-slate-700">+ Add Tier</button>
-        </div>
-        <div id="modalTiersContainer" class="space-y-2">
-          <!-- Dynamically populated rows -->
-        </div>
-      </div>
-
-      <!-- Weapon Profiles -->
-      <div class="border border-slate-800 rounded p-3">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-xs font-mono-tech text-amber-400 uppercase">Weapons & Wargear Profiles</span>
-          <button onclick="addModalWeaponRow()" class="text-xs bg-slate-800 px-2 py-0.5 rounded text-amber-400 hover:bg-slate-700">+ Add Weapon</button>
-        </div>
-        <div id="modalWeaponsContainer" class="space-y-2">
-          <!-- Dynamically populated weapon rows -->
-        </div>
-      </div>
-
-      <!-- Abilities & Keywords -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-mono-tech text-slate-400 mb-1">Unit Ability / Rules</label>
-          <textarea id="editAbilities" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none"></textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-mono-tech text-slate-400 mb-1">Keywords (comma separated)</label>
-          <textarea id="editKeywords" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-white focus:outline-none"></textarea>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-        <button onclick="closeUnitModal()" class="px-4 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-mono-tech text-slate-300">Cancel</button>
-        <button onclick="saveUnitModalData()" class="px-4 py-1.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold font-header text-xs uppercase">Save Changes</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // --- 11TH EDITION COMPLETE DEFAULT ARMIES DATA ---
-    const DEFAULT_FACTIONS = {
-      "Space Marines": {
-        ruleTitle: "Oath of Moment (11th Ed)",
-        ruleDesc: "At the start of your Command phase, select one enemy unit. Friendly ADEPTUS ASTARTES units reroll Hit rolls against that target.",
-        detachments: [
-          { id: "sm_det_1", name: "Gladius Strike Force", dp: 2, rule: "Combat Doctrines: Advance & Shoot, Fall Back & Shoot, Advance & Charge." },
-          { id: "sm_det_2", name: "Ironstorm Spearhead", dp: 1, rule: "Armoured Wrath: Re-roll 1 Hit, 1 Wound, or 1 Damage roll for Vehicles." },
-          { id: "sm_det_3", name: "Vanguard Spearhead", dp: 1, rule: "Shadow Masters: Enemy units attacking outside 12\" suffer -1 to Hit and benefit of Cover." }
-        ]
-      },
-      "Necrons": {
-        ruleTitle: "Reanimation Protocols (11th Ed)",
-        ruleDesc: "In your Command phase, each unit re-animates D3 wounds, restoring destroyed models if multi-wound.",
-        detachments: [
-          { id: "nec_det_1", name: "Awakened Dynasty", dp: 2, rule: "Command Protocols: +1 to Hit for units led by a NECRON CHARACTER." },
-          { id: "nec_det_2", name: "Hypercrypt Legion", dp: 1, rule: "Hyperphasing: Remove up to 2 units to Strategic Reserves at the end of enemy turn." },
-          { id: "nec_det_3", name: "Canoptek Court", dp: 1, rule: "Power Matrix: Canoptek and Cryptek units re-roll Hit rolls of 1 (full re-roll within matrix)." }
-        ]
-      },
-      "Tyranids": {
-        ruleTitle: "Synapse & Shadow in the Warp (11th Ed)",
-        ruleDesc: "3D6 Battle-shock tests within 6\" of Synapse. Once per battle, force every enemy unit to take a Battle-shock test.",
-        detachments: [
-          { id: "nid_det_1", name: "Invasion Fleet", dp: 2, rule: "Hyper-adaptations: Select Lethal Hits vs Monsters/Vehicles, Sustained Hits vs Infantry, or Precision vs Characters." },
-          { id: "nid_det_2", name: "Synaptic Nexus", dp: 1, rule: "Synaptic Imperatives: Cycle +1 to Advance/Charge, 5+ Invulnerable saves, or +1 Melee AP." },
-          { id: "nid_det_3", name: "Unending Swarm", dp: 1, rule: "Endless Waves: Resurrect D3+3 Endless Multitude models in your Command phase." }
-        ]
-      },
-      "Orks": {
-        ruleTitle: "Waaagh! (11th Ed)",
-        ruleDesc: "Call Waaagh! once per battle: Advance & Charge, +1 Melee Strength & Attacks, 5+ Invulnerable save.",
-        detachments: [
-          { id: "ork_det_1", name: "Waaagh! Tribe", dp: 2, rule: "Get Stuck In: Sustained Hits 1 on all melee weapons while calling Waaagh!" },
-          { id: "ork_det_2", name: "Dread Mob", dp: 1, rule: "Try Dat Button!: Push-your-luck weapon buffs with Hazardous consequences." },
-          { id: "ork_det_3", name: "War Horde", dp: 1, rule: "Speed Freek Blitz: Vehicles & Bikers gain +2\" Move and assault weapon capabilities." }
-        ]
-      },
-      "Adeptus Mechanicus": {
-        ruleTitle: "Doctrina Imperatives (11th Ed)",
-        ruleDesc: "Choose Protector Imperative (Ranged Heavy, -1 AP to incoming fire inside deploy) or Conqueror Imperative (Assault, +1 AP within enemy DZ).",
-        detachments: [
-          { id: "admech_det_1", name: "Rad-Zone Corps", dp: 2, rule: "Rad-Bombardment: Severe fallout damages and forces Battle-shock across enemy DZ in Turn 1." },
-          { id: "admech_det_2", name: "Hunter Clade", dp: 1, rule: "Infiltration Protocol: Skitarii units gain Stealth, and Ruststalkers advance and charge." },
-          { id: "admech_det_3", name: "Cohort Cybernetica", dp: 1, rule: "Necromechanic Overdrive: Cybernetica Datasmith programs affect all friendly Walkers/Vehicles." }
-        ]
-      },
-      "T'au Empire": {
-        ruleTitle: "For the Greater Good (11th Ed)",
-        ruleDesc: "Spotting pairs: Observer units guide Attacking units to grant +1 BS (or +2 BS if Markerlight equipped).",
-        detachments: [
-          { id: "tau_det_1", name: "Kauyon Patient Hunter", dp: 2, rule: "Patient ambush: From Battle Round 3 onwards, ranged weapons gain Sustained Hits 1 (or Sustained Hits 2 if guided)." },
-          { id: "tau_det_2", name: "Mont'ka Rapid Assault", dp: 1, rule: "Killing Blow: Rounds 1-3 all weapons have Lethal Hits against guided targets." },
-          { id: "tau_det_3", name: "Retaliation Cadre", dp: 1, rule: "Battlesuit Thrust: Battlesuits gain +1 Strength within 12\" and +1 AP within 6\"." }
-        ]
-      },
-      "Drukhari": {
-        ruleTitle: "Power from Pain (11th Ed)",
-        ruleDesc: "Expend Pain Tokens to grant full re-rolls to Hit in Shooting or Melee, or re-roll Advance and Charge distances.",
-        detachments: [
-          { id: "dru_det_1", name: "Realspace Raiders", dp: 2, rule: "Alliance of Agony: Archon, Succubus, and Haemonculus each grant bonus pain tokens to their retinues." },
-          { id: "dru_det_2", name: "Skysplinter Assault", dp: 1, rule: "Vessel Raiders: Disembarking units gain [LANCE] and Ignores Cover for turn." },
-          { id: "dru_det_3", name: "Prophets of Flesh", dp: 1, rule: "Covens Resurgence: Grotesques and Pain Engines gain 4+ Invulnerable and feel no pain 5+." }
-        ]
-      }
-    };
+    // =========================================================================
+    // 1. LIVE GOOGLE SHEET DATABASE CONNECTION
+    // =========================================================================
+    const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
+    const GOOGLE_SHEET_XLSX_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`;
 
-    const DEFAULT_UNITS = [
-      // SPACE MARINES
-      { id: "sm_calgar", faction: "Space Marines", name: "Marneus Calgar", role: "Epic Hero", m: "5\"", t: 6, sv: "2+", w: 6, ld: "6+", oc: 2, invuln: "4++",
-        tiers: [{ models: 3, points: 185 }],
-        weapons: [{ name: "Gauntlets of Ultramar (Ranged)", range: "18\"", a: 4, bs: "2+", s: 4, ap: -1, d: 2, kw: "Twin-linked" }, { name: "Gauntlets of Ultramar (Melee)", range: "Melee", a: 5, bs: "2+", s: 8, ap: -3, d: 3, kw: "Twin-linked" }],
-        abilities: "Master Tactician: Gain +1 CP at the start of your Command phase. Leads Victrix Honour Guard.", keywords: "Infantry, Character, Epic Hero, Chapter Master" },
-      { id: "sm_gravis_capt", faction: "Space Marines", name: "Captain in Gravis Armour", role: "Character", m: "5\"", t: 6, sv: "2+", w: 6, ld: "6+", oc: 1, invuln: "4++",
-        tiers: [{ models: 1, points: 80 }],
-        weapons: [{ name: "Boltstorm Gauntlet", range: "12\"", a: 3, bs: "2+", s: 4, ap: 0, d: 1, kw: "Pistol" }, { name: "Relic Chainsword", range: "Melee", a: 6, bs: "2+", s: 5, ap: -1, d: 1, kw: "-" }],
-        abilities: "Rites of Battle: Target unit within 12\" for a 0CP Stratagem once per battle round.", keywords: "Infantry, Character, Gravis, Captain" },
-      { id: "sm_intercessors", faction: "Space Marines", name: "Intercessor Squad", role: "Battleline", m: "6\"", t: 4, sv: "3+", w: 2, ld: "6+", oc: 2, invuln: "-",
-        tiers: [{ models: 5, points: 80 }, { models: 10, points: 160 }],
-        weapons: [{ name: "Bolt Rifle", range: "24\"", a: 2, bs: "3+", s: 4, ap: -1, d: 1, kw: "Assault, Heavy" }, { name: "Close Combat Weapon", range: "Melee", a: 3, bs: "3+", s: 4, ap: 0, d: 1, kw: "-" }],
-        abilities: "Sticky Objectives: Objective remains under your control even if you move away from it.", keywords: "Infantry, Battleline, Grenades, Intercessors" },
-      { id: "sm_heavy_inter", faction: "Space Marines", name: "Heavy Intercessors", role: "Battleline", m: "5\"", t: 6, sv: "3+", w: 3, ld: "6+", oc: 2, invuln: "-",
-        tiers: [{ models: 5, points: 100 }, { models: 10, points: 200 }],
-        weapons: [{ name: "Heavy Bolt Rifle", range: "30\"", a: 2, bs: "3+", s: 5, ap: -1, d: 1, kw: "Heavy" }, { name: "Close Combat Weapon", range: "Melee", a: 3, bs: "3+", s: 4, ap: 0, d: 1, kw: "-" }],
-        abilities: "Unyielding: +1 to Save characteristic against 1 Damage attacks while on an Objective.", keywords: "Infantry, Battleline, Gravis" },
-      { id: "sm_terminators", faction: "Space Marines", name: "Terminator Squad", role: "Infantry", m: "5\"", t: 5, sv: "2+", w: 3, ld: "6+", oc: 1, invuln: "4++",
-        tiers: [{ models: 5, points: 175 }, { models: 10, points: 350 }],
-        weapons: [{ name: "Storm Bolter", range: "24\"", a: 2, bs: "3+", s: 4, ap: 0, d: 1, kw: "Rapid Fire 2" }, { name: "Power Fist", range: "Melee", a: 3, bs: "3+", s: 8, ap: -2, d: 2, kw: "-" }],
-        abilities: "Teleport Homer: Rapid Ingress costs 0 CP if arriving within range of the homer.", keywords: "Infantry, Terminators, Deep Strike" },
-      { id: "sm_redemptor", faction: "Space Marines", name: "Redemptor Dreadnought", role: "Vehicle", m: "8\"", t: 10, sv: "2+", w: 12, ld: "6+", oc: 4, invuln: "-",
-        tiers: [{ models: 1, points: 210 }],
-        weapons: [{ name: "Macro Plasma Incinerator", range: "36\"", a: "D6+1", bs: "3+", s: 9, ap: -4, d: 3, kw: "Blast, Heavy" }, { name: "Redemptor Fist", range: "Melee", a: 5, bs: "3+", s: 12, ap: -2, d: "D6+1", kw: "-" }],
-        abilities: "Duty Eternal: Each time an attack is allocated to this model, subtract 1 from the Damage characteristic.", keywords: "Vehicle, Walker, Redemptor, Dreadnought" },
-      { id: "sm_gladiator", faction: "Space Marines", name: "Gladiator Lancer", role: "Vehicle", m: "10\"", t: 10, sv: "3+", w: 12, ld: "6+", oc: 3, invuln: "-",
-        tiers: [{ models: 1, points: 160 }],
-        weapons: [{ name: "Lancer Laser Destroyer", range: "72\"", a: 2, bs: "3+", s: 14, ap: -4, d: "D6+3", kw: "Heavy" }],
-        abilities: "Aquilon Optics: Re-roll 1 Hit, 1 Wound, and 1 Damage roll each time this model shoots.", keywords: "Vehicle, Tank, Smoke, Gladiator" },
-
-      // NECRONS
-      { id: "nec_king", faction: "Necrons", name: "The Silent King", role: "Epic Hero", m: "8\"", t: 10, sv: "2+", w: 16, ld: "6+", oc: 6, invuln: "4++",
-        tiers: [{ models: 3, points: 420 }],
-        weapons: [{ name: "Sceptre of Eternal Glory", range: "24\"", a: 6, bs: "2+", s: 8, ap: -3, d: 2, kw: "-" }, { name: "Triarchal Staff", range: "Melee", a: 6, bs: "2+", s: 9, ap: -3, d: 3, kw: "-" }],
-        abilities: "Voice of the Triarch: Choose an aura buff: reroll 1s to Hit, reroll 1s to Wound, or +1 Move/Charge.", keywords: "Vehicle, Walker, Character, Epic Hero, Supreme Commander" },
-      { id: "nec_overlord", faction: "Necrons", name: "Overlord with Translocation Shroud", role: "Character", m: "8\"", t: 5, sv: "2+", w: 6, ld: "6+", oc: 1, invuln: "4++",
-        tiers: [{ models: 1, points: 85 }],
-        weapons: [{ name: "Resurrection Orb", range: "-", a: 0, bs: "-", s: 0, ap: 0, d: 0, kw: "-" }, { name: "Hyperphase Glaive", range: "Melee", a: 4, bs: "2+", s: 7, ap: -3, d: 2, kw: "-" }],
-        abilities: "Translocation: Advance rolls for this model's unit automatically score 6\" without rolling.", keywords: "Infantry, Character, Overlord, Noble" },
-      { id: "nec_warriors", faction: "Necrons", name: "Necron Warriors", role: "Battleline", m: "5\"", t: 4, sv: "4+", w: 1, ld: "7+", oc: 2, invuln: "-",
-        tiers: [{ models: 10, points: 100 }, { models: 20, points: 200 }],
-        weapons: [{ name: "Gauss Flayer", range: "24\"", a: 1, bs: "4+", s: 4, ap: 0, d: 1, kw: "Lethal Hits" }, { name: "Close Combat Weapon", range: "Melee", a: 1, bs: "4+", s: 4, ap: 0, d: 1, kw: "-" }],
-        abilities: "Their Number is Legion: Re-roll Reanimation Protocol dice rolls of 1 (or re-roll D3 if on an objective).", keywords: "Infantry, Battleline, Necron Warriors" },
-      { id: "nec_immortals", faction: "Necrons", name: "Immortals", role: "Battleline", m: "5\"", t: 5, sv: "3+", w: 1, ld: "7+", oc: 2, invuln: "-",
-        tiers: [{ models: 5, points: 75 }, { models: 10, points: 150 }],
-        weapons: [{ name: "Tesla Carbine", range: "18\"", a: 2, bs: "3+", s: 5, ap: 0, d: 1, kw: "Sustained Hits 2, Assault" }, { name: "Gauss Blaster", range: "24\"", a: 2, bs: "3+", s: 5, ap: -1, d: 1, kw: "Lethal Hits" }],
-        abilities: "Implacable Eradication: Re-roll Wound rolls of 1 (or full re-roll vs targets on objectives).", keywords: "Infantry, Battleline, Immortals" },
-      { id: "nec_wraiths", faction: "Necrons", name: "Canoptek Wraiths", role: "Infantry", m: "10\"", t: 6, sv: "3+", w: 4, ld: "7+", oc: 2, invuln: "4++",
-        tiers: [{ models: 3, points: 125 }, { models: 6, points: 250 }],
-        weapons: [{ name: "Particle Caster", range: "12\"", a: 3, bs: "4+", s: 6, ap: 0, d: 1, kw: "Pistol, Devastating Wounds" }, { name: "Vicious Claws", range: "Melee", a: 4, bs: "4+", s: 6, ap: -1, d: 2, kw: "-" }],
-        abilities: "Wraithflight: Can move through terrain and models freely as if they were not there.", keywords: "Beast, Canoptek, Fly, Wraiths" },
-      { id: "nec_monolith", faction: "Necrons", name: "Monolith", role: "Vehicle", m: "7\"", t: 13, sv: "2+", w: 20, ld: "6+", oc: 8, invuln: "-",
-        tiers: [{ models: 1, points: 375 }],
-        weapons: [{ name: "Particle Whip", range: "24\"", a: "3D3", bs: "3+", s: 12, ap: -3, d: 3, kw: "Blast, Devastating Wounds" }, { name: "4 Gauss Flux Arcs", range: "24\"", a: 12, bs: "3+", s: 6, ap: -1, d: 1, kw: "Lethal Hits, Rapid Fire 6" }],
-        abilities: "Eternity Gate: Summon a friendly Infantry unit from reserves within 6\" of this model outside 3\" of enemies.", keywords: "Vehicle, Titanic, Towering, Monolith" },
-
-      // TYRANIDS
-      { id: "nid_swarmlord", faction: "Tyranids", name: "The Swarmlord", role: "Epic Hero", m: "8\"", t: 10, sv: "2+", w: 10, ld: "7+", oc: 3, invuln: "4++",
-        tiers: [{ models: 1, points: 240 }],
-        weapons: [{ name: "Bone Sabres", range: "Melee", a: 8, bs: "2+", s: 9, ap: -3, d: 3, kw: "Twin-linked" }, { name: "Synaptic Pulse", range: "18\"", a: 2, bs: "2+", s: 6, ap: -2, d: 3, kw: "Torrent" }],
-        abilities: "Malign Presence: Increase the CP cost of an enemy Stratagem by 1 for the rest of the battle.", keywords: "Monster, Character, Epic Hero, Synapse, Swarmlord" },
-      { id: "nid_termas", faction: "Tyranids", name: "Termagants", role: "Battleline", m: "6\"", t: 3, sv: "5+", w: 1, ld: "8+", oc: 2, invuln: "-",
-        tiers: [{ models: 10, points: 60 }, { models: 20, points: 120 }],
-        weapons: [{ name: "Fleshborer", range: "18\"", a: 1, bs: "4+", s: 5, ap: 0, d: 1, kw: "Assault" }, { name: "Xenos Claws", range: "Melee", a: 1, bs: "4+", s: 3, ap: 0, d: 1, kw: "-" }],
-        abilities: "Skittering Swarm: Reactively move D6\" when an enemy moves within 9\".", keywords: "Infantry, Battleline, Endless Multitude, Great Devourer" },
-      { id: "nid_zoans", faction: "Tyranids", name: "Zoanthropes", role: "Infantry", m: "5\"", t: 5, sv: "4+", w: 3, ld: "7+", oc: 1, invuln: "4++",
-        tiers: [{ models: 3, points: 100 }, { models: 6, points: 200 }],
-        weapons: [{ name: "Warp Blast (Witchfire)", range: "24\"", a: "D3", bs: "3+", s: 7, ap: -2, d: "D3", kw: "Blast" }, { name: "Warp Blast (Lance)", range: "24\"", a: 1, bs: "3+", s: 12, ap: -3, d: "D6+1", kw: "Lethal Hits" }],
-        abilities: "Warp Field: 6\" Aura granting a 6++ Invulnerable save (or 5++ for Synapse models).", keywords: "Infantry, Synapse, Fly, Psyker, Zoanthropes" },
-      { id: "nid_tyrannofex", faction: "Tyranids", name: "Tyrannofex", role: "Monster", m: "9\"", t: 12, sv: "2+", w: 16, ld: "8+", oc: 5, invuln: "-",
-        tiers: [{ models: 1, points: 190 }],
-        weapons: [{ name: "Rupture Cannon", range: "48\"", a: 2, bs: "3+", s: 18, ap: -4, d: "2D6", kw: "Heavy" }, { name: "Powerful Limbs", range: "Melee", a: 4, bs: "4+", s: 8, ap: 0, d: 2, kw: "-" }],
-        abilities: "Resilient Organism: Once per battle, reduce incoming attack damage to 0.", keywords: "Monster, Great Devourer, Tyrannofex" },
-
-      // ORKS
-      { id: "ork_ghaz", faction: "Orks", name: "Ghazghkull Thraka", role: "Epic Hero", m: "5\"", t: 6, sv: "2+", w: 10, ld: "6+", oc: 4, invuln: "4++",
-        tiers: [{ models: 2, points: 235 }],
-        weapons: [{ name: "Gork's Klaw", range: "Melee", a: 6, bs: "2+", s: 14, ap: -3, d: 4, kw: "Lethal Hits" }, { name: "Mork's Roar", range: "36\"", a: 12, bs: "5+", s: 5, ap: -1, d: 1, kw: "Rapid Fire 4" }],
-        abilities: "Prophet of the Great Waaagh!: +1 to Hit and +1 to Wound for friendly ORKS within 6\" during Waaagh!", keywords: "Infantry, Character, Epic Hero, Mega Armour, Ghazghkull" },
-      { id: "ork_boyz", faction: "Orks", name: "Boyz", role: "Battleline", m: "6\"", t: 5, sv: "5+", w: 1, ld: "7+", oc: 2, invuln: "-",
-        tiers: [{ models: 10, points: 85 }, { models: 20, points: 170 }],
-        weapons: [{ name: "Slugga", range: "12\"", a: 1, bs: "5+", s: 4, ap: 0, d: 1, kw: "Pistol" }, { name: "Choppa", range: "Melee", a: 3, bs: "3+", s: 4, ap: -1, d: 1, kw: "-" }],
-        abilities: "Break 'Em Heads: Re-roll Battle-shock tests if unit has 10 or more models.", keywords: "Infantry, Battleline, Mob, Boyz" },
-      { id: "ork_gretchin", faction: "Orks", name: "Gretchin", role: "Battleline", m: "6\"", t: 2, sv: "6+", w: 1, ld: "8+", oc: 2, invuln: "-",
-        tiers: [{ models: 11, points: 40 }],
-        weapons: [{ name: "Grot Blaster", range: "12\"", a: 1, bs: "4+", s: 3, ap: 0, d: 1, kw: "Pistol" }],
-        abilities: "Runny and Thievin': Gain a CP on a 4+ at start of turn if holding an objective.", keywords: "Infantry, Battleline, Gretchin" },
-      { id: "ork_trukk", faction: "Orks", name: "Trukk", role: "Dedicated Transport", m: "12\"", t: 8, sv: "4+", w: 10, ld: "7+", oc: 2, invuln: "6++",
-        tiers: [{ models: 1, points: 65 }],
-        weapons: [{ name: "Big Shoota", range: "36\"", a: 3, bs: "5+", s: 5, ap: 0, d: 1, kw: "Rapid Fire 2" }, { name: "Spiked Wheels", range: "Melee", a: 3, bs: "4+", s: 6, ap: 0, d: 1, kw: "-" }],
-        abilities: "Firing Deck 12: Up to 12 embarked models can shoot using Trukk's firing deck.", keywords: "Vehicle, Transport, Dedicated Transport, Trukk" },
-
-      // ADEPTUS MECHANICUS
-      { id: "adm_cawl", faction: "Adeptus Mechanicus", name: "Belisarius Cawl", role: "Epic Hero", m: "6\"", t: 8, sv: "2+", w: 10, ld: "6+", oc: 3, invuln: "4++",
-        tiers: [{ models: 1, points: 150 }],
-        weapons: [{ name: "Solar Atomiser", range: "18\"", a: "D3", bs: "2+", s: 12, ap: -4, d: "D6", kw: "Melta 2, Blast" }, { name: "Arc Scourge", range: "Melee", a: 5, bs: "2+", s: 7, ap: -2, d: 2, kw: "Anti-Vehicle 4+" }],
-        abilities: "Canticles of the Omnissiah: Grant Stealth aura, Battle-shock rerolls, or +1 Melee hit rolls.", keywords: "Monster, Character, Epic Hero, Cawl, Tech-Priest" },
-      { id: "adm_dominus", faction: "Adeptus Mechanicus", name: "Tech-Priest Dominus", role: "Character", m: "6\"", t: 4, sv: "2+", w: 4, ld: "6+", oc: 1, invuln: "5++",
-        tiers: [{ models: 1, points: 75 }],
-        weapons: [{ name: "Volkite Blaster", range: "24\"", a: 3, bs: "3+", s: 6, ap: 0, d: 2, kw: "Devastating Wounds" }, { name: "Omnissian Axe", range: "Melee", a: 4, bs: "3+", s: 6, ap: -2, d: 2, kw: "-" }],
-        abilities: "Master of Machines: Lead unit gains a 5+ Feel No Pain save.", keywords: "Infantry, Character, Tech-Priest, Dominus" },
-      { id: "adm_rangers", faction: "Adeptus Mechanicus", name: "Skitarii Rangers", role: "Battleline", m: "6\"", t: 3, sv: "5+", w: 1, ld: "7+", oc: 2, invuln: "6++",
-        tiers: [{ models: 10, points: 85 }],
-        weapons: [{ name: "Galvanic Rifle", range: "30\"", a: 1, bs: "4+", s: 4, ap: 0, d: 1, kw: "Heavy" }, { name: "Close Combat Weapon", range: "Melee", a: 1, bs: "4+", s: 3, ap: 0, d: 1, kw: "-" }],
-        abilities: "Scout 6\": May make a Normal Move of up to 6\" before the first turn begins.", keywords: "Infantry, Battleline, Skitarii, Rangers" },
-      { id: "adm_breachers", faction: "Adeptus Mechanicus", name: "Kataphron Breachers", role: "Infantry", m: "5\"", t: 7, sv: "3+", w: 3, ld: "7+", oc: 1, invuln: "6++",
-        tiers: [{ models: 3, points: 145 }, { models: 6, points: 290 }],
-        weapons: [{ name: "Heavy Arc Rifle", range: "36\"", a: 2, bs: "4+", s: 8, ap: -2, d: 3, kw: "Anti-Vehicle 4+, Rapid Fire 2" }, { name: "Hydraulic Claw", range: "Melee", a: 3, bs: "4+", s: 8, ap: -2, d: 3, kw: "-" }],
-        abilities: "Breaching Volley: Re-roll Hit rolls of 1 (or full re-rolls if within 6\" of Battleline).", keywords: "Infantry, Kataphron, Breachers" },
-      { id: "adm_dunecrawler", faction: "Adeptus Mechanicus", name: "Onager Dunecrawler", role: "Vehicle", m: "8\"", t: 10, sv: "2+", w: 11, ld: "7+", oc: 3, invuln: "4++",
-        tiers: [{ models: 1, points: 130 }],
-        weapons: [{ name: "Neutron Laser", range: "48\"", a: 2, bs: "4+", s: 16, ap: -4, d: "D6+1", kw: "Heavy, Blast" }, { name: "Cognis Heavy Stubber", range: "36\"", a: 3, bs: "4+", s: 4, ap: 0, d: 1, kw: "Rapid Fire 3" }],
-        abilities: "Emanatus Force Field: Friendly Skitarii units within 6\" receive a 4+ Invulnerable save against ranged attacks.", keywords: "Vehicle, Walker, Dunecrawler, Smoke" },
-
-      // T'AU EMPIRE
-      { id: "tau_shadowsun", faction: "T'au Empire", name: "Commander Shadowsun", role: "Epic Hero", m: "10\"", t: 4, sv: "3+", w: 6, ld: "6+", oc: 2, invuln: "5++",
-        tiers: [{ models: 1, points: 100 }],
-        weapons: [{ name: "2 High-energy Fusion Blasters", range: "18\"", a: 2, bs: "2+", s: 10, ap: -4, d: "D6", kw: "Melta 2" }],
-        abilities: "Hero of the Greater Good: Friendly T'AU EMPIRE units within 6\" re-roll Hit rolls of 1.", keywords: "Battlesuit, Character, Epic Hero, Fly, Stealth, Shadowsun" },
-      { id: "tau_coldstar", faction: "T'au Empire", name: "Commander in Coldstar Battlesuit", role: "Character", m: "12\"", t: 5, sv: "3+", w: 6, ld: "6+", oc: 2, invuln: "4++",
-        tiers: [{ models: 1, points: 95 }],
-        weapons: [{ name: "High-output Burst Cannon", range: "18\"", a: 8, bs: "3+", s: 5, ap: -1, d: 1, kw: "-" }, { name: "Missile Pod", range: "30\"", a: 2, bs: "3+", s: 7, ap: -1, d: 2, kw: "-" }],
-        abilities: "High-altitude Maneuvers: Led unit gains 12\" Move and Flying, plus [ASSAULT] on ranged weapons.", keywords: "Battlesuit, Character, Fly, Coldstar, Commander" },
-      { id: "tau_breachers", faction: "T'au Empire", name: "Breacher Team", role: "Battleline", m: "6\"", t: 3, sv: "4+", w: 1, ld: "7+", oc: 2, invuln: "-",
-        tiers: [{ models: 10, points: 100 }],
-        weapons: [{ name: "Pulse Blaster", range: "10\"", a: 2, bs: "3+", s: 6, ap: -1, d: 1, kw: "Assault" }, { name: "Close Combat Weapon", range: "Melee", a: 1, bs: "5+", s: 3, ap: 0, d: 1, kw: "-" }],
-        abilities: "Breaching Team: Re-roll Wound rolls when shooting at enemy units holding an Objective.", keywords: "Infantry, Battleline, Grenades, Fire Warrior, Breachers" },
-      { id: "tau_crisis", faction: "T'au Empire", name: "Crisis Sunforge Battlesuits", role: "Infantry", m: "10\"", t: 5, sv: "3+", w: 4, ld: "7+", oc: 2, invuln: "4++",
-        tiers: [{ models: 3, points: 150 }],
-        weapons: [{ name: "2 Fusion Blasters", range: "12\"", a: 2, bs: "4+", s: 9, ap: -4, d: "D6", kw: "Melta 2" }],
-        abilities: "Sunforge: Re-roll Wound rolls and Damage rolls against Monster and Vehicle targets.", keywords: "Battlesuit, Fly, Crisis, Sunforge" },
-      { id: "tau_hammerhead", faction: "T'au Empire", name: "Hammerhead Gunship", role: "Vehicle", m: "10\"", t: 10, sv: "3+", w: 14, ld: "7+", oc: 3, invuln: "-",
-        tiers: [{ models: 1, points: 145 }],
-        weapons: [{ name: "Railgun", range: "72\"", a: 1, bs: "4+", s: 20, ap: -5, d: "D6+6", kw: "Heavy, Devastating Wounds" }, { name: "2 Smart Missile Systems", range: "30\"", a: 6, bs: "4+", s: 5, ap: 0, d: 1, kw: "Indirect Fire" }],
-        abilities: "Targeting Array: Re-roll 1 Hit roll or 1 Wound roll each time this model shoots.", keywords: "Vehicle, Fly, Hammerhead, Tank" },
-
-      // DRUKHARI
-      { id: "dru_drazhar", faction: "Drukhari", name: "Drazhar", role: "Epic Hero", m: "7\"", t: 3, sv: "2+", w: 5, ld: "6+", oc: 1, invuln: "4++",
-        tiers: [{ models: 1, points: 75 }],
-        weapons: [{ name: "The Executioner's Demiklaives", range: "Melee", a: 8, bs: "2+", s: 5, ap: -3, d: 2, kw: "Lethal Hits, Twin-linked" }],
-        abilities: "Master of Blades: While leading Incubi, add +1 to the Wound rolls of melee attacks.", keywords: "Infantry, Character, Epic Hero, Incubi, Drazhar" },
-      { id: "dru_archon", faction: "Drukhari", name: "Archon", role: "Character", m: "8\"", t: 3, sv: "4+", w: 4, ld: "6+", oc: 1, invuln: "2++",
-        tiers: [{ models: 1, points: 75 }],
-        weapons: [{ name: "Blast Pistol", range: "6\"", a: 1, bs: "2+", s: 8, ap: -3, d: "D3", kw: "Pistol" }, { name: "Huskblade", range: "Melee", a: 5, bs: "2+", s: 3, ap: -2, d: 3, kw: "Anti-Infantry 3+" }],
-        abilities: "Shadowfield: Has a 2+ Invulnerable save; collapses for the rest of battle on the first failed save.", keywords: "Infantry, Character, Archon, Kabal" },
-      { id: "dru_kabalites", faction: "Drukhari", name: "Kabalite Warriors", role: "Battleline", m: "8\"", t: 3, sv: "5+", w: 1, ld: "6+", oc: 2, invuln: "6++",
-        tiers: [{ models: 10, points: 110 }],
-        weapons: [{ name: "Splinter Rifle", range: "24\"", a: 2, bs: "3+", s: 2, ap: 0, d: 1, kw: "Anti-Infantry 3+, Assault" }, { name: "Dark Lance", range: "36\"", a: 1, bs: "4+", s: 12, ap: -3, d: "D6+2", kw: "Heavy" }],
-        abilities: "Sadistic Raiders: Objective Markers controlled by this unit remain under your control if vacated.", keywords: "Infantry, Battleline, Kabal, Kabalite Warriors" },
-      { id: "dru_raider", faction: "Drukhari", name: "Raider", role: "Dedicated Transport", m: "14\"", t: 8, sv: "4+", w: 10, ld: "6+", oc: 2, invuln: "6++",
-        tiers: [{ models: 1, points: 80 }],
-        weapons: [{ name: "Dark Lance", range: "36\"", a: 1, bs: "3+", s: 12, ap: -3, d: "D6+2", kw: "Heavy" }],
-        abilities: "Firing Deck 11: Transport capacity of 11 infantry models with open firing positions.", keywords: "Vehicle, Transport, Dedicated Transport, Fly, Raider" },
-      { id: "dru_talos", faction: "Drukhari", name: "Talos Pain Engine", role: "Monster", m: "7\"", t: 7, sv: "3+", w: 7, ld: "6+", oc: 3, invuln: "5++",
-        tiers: [{ models: 1, points: 80 }, { models: 2, points: 160 }],
-        weapons: [{ name: "Haywire Blaster", range: "24\"", a: 2, bs: "3+", s: 4, ap: -1, d: 3, kw: "Anti-Vehicle 4+, Devastating Wounds" }, { name: "Talos Gauntlet", range: "Melee", a: 5, bs: "3+", s: 8, ap: -2, d: 3, kw: "-" }],
-        abilities: "Engine of Agony: Whenever this unit destroys an enemy unit, gain 1 Pain Token.", keywords: "Monster, Fly, Haemonculus Covens, Talos" }
-    ];
-
-    // --- APPLICATION STATE ---
-    let appState = {
-      activeTab: "roster",
-      selectedFaction: "Space Marines",
-      pointsLimit: 2000,
-      activeDetachments: [],
-      roster: [], // { instanceId, unitId, tierIndex, isWarlord }
-      cmsFactionFilter: "ALL"
-    };
-
-    // Load from LocalStorage or initialize
-    function initDatabase() {
-      if (!localStorage.getItem("wh40k_11th_factions")) {
-        localStorage.setItem("wh40k_11th_factions", JSON.stringify(DEFAULT_FACTIONS));
-      }
-      if (!localStorage.getItem("wh40k_11th_units")) {
-        localStorage.setItem("wh40k_11th_units", JSON.stringify(DEFAULT_UNITS));
-      }
-      const savedRoster = localStorage.getItem("wh40k_11th_roster_state");
-      if (savedRoster) {
-        try {
-          const parsed = JSON.parse(savedRoster);
-          appState.selectedFaction = parsed.selectedFaction || "Space Marines";
-          appState.pointsLimit = parsed.pointsLimit || 2000;
-          appState.activeDetachments = parsed.activeDetachments || [];
-          appState.roster = parsed.roster || [];
-        } catch(e) {
-          console.error("Failed to parse saved roster state", e);
+    // Built-in fallback cache in case offline
+    const FALLBACK_DB = {
+      Factions: [
+        { Faction: "Adeptus Mechanicus", ArmyRuleName: "Doctrina Imperatives", ArmyRuleDesc: "At the start of the battle round, select Protector Imperative (Ranged weapons gain [HEAVY]; improve Save by 1 against ranged attacks in your deployment zone) or Conqueror Imperative (Ranged weapons gain [ASSAULT]; improve AP by 1 near friendly Battleline)." },
+        { Faction: "Space Marines", ArmyRuleName: "Oath of Moment", ArmyRuleDesc: "At the start of your Command phase, select one enemy unit. Until your next Command phase, friendly ADEPTUS ASTARTES models re-roll Hit rolls against that target." },
+        { Faction: "Necrons", ArmyRuleName: "Reanimation Protocols", ArmyRuleDesc: "At the end of your Command phase, each unit activates Reanimation Protocols and reanimates D3 wounds, restoring destroyed models where possible." },
+        { Faction: "T'au Empire", ArmyRuleName: "For the Greater Good", ArmyRuleDesc: "Observer units spot enemy targets for Guided units, improving Ballistic Skill by 1 (and granting Ignores Cover if equipped with Markerlights)." },
+        { Faction: "Drukhari", ArmyRuleName: "Power from Pain", ArmyRuleDesc: "Spend Pain Tokens to empower units with full Hit re-rolls, Advance/Charge re-rolls, and +1 Melee AP." }
+      ],
+      Detachments: [
+        {
+          Faction: "Adeptus Mechanicus", DetachmentName: "Rad-Zone Corps", RuleName: "Rad-Bombardment",
+          RuleDesc: "Round 1: Enemy units in their deployment zone suffer mortal wounds or must take a Battle-shock test. Rounds 2-5: Fallout continues on a 3+.",
+          Enh1Name: "Radial Suffusion", Enh1Pts: 25, Enh1Desc: "Tech-Priest model only. Fallout affects enemy units within 6\" of their deployment zone.",
+          Enh2Name: "Peerless Eradicator", Enh2Pts: 20, Enh2Desc: "Tech-Priest model only. Ranged weapons in the bearer's unit gain [SUSTAINED HITS 1].",
+          Enh3Name: "Autoclavic Denunciation", Enh3Pts: 15, Enh3Desc: "Tech-Priest model only. Bearer's ranged weapons gain [ANTI-INFANTRY 2+] and [ANTI-MONSTER 4+]."
+        },
+        {
+          Faction: "Adeptus Mechanicus", DetachmentName: "Skitarii Hunter Clade", RuleName: "Hunter Protocols",
+          RuleDesc: "Skitarii Infantry and Mounted units gain the Stealth ability. Sicarian units can Advance and Charge.",
+          Enh1Name: "Cantic Thrallnet", Enh1Pts: 25, Enh1Desc: "Skitarii Marshal only. Select one friendly Skitarii unit within 12\"; both Doctrina Imperatives are active for it.",
+          Enh2Name: "Veiled Hunter", Enh2Pts: 10, Enh2Desc: "Skitarii Marshal only. Redeploy up to 3 Skitarii Infantry units before Turn 1.",
+          Enh3Name: "Battle-Sphere Uplink", Enh3Pts: 30, Enh3Desc: "Skitarii Marshal only. Bearer's unit can make a Normal Move of up to 6\" after shooting."
         }
+      ],
+      Units: [
+        { Faction: "Adeptus Mechanicus", Name: "Belisarius Cawl", Role: "Epic Hero", MaxInArmy: 1, M: "6\"", T: 8, SV: "2+", W: 10, LD: "6+", OC: 3, Invuln: "4++", Tiers: "1:150", Abilities: "Canticles of the Omnissiah (Aura), Mechanised Regeneration (D3 wounds)", Keywords: "Monster, Character, Epic Hero, Imperium, Tech-Priest, Belisarius Cawl" },
+        { Faction: "Adeptus Mechanicus", Name: "Tech-Priest Dominus", Role: "Character", MaxInArmy: 3, M: "6\"", T: 4, SV: "2+", W: 4, LD: "6+", OC: 1, Invuln: "5++", Tiers: "1:75", Abilities: "Lord of the Machine Cult (Led unit gains Feel No Pain 5+), Data-spike", Keywords: "Infantry, Character, Imperium, Tech-Priest, Dominus" },
+        { Faction: "Adeptus Mechanicus", Name: "Skitarii Rangers", Role: "Battleline", MaxInArmy: 6, M: "6\"", T: 3, SV: "5+", W: 1, LD: "7+", OC: 2, Invuln: "6++", Tiers: "10:85", Abilities: "Scout 6\", Objective Scouted (Sticky Objectives)", Keywords: "Infantry, Battleline, Imperium, Skitarii, Rangers" }
+      ],
+      Weapons: [
+        { UnitName: "Belisarius Cawl", WeaponName: "Solar Atomiser", Type: "Ranged", DefaultCount: 1, MaxCount: 1, PerModels: 0, Range: "18\"", A: "D3", BS_WS: "2+", S: 14, AP: -4, D: "D6", Keywords: "Blast, Melta 3" },
+        { UnitName: "Tech-Priest Dominus", WeaponName: "Volkite Blaster", Type: "Ranged", DefaultCount: 1, MaxCount: 1, PerModels: 0, Range: "24\"", A: 3, BS_WS: "3+", S: 5, AP: 0, D: 2, Keywords: "Devastating Wounds" },
+        { UnitName: "Skitarii Rangers", WeaponName: "Galvanic Rifle", Type: "Ranged", DefaultCount: 10, MaxCount: 1, PerModels: 1, Range: "30\"", A: 2, BS_WS: "4+", S: 4, AP: 0, D: 1, Keywords: "Heavy" },
+        { UnitName: "Skitarii Rangers", WeaponName: "Transuranic Arquebus", Type: "Ranged", DefaultCount: 0, MaxCount: 1, PerModels: 0, Range: "36\"", A: 1, BS_WS: "4+", S: 7, AP: -2, D: "D3", Keywords: "Heavy, Precision" }
+      ]
+    };
+
+    let DB = { Factions: [], Detachments: [], Units: [], Weapons: [] };
+
+    let state = {
+      faction: "",
+      pointsLimit: 0,
+      detachmentName: "",
+      roster: [],
+      staging: {
+        warlord: null,
+        regular: null
       }
-    }
+    };
 
-    function getFactions() { return JSON.parse(localStorage.getItem("wh40k_11th_factions")); }
-    function getUnits() { return JSON.parse(localStorage.getItem("wh40k_11th_units")); }
-    function saveUnits(units) { localStorage.setItem("wh40k_11th_units", JSON.stringify(units)); }
-    function saveState() {
-      localStorage.setItem("wh40k_11th_roster_state", JSON.stringify({
-        selectedFaction: appState.selectedFaction,
-        pointsLimit: appState.pointsLimit,
-        activeDetachments: appState.activeDetachments,
-        roster: appState.roster
-      }));
-    }
+    async function initApp() {
+      const dot = document.getElementById("noosphereStatusDot");
+      const statusTxt = document.getElementById("noosphereStatusText");
 
-    // --- VIEW SWITCHER ---
-    function switchTab(tab) {
-      appState.activeTab = tab;
-      const btnRoster = document.getElementById("btnTabRoster");
-      const btnCMS = document.getElementById("btnTabCMS");
-      const viewRoster = document.getElementById("viewRoster");
-      const viewCMS = document.getElementById("viewCMS");
+      try {
+        const response = await fetch(GOOGLE_SHEET_XLSX_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error("Google Sheet response not OK");
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
 
-      if (tab === "roster") {
-        btnRoster.className = "px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition bg-amber-500 text-slate-950 font-header flex items-center gap-2";
-        btnCMS.className = "px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition text-slate-400 hover:text-white font-header flex items-center gap-2";
-        viewRoster.classList.remove("hidden");
-        viewCMS.classList.add("hidden");
-        renderRosterView();
-      } else {
-        btnCMS.className = "px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition bg-amber-500 text-slate-950 font-header flex items-center gap-2";
-        btnRoster.className = "px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition text-slate-400 hover:text-white font-header flex items-center gap-2";
-        viewCMS.classList.remove("hidden");
-        viewRoster.classList.add("hidden");
-        renderCMSTable();
+        // Case-insensitive sheet matching helper
+        const findSheet = (name) => {
+          const match = workbook.SheetNames.find(s => s.trim().toLowerCase() === name.toLowerCase());
+          return match ? XLSX.utils.sheet_to_json(workbook.Sheets[match]) : [];
+        };
+
+        const factions = findSheet("Factions");
+        const detachments = findSheet("Detachments");
+        const units = findSheet("Units");
+        const weapons = findSheet("Weapons");
+
+        if (factions.length === 0 || units.length === 0) {
+          throw new Error("Missing Factions or Units tabs in Google Sheet");
+        }
+
+        DB = { Factions: factions, Detachments: detachments, Units: units, Weapons: weapons };
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Factions.length} FACTIONS & ${DB.Units.length} UNITS SYNCHRONISED`;
+      } catch (err) {
+        console.warn("Falling back to internal cache:", err);
+        DB = JSON.parse(JSON.stringify(FALLBACK_DB));
+        dot.className = "w-2 h-2 rounded-full bg-amber-500";
+        statusTxt.textContent = "OFFLINE BACKUP COGITATOR CACHE ACTIVE (CHECK SHEET TAB NAMES)";
       }
+
+      populateFactionsDropdown();
+      renderRoster();
     }
 
-    // --- FACTION & DETACHMENTS INITIALIZATION ---
-    function populateFactionDropdown() {
-      const factions = getFactions();
+    // =========================================================================
+    // 2. STEP-BY-STEP WORKFLOW CONTROLLERS (Left Column)
+    // =========================================================================
+    function populateFactionsDropdown() {
       const sel = document.getElementById("selFaction");
-      sel.innerHTML = "";
-      Object.keys(factions).forEach(f => {
+      sel.innerHTML = `<option value="">-- Choose Faction --</option>`;
+      DB.Factions.forEach(f => {
+        if (!f.Faction) return;
         const opt = document.createElement("option");
-        opt.value = f;
-        opt.textContent = f;
-        if (f === appState.selectedFaction) opt.selected = true;
+        opt.value = String(f.Faction).trim();
+        opt.textContent = String(f.Faction).trim();
         sel.appendChild(opt);
       });
-      onFactionChange(false);
     }
 
-    function onFactionChange(resetRoster = true) {
-      appState.selectedFaction = document.getElementById("selFaction").value;
-      const factions = getFactions();
-      const facData = factions[appState.selectedFaction];
+    // STEP 1: FACTION CHOSEN
+    function onSelectFaction() {
+      const fac = document.getElementById("selFaction").value;
+      state.faction = fac;
+      state.detachmentName = "";
+      state.roster = [];
 
-      document.getElementById("factionRuleTitle").textContent = facData.ruleTitle;
-      document.getElementById("factionRuleDesc").textContent = facData.ruleDesc;
+      const ptsWrapper = document.getElementById("stepPointsWrapper");
+      const ruleBox = document.getElementById("factionRuleBox");
 
-      // Populate Detachment Selector
-      const selDet = document.getElementById("selAddDetachment");
-      selDet.innerHTML = "";
-      facData.detachments.forEach(d => {
+      if (!fac) {
+        ptsWrapper.classList.add("opacity-40", "pointer-events-none");
+        ruleBox.classList.add("hidden");
+        document.getElementById("stepDetachmentCard").classList.add("hidden");
+        document.getElementById("stepWarlordCard").classList.add("hidden");
+        document.getElementById("stepUnitsCard").classList.add("hidden");
+        renderRoster();
+        return;
+      }
+
+      ptsWrapper.classList.remove("opacity-40", "pointer-events-none");
+
+      const facObj = DB.Factions.find(f => String(f.Faction).trim() === fac);
+      if (facObj) {
+        ruleBox.classList.remove("hidden");
+        document.getElementById("factionRuleName").textContent = facObj.ArmyRuleName || "";
+        document.getElementById("factionRuleDesc").textContent = facObj.ArmyRuleDesc || "";
+      }
+
+      if (state.pointsLimit > 0) {
+        unlockDetachmentStep();
+      }
+      renderRoster();
+    }
+
+    // STEP 2: POINTS CHOSEN
+    function onSelectPoints() {
+      const pts = parseInt(document.getElementById("selPoints").value) || 0;
+      state.pointsLimit = pts;
+      if (pts > 0 && state.faction) {
+        unlockDetachmentStep();
+      } else {
+        document.getElementById("stepDetachmentCard").classList.add("hidden");
+        document.getElementById("stepWarlordCard").classList.add("hidden");
+        document.getElementById("stepUnitsCard").classList.add("hidden");
+      }
+      renderRoster();
+    }
+
+    // STEP 3: POPULATE DETACHMENTS & 11TH EDITION OVERVIEW
+    function unlockDetachmentStep() {
+      const detCard = document.getElementById("stepDetachmentCard");
+      detCard.classList.remove("hidden");
+
+      const overviewList = document.getElementById("detachmentOverviewList");
+      const selDet = document.getElementById("selDetachment");
+      overviewList.innerHTML = "";
+      selDet.innerHTML = `<option value="">-- Select Active Detachment --</option>`;
+
+      const facDets = DB.Detachments.filter(d => String(d.Faction).trim() === state.faction);
+
+      facDets.forEach(d => {
+        const item = document.createElement("div");
+        item.className = "p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1";
+        const enhs = getEnhancementsFromDetachment(d);
+        const enhHtml = enhs.map(e => `<span class="inline-block bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded text-[10px] text-amber-300 mr-1 mt-1">${e.name} (${e.pts} pts)</span>`).join("");
+
+        item.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-amber-400 uppercase font-imperial">${d.DetachmentName}</span>
+            <span class="text-[10px] font-cogitator text-red-400">Rule: ${d.RuleName}</span>
+          </div>
+          <p class="text-zinc-300 text-[11px] leading-relaxed">${d.RuleDesc}</p>
+          ${enhHtml ? `<div class="pt-1 border-t border-zinc-900"><span class="text-[10px] font-cogitator text-zinc-500 block">ENHANCEMENTS:</span>${enhHtml}</div>` : ''}
+        `;
+        overviewList.appendChild(item);
+
         const opt = document.createElement("option");
-        opt.value = d.id;
-        opt.textContent = `${d.name} (${d.dp} DP)`;
+        opt.value = d.DetachmentName;
+        opt.textContent = `${d.DetachmentName} — [${d.RuleName}]`;
         selDet.appendChild(opt);
       });
 
-      if (resetRoster) {
-        // When changing faction, select first detachment by default and clear list
-        appState.activeDetachments = [facData.detachments[0].id];
-        appState.roster = [];
-      } else if (appState.activeDetachments.length === 0) {
-        appState.activeDetachments = [facData.detachments[0].id];
-      }
-
-      saveState();
-      renderRosterView();
+      document.getElementById("stepWarlordCard").classList.add("hidden");
+      document.getElementById("stepUnitsCard").classList.add("hidden");
     }
 
-    function updateBattleLimits() {
-      appState.pointsLimit = parseInt(document.getElementById("selPointsLimit").value);
-      saveState();
-      renderCalculations();
-    }
-
-    function getMaxDP(points) {
-      if (points <= 500) return 1;
-      if (points <= 1000) return 2;
-      if (points <= 2000) return 3;
-      return 4;
-    }
-
-    // --- DETACHMENT MANAGEMENT ---
-    function addSelectedDetachment() {
-      const detId = document.getElementById("selAddDetachment").value;
-      if (!appState.activeDetachments.includes(detId)) {
-        appState.activeDetachments.push(detId);
-        saveState();
-        renderRosterView();
-      }
-    }
-
-    function removeDetachment(detId) {
-      if (appState.activeDetachments.length <= 1) {
-        alert("You must keep at least 1 primary detachment selected.");
-        return;
-      }
-      appState.activeDetachments = appState.activeDetachments.filter(id => id !== detId);
-      saveState();
-      renderRosterView();
-    }
-
-    // --- RENDER ROSTER & CATALOG ---
-    function renderRosterView() {
-      renderActiveDetachments();
-      renderArmoryCatalog();
-      renderRosterUnits();
-      renderCalculations();
-    }
-
-    function renderActiveDetachments() {
-      const container = document.getElementById("activeDetachmentsList");
-      container.innerHTML = "";
-      const factions = getFactions();
-      const facData = factions[appState.selectedFaction];
-
-      appState.activeDetachments.forEach(dId => {
-        const d = facData.detachments.find(item => item.id === dId);
-        if (!d) return;
-
-        const chip = document.createElement("div");
-        chip.className = "flex items-center gap-2 bg-slate-950 border border-slate-700 px-3 py-1.5 rounded text-xs";
-        chip.innerHTML = `
-          <span class="text-amber-400 font-bold">${d.name}</span>
-          <span class="px-1.5 py-0.2 bg-cyan-950 text-cyan-400 font-mono-tech rounded text-[10px] font-bold">${d.dp} DP</span>
-          <span class="text-slate-400 text-[11px] truncate max-w-xs hidden sm:inline">(${d.rule})</span>
-          <button onclick="removeDetachment('${d.id}')" class="text-slate-500 hover:text-red-400 ml-1"><i class="fa-solid fa-xmark"></i></button>
-        `;
-        container.appendChild(chip);
-      });
-    }
-
-    function renderArmoryCatalog() {
-      const container = document.getElementById("armoryCatalogContainer");
-      const search = document.getElementById("unitSearchInput").value.toLowerCase();
-      const roleFilter = document.getElementById("roleFilterSelect").value;
-      const units = getUnits().filter(u => u.faction === appState.selectedFaction);
-
-      const filtered = units.filter(u => {
-        const matchSearch = u.name.toLowerCase().includes(search) || u.keywords.toLowerCase().includes(search);
-        const matchRole = (roleFilter === "ALL") || (u.role === roleFilter);
-        return matchSearch && matchRole;
-      });
-
-      document.getElementById("armoryCountBadge").textContent = `${filtered.length} Available`;
-      container.innerHTML = "";
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-6 text-slate-500 font-mono-tech text-xs">NO ARMORY ENTRIES FOUND</div>`;
-        return;
-      }
-
-      filtered.forEach(unit => {
-        const baseTier = unit.tiers[0] || { models: 1, points: 50 };
-        const card = document.createElement("div");
-        card.className = "p-3 bg-slate-950/70 border border-slate-800 rounded hover:border-slate-600 transition flex items-center justify-between gap-3";
-        card.innerHTML = `
-          <div class="flex-grow">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-slate-100 hover:text-amber-400">${unit.name}</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono-tech">${unit.role}</span>
-            </div>
-            <div class="flex items-center gap-3 text-[11px] font-mono-tech text-slate-400 mt-1">
-              <span>M:${unit.m}</span><span>T:${unit.t}</span><span>SV:${unit.sv}</span><span>W:${unit.w}</span><span>OC:${unit.oc}</span>
-              ${unit.invuln !== '-' ? `<span class="text-amber-400">${unit.invuln}</span>` : ''}
-            </div>
-          </div>
-          <div class="text-right flex-shrink-0">
-            <div class="text-xs font-bold text-amber-400 font-mono-tech">${baseTier.points} pts</div>
-            <button onclick="addUnitToRoster('${unit.id}')" class="mt-1 px-2.5 py-1 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 rounded text-xs font-bold font-header uppercase transition flex items-center gap-1">
-              <i class="fa-solid fa-plus text-[10px]"></i> Enlist
-            </button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // --- ROSTER ACTIONS ---
-    function addUnitToRoster(unitId) {
-      const instanceId = 'inst_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-      appState.roster.push({
-        instanceId,
-        unitId,
-        tierIndex: 0,
-        isWarlord: appState.roster.length === 0 // Make first enlisted warlord by default
-      });
-      saveState();
-      renderRosterView();
-    }
-
-    function removeRosterUnit(instanceId) {
-      appState.roster = appState.roster.filter(u => u.instanceId !== instanceId);
-      saveState();
-      renderRosterView();
-    }
-
-    function setWarlord(instanceId) {
-      appState.roster.forEach(item => {
-        item.isWarlord = (item.instanceId === instanceId);
-      });
-      saveState();
-      renderRosterView();
-    }
-
-    function setUnitTier(instanceId, tierIndex) {
-      const item = appState.roster.find(u => u.instanceId === instanceId);
-      if (item) {
-        item.tierIndex = parseInt(tierIndex);
-        saveState();
-        renderRosterView();
-      }
-    }
-
-    function clearCurrentRoster() {
-      if (confirm("Reset current army roster to empty?")) {
-        appState.roster = [];
-        saveState();
-        renderRosterView();
-      }
-    }
-
-    // --- RENDER ROSTER UNITS CARDS ---
-    function renderRosterUnits() {
-      const container = document.getElementById("rosterListContainer");
-      document.getElementById("rosterUnitCount").textContent = `${appState.roster.length} Units`;
-      const allUnits = getUnits();
-
-      if (appState.roster.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 border-2 border-dashed border-slate-800 rounded-lg text-slate-500">
-            <i class="fa-solid fa-dungeon text-4xl mb-2 opacity-40"></i>
-            <p class="font-mono-tech text-sm">NO DETACHMENTS MOBILIZED</p>
-            <p class="text-xs text-slate-600 mt-1">Select units from the Armory to enlist them into your 11th Edition Strike Force.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = "";
-
-      appState.roster.forEach((entry, idx) => {
-        const unit = allUnits.find(u => u.id === entry.unitId);
-        if (!unit) return;
-
-        const currentTier = unit.tiers[entry.tierIndex] || unit.tiers[0];
-
-        const card = document.createElement("div");
-        card.className = `p-3.5 bg-slate-950 border ${entry.isWarlord ? 'border-amber-500/80 shadow-md shadow-amber-500/10' : 'border-slate-800'} rounded-lg transition space-y-2.5`;
-        
-        let tiersOptions = unit.tiers.map((t, tIdx) => 
-          `<option value="${tIdx}" ${tIdx === entry.tierIndex ? 'selected' : ''}>${t.models} models - ${t.points} pts</option>`
-        ).join('');
-
-        let weaponsHtml = unit.weapons.map(w => 
-          `<tr>
-            <td class="font-bold text-slate-200 py-0.5">${w.name}</td>
-            <td class="text-center">${w.range}</td>
-            <td class="text-center">${w.a}</td>
-            <td class="text-center">${w.bs}</td>
-            <td class="text-center">${w.s}</td>
-            <td class="text-center">${w.ap}</td>
-            <td class="text-center">${w.d}</td>
-            <td class="text-amber-400/90 text-[10px] pl-2">${w.kw}</td>
-          </tr>`
-        ).join('');
-
-        card.innerHTML = `
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="font-header font-bold text-sm text-slate-100">${unit.name}</span>
-              ${entry.isWarlord ? '<span class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-header text-[10px] font-bold"><i class="fa-solid fa-crown"></i> WARLORD</span>' : ''}
-              <span class="text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">${unit.role}</span>
-            </div>
-            
-            <div class="flex items-center gap-2">
-              <select onchange="setUnitTier('${entry.instanceId}', this.value)" class="bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded text-amber-400 font-mono-tech focus:outline-none">
-                ${tiersOptions}
-              </select>
-              <button onclick="setWarlord('${entry.instanceId}')" title="Make Warlord" class="p-1 px-2 rounded bg-slate-900 border border-slate-800 hover:border-amber-500 text-slate-400 hover:text-amber-400 text-xs">
-                <i class="fa-solid fa-crown"></i>
-              </button>
-              <button onclick="removeRosterUnit('${entry.instanceId}')" title="Remove unit" class="p-1 px-2 rounded bg-slate-900 border border-slate-800 hover:border-red-500 text-slate-400 hover:text-red-400 text-xs">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Characteristics Strip -->
-          <div class="grid grid-cols-7 gap-1 bg-slate-900/90 p-1.5 rounded text-center text-xs font-mono-tech border border-slate-800">
-            <div><span class="text-[10px] text-slate-500 block">M</span><span class="font-bold text-slate-200">${unit.m}</span></div>
-            <div><span class="text-[10px] text-slate-500 block">T</span><span class="font-bold text-slate-200">${unit.t}</span></div>
-            <div><span class="text-[10px] text-slate-500 block">SV</span><span class="font-bold text-slate-200">${unit.sv}</span></div>
-            <div><span class="text-[10px] text-slate-500 block">W</span><span class="font-bold text-slate-200">${unit.w}</span></div>
-            <div><span class="text-[10px] text-slate-500 block">LD</span><span class="font-bold text-slate-200">${unit.ld}</span></div>
-            <div><span class="text-[10px] text-slate-500 block">OC</span><span class="font-bold text-slate-200">${unit.oc}</span></div>
-            <div><span class="text-[10px] text-slate-500 block">INV</span><span class="font-bold text-amber-400">${unit.invuln}</span></div>
-          </div>
-
-          <!-- Weapon Profiles Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-[11px] font-mono-tech text-slate-300">
-              <thead class="text-[10px] uppercase text-slate-500 border-b border-slate-800/60">
-                <tr>
-                  <th class="py-1">Weapon</th>
-                  <th class="text-center">Rng</th>
-                  <th class="text-center">A</th>
-                  <th class="text-center">BS/WS</th>
-                  <th class="text-center">S</th>
-                  <th class="text-center">AP</th>
-                  <th class="text-center">D</th>
-                  <th class="pl-2">Keywords</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-900">
-                ${weaponsHtml}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Abilities & Keywords Footnote -->
-          <div class="text-[11px] pt-1 text-slate-400 border-t border-slate-900 flex flex-col gap-0.5">
-            <div><span class="text-amber-400 font-bold">Rule:</span> ${unit.abilities}</div>
-            <div class="text-[10px] font-mono-tech text-slate-500"><span class="text-slate-400">KEYWORDS:</span> ${unit.keywords}</div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // --- CALCULATIONS & RULES ENGINE VALIDATION ---
-    function renderCalculations() {
-      const allUnits = getUnits();
-      const factions = getFactions();
-      const facData = factions[appState.selectedFaction];
-
-      // Points calculation
-      let totalPts = 0;
-      const unitCounts = {};
-
-      appState.roster.forEach(entry => {
-        const u = allUnits.find(item => item.id === entry.unitId);
-        if (u) {
-          const tier = u.tiers[entry.tierIndex] || u.tiers[0];
-          totalPts += tier.points;
-          unitCounts[u.id] = (unitCounts[u.id] || 0) + 1;
+    function getEnhancementsFromDetachment(detRow) {
+      if (!detRow) return [];
+      const list = [];
+      for (let i = 1; i <= 4; i++) {
+        if (detRow[`Enh${i}Name`]) {
+          list.push({
+            name: String(detRow[`Enh${i}Name`]).trim(),
+            pts: parseInt(detRow[`Enh${i}Pts`]) || 0,
+            desc: String(detRow[`Enh${i}Desc`] || "").trim()
+          });
         }
-      });
-
-      // Detachment Points (DP) calculation
-      let totalDP = 0;
-      appState.activeDetachments.forEach(dId => {
-        const det = facData.detachments.find(d => d.id === dId);
-        if (det) totalDP += det.dp;
-      });
-
-      const maxDP = getMaxDP(appState.pointsLimit);
-
-      // Points UI Updates
-      document.getElementById("pointsDisplay").textContent = `${totalPts} / ${appState.pointsLimit} pts`;
-      const ptsPercent = Math.min(100, Math.round((totalPts / appState.pointsLimit) * 100));
-      const ptsBar = document.getElementById("pointsProgressBar");
-      ptsBar.style.width = ptsPercent + "%";
-
-      const ptsBadge = document.getElementById("pointsStatusBadge");
-      if (totalPts > appState.pointsLimit) {
-        ptsBar.className = "bg-red-500 h-full transition-all duration-300";
-        ptsBadge.className = "text-[10px] uppercase font-mono-tech text-red-400 mt-1";
-        ptsBadge.textContent = "Over Point Limit!";
-      } else {
-        ptsBar.className = "bg-amber-500 h-full transition-all duration-300";
-        ptsBadge.className = "text-[10px] uppercase font-mono-tech text-emerald-400 mt-1";
-        ptsBadge.textContent = "Within Point Limit";
       }
-
-      // DP UI Updates
-      document.getElementById("dpDisplay").textContent = `${totalDP} / ${maxDP} DP`;
-      const dpPercent = Math.min(100, Math.round((totalDP / maxDP) * 100));
-      const dpBar = document.getElementById("dpProgressBar");
-      dpBar.style.width = dpPercent + "%";
-
-      const dpBadge = document.getElementById("dpStatusBadge");
-      if (totalDP > maxDP) {
-        dpBar.className = "bg-red-500 h-full transition-all duration-300";
-        dpBadge.className = "text-[10px] uppercase font-mono-tech text-red-400 mt-1";
-        dpBadge.textContent = "DP Budget Exceeded!";
-      } else {
-        dpBar.className = "bg-cyan-500 h-full transition-all duration-300";
-        dpBadge.className = "text-[10px] uppercase font-mono-tech text-emerald-400 mt-1";
-        dpBadge.textContent = "DP Budget Legal";
-      }
-
-      // Check Validation Alerts
-      const alerts = [];
-
-      if (totalPts > appState.pointsLimit) {
-        alerts.push(`Roster exceeds max points limit (${totalPts} / ${appState.pointsLimit} pts).`);
-      }
-      if (totalDP > maxDP) {
-        alerts.push(`Detachment Points budget violated (${totalDP} spent / max ${maxDP} DP).`);
-      }
-      if (appState.roster.length > 0 && !appState.roster.some(u => u.isWarlord)) {
-        alerts.push("No WARLORD designated for your force.");
-      }
-
-      // Rule of 3 / 6 / Epic Hero check
-      Object.keys(unitCounts).forEach(uId => {
-        const u = allUnits.find(item => item.id === uId);
-        if (!u) return;
-        const count = unitCounts[uId];
-        if (u.role === "Epic Hero" && count > 1) {
-          alerts.push(`Rule of 1 violation: ${u.name} is an Epic Hero and can only be taken once.`);
-        } else if ((u.role === "Battleline" || u.role === "Dedicated Transport") && count > 6) {
-          alerts.push(`Rule of 6 violation: Cannot include more than 6 units of ${u.name}.`);
-        } else if (u.role !== "Battleline" && u.role !== "Dedicated Transport" && u.role !== "Epic Hero" && count > 3) {
-          alerts.push(`Rule of 3 violation: Cannot include more than 3 units of ${u.name}.`);
-        }
-      });
-
-      const alertContainer = document.getElementById("rosterValidationAlerts");
-      if (alerts.length > 0) {
-        alertContainer.classList.remove("hidden");
-        alertContainer.innerHTML = alerts.map(a => `<div><i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i> ${a}</div>`).join('');
-      } else {
-        alertContainer.classList.add("hidden");
-        alertContainer.innerHTML = "";
-      }
+      return list;
     }
 
-    // --- CMS DATASHEET TABLE LOGIC ---
-    function setCMSFactionFilter(fac) {
-      appState.cmsFactionFilter = fac;
-      ['All', 'SM', 'Necron', 'Nids', 'Orks', 'AdMech', 'Tau', 'Drukhari'].forEach(b => {
-        const el = document.getElementById(`cmsFilterFaction${b}`);
-        if (el) el.className = "px-3 py-1 rounded text-xs font-mono-tech bg-slate-900 text-slate-400 hover:text-white";
-      });
-      renderCMSTable();
-    }
+    function onSelectDetachment() {
+      const detName = document.getElementById("selDetachment").value;
+      state.detachmentName = detName;
 
-    function renderCMSTable() {
-      const tbody = document.getElementById("cmsTableBody");
-      const search = document.getElementById("cmsSearchInput").value.toLowerCase();
-      const units = getUnits();
-
-      const filtered = units.filter(u => {
-        const matchFaction = (appState.cmsFactionFilter === "ALL") || (u.faction === appState.cmsFactionFilter);
-        const matchSearch = u.name.toLowerCase().includes(search) || u.faction.toLowerCase().includes(search);
-        return matchFaction && matchSearch;
-      });
-
-      tbody.innerHTML = "";
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">NO UNITS FOUND IN DATABASE</td></tr>`;
+      if (!detName) {
+        document.getElementById("stepWarlordCard").classList.add("hidden");
+        document.getElementById("stepUnitsCard").classList.add("hidden");
+        renderRoster();
         return;
       }
 
-      filtered.forEach(u => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-800/40 transition";
-        const tiersText = u.tiers.map(t => `${t.models}m: ${t.points}p`).join(', ');
-        tr.innerHTML = `
-          <td class="p-3 font-bold text-slate-200">${u.name}</td>
-          <td class="p-3 text-slate-400">${u.faction}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">${u.role}</span></td>
-          <td class="p-3 text-slate-300 font-mono-tech text-[11px]">${u.m} | T${u.t} | ${u.sv} | ${u.w}W | ${u.ld} | OC${u.oc} | ${u.invuln}</td>
-          <td class="p-3 text-amber-400 text-[11px]">${tiersText}</td>
-          <td class="p-3 text-right space-x-2">
-            <button onclick="openEditUnitModal('${u.id}')" class="p-1 px-2 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 rounded text-slate-300 text-xs">
-              <i class="fa-solid fa-pen"></i> Edit
-            </button>
-            <button onclick="cloneUnit('${u.id}')" class="p-1 px-2 bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 rounded text-slate-300 text-xs">
-              <i class="fa-solid fa-copy"></i>
-            </button>
-            <button onclick="deleteUnit('${u.id}')" class="p-1 px-2 bg-slate-800 hover:bg-red-500 hover:text-white rounded text-slate-300 text-xs">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
+      unlockWarlordAndUnitsSteps();
+      renderRoster();
+    }
+
+    // STEP 4 & 5: WARLORD (CHARACTER ONLY) & REGULAR UNITS
+    function unlockWarlordAndUnitsSteps() {
+      document.getElementById("stepWarlordCard").classList.remove("hidden");
+      document.getElementById("stepUnitsCard").classList.remove("hidden");
+
+      const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
+
+      // Filter Characters via Keyword column
+      const charUnits = facUnits.filter(u =>
+        String(u.Keywords || "").toLowerCase().includes("character") ||
+        String(u.Role || "").toLowerCase().includes("character") ||
+        String(u.Role || "").toLowerCase().includes("epic hero")
+      );
+
+      const selWarlord = document.getElementById("selWarlordUnit");
+      selWarlord.innerHTML = `<option value="">-- Select Character as Warlord --</option>`;
+      charUnits.forEach(u => {
+        const isEpic = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
+        const firstPts = String(u.Tiers || "1:0").split(",")[0].split(":")[1] || "0";
+        const opt = document.createElement("option");
+        opt.value = u.Name;
+        opt.textContent = `${u.Name} [${isEpic ? 'Epic Hero' : 'Character'}] (${firstPts} pts)`;
+        selWarlord.appendChild(opt);
+      });
+
+      const selRegular = document.getElementById("selRegularUnit");
+      selRegular.innerHTML = `<option value="">-- Choose Unit from Datasheets --</option>`;
+      facUnits.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.Name;
+        opt.textContent = `[${u.Role}] ${u.Name} (${u.Tiers})`;
+        selRegular.appendChild(opt);
+      });
+
+      document.getElementById("warlordConfigPanel").classList.add("hidden");
+      document.getElementById("regularUnitConfigPanel").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // 3. UNIT & WARLORD STAGING CONFIGURATOR (Weapons, Enhancements, Stats)
+    // =========================================================================
+    function parseTiers(tiersStr) {
+      return String(tiersStr || "1:50").split(",").map(s => {
+        const [m, p] = s.trim().split(":");
+        return { models: parseInt(m) || 1, pts: parseInt(p) || 0 };
       });
     }
 
-    // --- CMS MODAL & CRUD OPERATIONS ---
-    function openNewUnitModal() {
-      document.getElementById("modalEditorTitle").textContent = "Create New Unit Datasheet";
-      document.getElementById("editUnitId").value = "";
-      document.getElementById("editUnitName").value = "New Squad";
-      document.getElementById("editUnitFaction").value = appState.selectedFaction;
-      document.getElementById("editUnitRole").value = "Battleline";
-      document.getElementById("editM").value = "6\"";
-      document.getElementById("editT").value = 4;
-      document.getElementById("editSV").value = "3+";
-      document.getElementById("editW").value = 2;
-      document.getElementById("editLD").value = "6+";
-      document.getElementById("editOC").value = 2;
-      document.getElementById("editInvuln").value = "-";
-      document.getElementById("editAbilities").value = "Standard tactical protocols.";
-      document.getElementById("editKeywords").value = "Infantry, Battleline";
-
-      renderModalTiers([{ models: 5, points: 90 }]);
-      renderModalWeapons([{ name: "Standard Rifle", range: "24\"", a: 2, bs: "3+", s: 4, ap: 0, d: 1, kw: "-" }]);
-
-      document.getElementById("unitEditorModal").classList.remove("hidden");
+    function getWeaponMaxForModels(w, modelCount) {
+      const maxC = parseInt(w.MaxCount) || 1;
+      const perM = parseInt(w.PerModels) || 0;
+      if (perM <= 0) return maxC;
+      if (perM === 1) return maxC * modelCount;
+      return Math.floor(modelCount / perM) * maxC;
     }
 
-    function openEditUnitModal(unitId) {
-      const u = getUnits().find(item => item.id === unitId);
-      if (!u) return;
+    function onChangeBuilderUnit(mode) {
+      const selectId = mode === "warlord" ? "selWarlordUnit" : "selRegularUnit";
+      const panelId = mode === "warlord" ? "warlordConfigPanel" : "regularUnitConfigPanel";
+      const unitName = document.getElementById(selectId).value;
+      const panel = document.getElementById(panelId);
 
-      document.getElementById("modalEditorTitle").textContent = `Edit: ${u.name}`;
-      document.getElementById("editUnitId").value = u.id;
-      document.getElementById("editUnitName").value = u.name;
-      document.getElementById("editUnitFaction").value = u.faction;
-      document.getElementById("editUnitRole").value = u.role;
-      document.getElementById("editM").value = u.m;
-      document.getElementById("editT").value = u.t;
-      document.getElementById("editSV").value = u.sv;
-      document.getElementById("editW").value = u.w;
-      document.getElementById("editLD").value = u.ld;
-      document.getElementById("editOC").value = u.oc;
-      document.getElementById("editInvuln").value = u.invuln;
-      document.getElementById("editAbilities").value = u.abilities;
-      document.getElementById("editKeywords").value = u.keywords;
+      if (!unitName) {
+        panel.classList.add("hidden");
+        state.staging[mode] = null;
+        return;
+      }
 
-      renderModalTiers(u.tiers);
-      renderModalWeapons(u.weapons);
+      const unitObj = DB.Units.find(u => String(u.Faction).trim() === state.faction && String(u.Name).trim() === unitName);
+      if (!unitObj) return;
 
-      document.getElementById("unitEditorModal").classList.remove("hidden");
+      const tiers = parseTiers(unitObj.Tiers);
+      const unitWeapons = DB.Weapons.filter(w => String(w.UnitName || "").trim().toLowerCase() === unitName.toLowerCase());
+
+      state.staging[mode] = {
+        unitObj,
+        tiers,
+        tierIdx: 0,
+        enhancementName: "",
+        weaponCounts: unitWeapons.map(w => parseInt(w.DefaultCount) || 0),
+        weaponsList: unitWeapons
+      };
+
+      renderStagingPanel(mode);
     }
 
-    function closeUnitModal() {
-      document.getElementById("unitEditorModal").classList.add("hidden");
-    }
+    function renderStagingPanel(mode) {
+      const panelId = mode === "warlord" ? "warlordConfigPanel" : "regularUnitConfigPanel";
+      const panel = document.getElementById(panelId);
+      const stg = state.staging[mode];
+      if (!stg) return;
 
-    function renderModalTiers(tiers) {
-      const container = document.getElementById("modalTiersContainer");
-      container.innerHTML = "";
-      tiers.forEach(t => {
-        const row = document.createElement("div");
-        row.className = "flex items-center gap-3 tierRow";
-        row.innerHTML = `
-          <input type="number" placeholder="Models" value="${t.models}" class="tierModels w-28 bg-slate-950 border border-slate-700 px-2 py-1 text-xs rounded text-white">
-          <input type="number" placeholder="Points" value="${t.points}" class="tierPoints w-28 bg-slate-950 border border-slate-700 px-2 py-1 text-xs rounded text-amber-400">
-          <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-red-400 text-xs"><i class="fa-solid fa-trash-can"></i></button>
-        `;
-        container.appendChild(row);
-      });
-    }
+      panel.classList.remove("hidden");
+      const u = stg.unitObj;
+      const activeTier = stg.tiers[stg.tierIdx] || stg.tiers[0];
+      const isCharacter = String(u.Keywords || "").toLowerCase().includes("character") || String(u.Role || "").toLowerCase().includes("character");
+      const isEpicHero = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
 
-    function addModalTierRow() {
-      const container = document.getElementById("modalTiersContainer");
-      const row = document.createElement("div");
-      row.className = "flex items-center gap-3 tierRow";
-      row.innerHTML = `
-        <input type="number" placeholder="Models" value="10" class="tierModels w-28 bg-slate-950 border border-slate-700 px-2 py-1 text-xs rounded text-white">
-        <input type="number" placeholder="Points" value="150" class="tierPoints w-28 bg-slate-950 border border-slate-700 px-2 py-1 text-xs rounded text-amber-400">
-        <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-red-400 text-xs"><i class="fa-solid fa-trash-can"></i></button>
-      `;
-      container.appendChild(row);
-    }
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const availableEnhancements = (isCharacter && !isEpicHero) ? getEnhancementsFromDetachment(detObj) : [];
 
-    function renderModalWeapons(weapons) {
-      const container = document.getElementById("modalWeaponsContainer");
-      container.innerHTML = "";
-      weapons.forEach(w => {
-        const row = document.createElement("div");
-        row.className = "grid grid-cols-8 gap-2 weaponRow items-center";
-        row.innerHTML = `
-          <input type="text" placeholder="Name" value="${w.name}" class="wName col-span-2 bg-slate-950 border border-slate-700 px-1.5 py-1 text-xs rounded text-white">
-          <input type="text" placeholder="Rng" value="${w.range}" class="wRange bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-          <input type="text" placeholder="A" value="${w.a}" class="wA bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-          <input type="text" placeholder="BS" value="${w.bs}" class="wBS bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-          <input type="number" placeholder="S" value="${w.s}" class="wS bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-          <input type="number" placeholder="AP" value="${w.ap}" class="wAP bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-          <div class="flex items-center gap-1">
-            <input type="text" placeholder="D" value="${w.d}" class="wD bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white w-full">
-            <button onclick="this.closest('.weaponRow').remove()" class="text-slate-500 hover:text-red-400 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+      let tiersHtml = stg.tiers.map((t, idx) =>
+        `<option value="${idx}" ${idx === stg.tierIdx ? 'selected' : ''}>${t.models} Model(s) — ${t.pts} pts</option>`
+      ).join("");
+
+      let enhOptionsHtml = `<option value="">-- No Enhancement (0 pts) --</option>` +
+        availableEnhancements.map(e =>
+          `<option value="${e.name}" ${stg.enhancementName === e.name ? 'selected' : ''}>${e.name} (+${e.pts} pts)</option>`
+        ).join("");
+
+      const selectedEnhObj = availableEnhancements.find(e => e.name === stg.enhancementName);
+
+      let weaponsHtml = stg.weaponsList.map((w, wIdx) => {
+        const count = stg.weaponCounts[wIdx] || 0;
+        const maxAllowed = getWeaponMaxForModels(w, activeTier.models);
+        const isOver = count > maxAllowed;
+        const limitLabel = w.PerModels > 1 ? `Max ${w.MaxCount} per ${w.PerModels} models` : w.PerModels == 1 ? `Max ${w.MaxCount} per model` : `Max ${w.MaxCount} per unit`;
+
+        return `
+          <div class="p-2.5 rounded bg-zinc-950 border ${isOver ? 'border-red-500 bg-red-950/30' : count > 0 ? 'border-amber-500/40' : 'border-zinc-800'} space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-bold text-zinc-100">${w.WeaponName}</span>
+                <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 ml-1">${w.Type}</span>
+                <div class="text-[10px] font-cogitator ${isOver ? 'text-red-400 font-bold' : 'text-zinc-500'}">
+                  Limit: ${count} / ${maxAllowed} (${limitLabel})
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, -1)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs">-</button>
+                <span class="w-7 text-center font-cogitator text-xs font-bold ${isOver ? 'text-red-400' : 'text-amber-400'}">${count}x</span>
+                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, 1)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-zinc-200 font-bold text-xs">+</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-6 gap-1 text-[10px] font-cogitator bg-zinc-900/90 p-1 rounded text-center text-zinc-300">
+              <div><span class="text-zinc-500">RNG:</span> ${w.Range}</div>
+              <div><span class="text-zinc-500">A:</span> ${w.A}</div>
+              <div><span class="text-zinc-500">BS/WS:</span> ${w.BS_WS}</div>
+              <div><span class="text-zinc-500">S:</span> ${w.S}</div>
+              <div><span class="text-zinc-500">AP:</span> ${w.AP}</div>
+              <div><span class="text-zinc-500">D:</span> ${w.D}</div>
+            </div>
+            ${w.Keywords && w.Keywords !== '-' ? `<div class="text-[10px] font-cogitator text-amber-400/90">Keywords: [${w.Keywords}]</div>` : ''}
           </div>
         `;
-        container.appendChild(row);
-      });
-    }
+      }).join("");
 
-    function addModalWeaponRow() {
-      const container = document.getElementById("modalWeaponsContainer");
-      const row = document.createElement("div");
-      row.className = "grid grid-cols-8 gap-2 weaponRow items-center";
-      row.innerHTML = `
-        <input type="text" placeholder="Name" value="Close Combat Weapon" class="wName col-span-2 bg-slate-950 border border-slate-700 px-1.5 py-1 text-xs rounded text-white">
-        <input type="text" placeholder="Rng" value="Melee" class="wRange bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-        <input type="text" placeholder="A" value="3" class="wA bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-        <input type="text" placeholder="BS" value="3+" class="wBS bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-        <input type="number" placeholder="S" value="4" class="wS bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-        <input type="number" placeholder="AP" value="0" class="wAP bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white">
-        <div class="flex items-center gap-1">
-          <input type="text" placeholder="D" value="1" class="wD bg-slate-950 border border-slate-700 px-1 py-1 text-xs text-center rounded text-white w-full">
-          <button onclick="this.closest('.weaponRow').remove()" class="text-slate-500 hover:text-red-400 text-xs"><i class="fa-solid fa-trash-can"></i></button>
+      const totalUnitPts = activeTier.pts + (selectedEnhObj ? selectedEnhObj.pts : 0);
+
+      panel.innerHTML = `
+        <div class="p-3.5 bg-zinc-900/70 border border-amber-500/30 rounded space-y-3 mt-2">
+          <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+            <div>
+              <div class="text-sm font-bold text-amber-400 font-imperial uppercase">${u.Name}</div>
+              <div class="text-[10px] font-cogitator text-zinc-400">Role: ${u.Role} (Max ${u.MaxInArmy} in Army)</div>
+            </div>
+            <div class="text-right font-cogitator">
+              <span class="text-xs text-zinc-400">Unit Cost:</span>
+              <span class="text-sm font-bold text-amber-400">${totalUnitPts} pts</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 gap-1 bg-zinc-950 p-2 rounded border border-zinc-800 text-center font-cogitator text-xs">
+            <div><span class="text-[10px] text-zinc-500 block">M</span><span class="font-bold text-zinc-100">${u.M}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">T</span><span class="font-bold text-zinc-100">${u.T}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">SV</span><span class="font-bold text-zinc-100">${u.SV}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">W</span><span class="font-bold text-zinc-100">${u.W}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">LD</span><span class="font-bold text-zinc-100">${u.LD}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">OC</span><span class="font-bold text-zinc-100">${u.OC}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">INV</span><span class="font-bold text-amber-400">${u.Invuln}</span></div>
+          </div>
+
+          <div class="text-xs bg-zinc-950/60 p-2 rounded border border-zinc-800/80 space-y-1">
+            <div><span class="text-amber-500 font-bold">Abilities:</span> <span class="text-zinc-300">${u.Abilities}</span></div>
+            <div class="text-[10px] font-cogitator text-zinc-400"><span class="text-zinc-500">Keywords:</span> ${u.Keywords}</div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-cogitator text-zinc-400 uppercase mb-1">Unit Size & Base Points</label>
+            <select onchange="changeStagingTier('${mode}', this.value)" class="w-full bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-amber-300 font-cogitator">
+              ${tiersHtml}
+            </select>
+          </div>
+
+          ${isCharacter ? (
+            isEpicHero ? `
+              <div class="p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-cogitator text-zinc-500">
+                <i class="fa-solid fa-ban text-red-500 mr-1"></i> EPIC HERO RULE: Epic Heroes cannot be given Enhancements.
+              </div>
+            ` : `
+              <div>
+                <label class="block text-[11px] font-cogitator text-amber-400 uppercase mb-1">Detachment Enhancement (Optional)</label>
+                <select onchange="changeStagingEnhancement('${mode}', this.value)" class="w-full bg-zinc-950 border border-amber-600/50 rounded px-2.5 py-1.5 text-xs text-zinc-100">
+                  ${enhOptionsHtml}
+                </select>
+                ${selectedEnhObj ? `<div class="mt-1.5 p-2 bg-amber-950/20 border border-amber-600/30 rounded text-[11px] text-amber-200">${selectedEnhObj.desc}</div>` : ''}
+              </div>
+            `
+          ) : ''}
+
+          <div class="space-y-2">
+            <div class="text-[11px] font-cogitator text-amber-400 uppercase">Wargear & Weapon Options</div>
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              ${weaponsHtml || '<div class="text-xs text-zinc-500 font-cogitator">No customisable weapons listed.</div>'}
+            </div>
+          </div>
+
+          <button onclick="commitStagedUnitToRoster('${mode}')" class="w-full py-2.5 rounded bg-gradient-to-r from-red-800 via-red-700 to-red-800 hover:from-red-700 hover:to-red-600 border border-amber-500/60 text-amber-100 font-imperial font-bold text-xs uppercase tracking-wider shadow-lg transition">
+            <i class="fa-solid fa-check-double mr-1"></i> ${mode === 'warlord' ? 'Authorise Warlord & Add to Roster' : 'Authorise Unit & Add to Roster'}
+          </button>
         </div>
       `;
-      container.appendChild(row);
     }
 
-    function saveUnitModalData() {
-      const units = getUnits();
-      let uId = document.getElementById("editUnitId").value;
-      const isNew = !uId;
-      if (isNew) uId = "custom_" + Date.now();
-
-      // Collect Tiers
-      const tierRows = document.querySelectorAll(".tierRow");
-      const tiers = [];
-      tierRows.forEach(r => {
-        tiers.push({
-          models: parseInt(r.querySelector(".tierModels").value) || 1,
-          points: parseInt(r.querySelector(".tierPoints").value) || 50
-        });
-      });
-      if (tiers.length === 0) tiers.push({ models: 1, points: 50 });
-
-      // Collect Weapons
-      const wRows = document.querySelectorAll(".weaponRow");
-      const weapons = [];
-      wRows.forEach(r => {
-        weapons.push({
-          name: r.querySelector(".wName").value || "Weapon",
-          range: r.querySelector(".wRange").value || "Melee",
-          a: r.querySelector(".wA").value || "1",
-          bs: r.querySelector(".wBS").value || "4+",
-          s: parseInt(r.querySelector(".wS").value) || 4,
-          ap: parseInt(r.querySelector(".wAP").value) || 0,
-          d: r.querySelector(".wD").value || "1",
-          kw: "-"
-        });
-      });
-
-      const updatedUnit = {
-        id: uId,
-        name: document.getElementById("editUnitName").value,
-        faction: document.getElementById("editUnitFaction").value,
-        role: document.getElementById("editUnitRole").value,
-        m: document.getElementById("editM").value,
-        t: parseInt(document.getElementById("editT").value) || 4,
-        sv: document.getElementById("editSV").value,
-        w: parseInt(document.getElementById("editW").value) || 1,
-        ld: document.getElementById("editLD").value,
-        oc: parseInt(document.getElementById("editOC").value) || 1,
-        invuln: document.getElementById("editInvuln").value || "-",
-        tiers,
-        weapons,
-        abilities: document.getElementById("editAbilities").value,
-        keywords: document.getElementById("editKeywords").value
-      };
-
-      if (isNew) {
-        units.push(updatedUnit);
-      } else {
-        const idx = units.findIndex(u => u.id === uId);
-        if (idx !== -1) units[idx] = updatedUnit;
-      }
-
-      saveUnits(units);
-      closeUnitModal();
-      renderCMSTable();
-      renderRosterView();
-    }
-
-    function cloneUnit(unitId) {
-      const units = getUnits();
-      const u = units.find(item => item.id === unitId);
-      if (!u) return;
-
-      const cloned = JSON.parse(JSON.stringify(u));
-      cloned.id = "clone_" + Date.now();
-      cloned.name = u.name + " (Copy)";
-      units.push(cloned);
-      saveUnits(units);
-      renderCMSTable();
-    }
-
-    function deleteUnit(unitId) {
-      if (confirm("Are you sure you want to permanently delete this datasheet?")) {
-        let units = getUnits().filter(u => u.id !== unitId);
-        saveUnits(units);
-        appState.roster = appState.roster.filter(entry => entry.unitId !== unitId);
-        saveState();
-        renderCMSTable();
-        renderRosterView();
-      }
-    }
-
-    // --- JSON IMPORT / EXPORT & RESET ---
-    function exportJsonFile() {
-      const data = {
-        factions: getFactions(),
-        units: getUnits()
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `wh40k_11th_datasheets_${Date.now()}.json`;
-      a.click();
-    }
-
-    function importJsonFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const parsed = JSON.parse(evt.target.result);
-          if (parsed.units && Array.isArray(parsed.units)) {
-            saveUnits(parsed.units);
-            if (parsed.factions) localStorage.setItem("wh40k_11th_factions", JSON.stringify(parsed.factions));
-            alert("Database imported successfully!");
-            renderCMSTable();
-            renderRosterView();
-          } else {
-            alert("Invalid JSON schema.");
-          }
-        } catch(err) {
-          alert("Error parsing JSON file.");
+    function changeStagingTier(mode, tierIdx) {
+      const stg = state.staging[mode];
+      if (!stg) return;
+      stg.tierIdx = parseInt(tierIdx) || 0;
+      const newModels = stg.tiers[stg.tierIdx].models;
+      stg.weaponsList.forEach((w, idx) => {
+        if (parseInt(w.PerModels) === 1 && parseInt(w.DefaultCount) > 0) {
+          stg.weaponCounts[idx] = newModels;
         }
-      };
-      reader.readAsText(file);
+      });
+      renderStagingPanel(mode);
     }
 
-    function factoryResetDatabase() {
-      if (confirm("Reset the entire database back to default 11th Edition official units? Custom modifications will be lost.")) {
-        localStorage.setItem("wh40k_11th_factions", JSON.stringify(DEFAULT_FACTIONS));
-        localStorage.setItem("wh40k_11th_units", JSON.stringify(DEFAULT_UNITS));
-        appState.roster = [];
-        saveState();
-        location.reload();
+    function changeStagingEnhancement(mode, enhName) {
+      if (!state.staging[mode]) return;
+      state.staging[mode].enhancementName = enhName;
+      renderStagingPanel(mode);
+    }
+
+    function adjustStagingWeapon(mode, wIdx, delta) {
+      const stg = state.staging[mode];
+      if (!stg) return;
+      stg.weaponCounts[wIdx] = Math.max(0, (stg.weaponCounts[wIdx] || 0) + delta);
+      renderStagingPanel(mode);
+    }
+
+    function commitStagedUnitToRoster(mode) {
+      const stg = state.staging[mode];
+      if (!stg) return;
+
+      const u = stg.unitObj;
+      const activeTier = stg.tiers[stg.tierIdx] || stg.tiers[0];
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const enhList = getEnhancementsFromDetachment(detObj);
+      const chosenEnh = enhList.find(e => e.name === stg.enhancementName) || null;
+
+      if (mode === "warlord") {
+        state.roster.forEach(r => r.isWarlord = false);
+      }
+
+      const equippedWeapons = [];
+      stg.weaponsList.forEach((w, idx) => {
+        const c = stg.weaponCounts[idx] || 0;
+        if (c > 0) {
+          equippedWeapons.push({
+            ...w,
+            count: c,
+            maxAllowed: getWeaponMaxForModels(w, activeTier.models)
+          });
+        }
+      });
+
+      state.roster.push({
+        id: "unit_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+        unitName: u.Name,
+        role: u.Role,
+        maxInArmy: parseInt(u.MaxInArmy) || 3,
+        stats: { M: u.M, T: u.T, SV: u.SV, W: u.W, LD: u.LD, OC: u.OC, Invuln: u.Invuln },
+        abilities: u.Abilities,
+        keywords: u.Keywords,
+        isWarlord: mode === "warlord",
+        models: activeTier.models,
+        basePts: activeTier.pts,
+        enhancement: chosenEnh,
+        weapons: equippedWeapons
+      });
+
+      if (mode === "regular") {
+        document.getElementById("selRegularUnit").value = "";
+        document.getElementById("regularUnitConfigPanel").classList.add("hidden");
+        state.staging.regular = null;
+      }
+
+      renderRoster();
+    }
+
+    // =========================================================================
+    // 4. RIGHT COLUMN: ROSTER DISPLAY & 11TH ED VALIDATION ENGINE
+    // =========================================================================
+    function renderRoster() {
+      const subtitle = document.getElementById("rosterSubtitle");
+      const ptsText = document.getElementById("rosterPointsText");
+      const ptsBar = document.getElementById("rosterPointsBar");
+      const detPill = document.getElementById("rosterDetachmentPill");
+      const container = document.getElementById("enlistedUnitsContainer");
+      const errorBox = document.getElementById("cogitatorErrorBox");
+
+      if (!state.faction) {
+        subtitle.textContent = "AWAITING INITIAL DIRECTIVES...";
+        ptsText.textContent = "0 / 0 pts";
+        ptsBar.style.width = "0%";
+        detPill.classList.add("hidden");
+        errorBox.classList.add("hidden");
+        return;
+      }
+
+      subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS`;
+
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      if (detObj) {
+        detPill.classList.remove("hidden");
+        detPill.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-amber-400 uppercase font-imperial">${detObj.DetachmentName}</span>
+            <span class="text-[10px] font-cogitator text-red-400">${detObj.RuleName}</span>
+          </div>
+          <p class="text-zinc-300 text-[11px]">${detObj.RuleDesc}</p>
+        `;
+      } else {
+        detPill.classList.add("hidden");
+      }
+
+      let totalPts = 0;
+      const unitCounts = {};
+      const enhancementNames = [];
+      const errors = [];
+
+      state.roster.forEach(item => {
+        const itemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        totalPts += itemPts;
+        unitCounts[item.unitName] = (unitCounts[item.unitName] || 0) + 1;
+
+        if (item.enhancement) {
+          enhancementNames.push(item.enhancement.name);
+        }
+
+        item.weapons.forEach(w => {
+          if (w.count > w.maxAllowed) {
+            errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max permitted for ${item.models} models is ${w.maxAllowed}).`);
+          }
+        });
+      });
+
+      Object.keys(unitCounts).forEach(uName => {
+        const sample = state.roster.find(r => r.unitName === uName);
+        const maxAllowed = sample ? sample.maxInArmy : 3;
+        if (unitCounts[uName] > maxAllowed) {
+          errors.push(`[FORCE ORG VIOLATION] ${uName} (${sample.role}): ${unitCounts[uName]} units enlisted, exceeding maximum cap of ${maxAllowed}.`);
+        }
+      });
+
+      if (state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) {
+        errors.push(`[COMMAND ERROR] No Warlord designated. Every Battle-Forged army must include 1 Character Warlord.`);
+      }
+
+      if (enhancementNames.length > 3) {
+        errors.push(`[ENHANCEMENT LIMIT] Army contains ${enhancementNames.length} Enhancements (Maximum permitted is 3).`);
+      }
+      const dupEnh = enhancementNames.filter((item, index) => enhancementNames.indexOf(item) !== index);
+      if (dupEnh.length > 0) {
+        errors.push(`[DUPLICATE ENHANCEMENT] "${dupEnh[0]}" has been assigned to multiple Characters.`);
+      }
+
+      if (state.pointsLimit > 0 && totalPts > state.pointsLimit) {
+        errors.push(`[POINTS EXCEEDED] Total requisitioned points (${totalPts} pts) exceeds battle size limit (${state.pointsLimit} pts) by ${totalPts - state.pointsLimit} pts.`);
+      }
+
+      ptsText.textContent = `${totalPts} / ${state.pointsLimit} pts`;
+      const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
+      ptsBar.style.width = pct + "%";
+      ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit)
+        ? "bg-red-600 h-full transition-all duration-300"
+        : "bg-amber-500 h-full transition-all duration-300";
+
+      if (errors.length > 0) {
+        errorBox.classList.remove("hidden");
+        errorBox.innerHTML = `<div class="font-bold text-red-400 uppercase mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> COGITATOR ERROR LOG (${errors.length}):</div>` +
+          errors.map(e => `<div>• ${e}</div>`).join("");
+      } else {
+        errorBox.classList.add("hidden");
+      }
+
+      if (state.roster.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+            <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
+            <p>NO UNITS AUTHORISED IN ROSTER</p>
+            <p class="text-[11px] mt-1">Select Warlord and Units on the left panel to populate your army.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      const sortedRoster = [...state.roster].sort((a, b) => (b.isWarlord ? 1 : 0) - (a.isWarlord ? 1 : 0));
+
+      sortedRoster.forEach(item => {
+        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        const isOverUnitCap = unitCounts[item.unitName] > item.maxInArmy;
+        const hasWeaponError = item.weapons.some(w => w.count > w.maxAllowed);
+
+        const weaponsListHtml = item.weapons.map(w => `
+          <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
+            <div>
+              <span class="text-amber-400 font-cogitator font-bold">${w.count}x</span> ${w.WeaponName}
+              ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/80 font-cogitator ml-1">[${w.Keywords}]</span>` : ''}
+            </div>
+            <div class="font-cogitator text-[10px] text-zinc-400">
+              Rng:${w.Range} | A:${w.A} | BS/WS:${w.BS_WS} | S:${w.S} | AP:${w.AP} | D:${w.D}
+            </div>
+          </div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = `p-3.5 rounded bg-zinc-950 border ${isOverUnitCap || hasWeaponError ? 'border-red-600' : item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} space-y-2`;
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 border-b border-zinc-800 pb-2">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-imperial font-bold text-sm text-zinc-100 uppercase">${item.unitName}</span>
+                ${item.isWarlord ? `<span class="px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-cogitator text-[10px] font-bold"><i class="fa-solid fa-crown"></i> WARLORD</span>` : ''}
+                <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400">${item.models} Model(s)</span>
+                <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-500">${item.role}</span>
+              </div>
+              <div class="text-[10px] font-cogitator text-zinc-400 mt-1">
+                M:${item.stats.M} | T:${item.stats.T} | SV:${item.stats.SV} | W:${item.stats.W} | LD:${item.stats.LD} | OC:${item.stats.OC} | INV:${item.stats.Invuln}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-cogitator font-bold text-sm text-amber-400">${totalItemPts} pts</span>
+              <button onclick="removeUnitFromRoster('${item.id}')" class="p-1 px-2 rounded bg-zinc-900 hover:bg-red-900/60 text-zinc-400 hover:text-red-300 text-xs transition" title="Remove Unit">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+          ${item.enhancement ? `
+            <div class="p-2 rounded bg-amber-950/20 border border-amber-600/30 text-xs">
+              <span class="font-bold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
+              <p class="text-[11px] text-zinc-300 mt-0.5">${item.enhancement.desc}</p>
+            </div>
+          ` : ''}
+
+          <div class="space-y-0.5">
+            <div class="text-[10px] font-cogitator text-zinc-500 uppercase">Equipped Wargear:</div>
+            ${weaponsListHtml || '<div class="text-xs text-zinc-600">Standard Close Combat Weapons</div>'}
+          </div>
+
+          <div class="text-[11px] text-zinc-400 pt-1">
+            <span class="text-amber-500/90 font-bold">Abilities:</span> ${item.abilities}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function removeUnitFromRoster(id) {
+      state.roster = state.roster.filter(r => r.id !== id);
+      renderRoster();
+    }
+
+    function clearArmyRoster() {
+      if (confirm("Purge all enlisted units from current roster?")) {
+        state.roster = [];
+        renderRoster();
       }
     }
 
-    // --- EXPORT ARMY ROSTER TO TEXT ---
-    function exportArmyText() {
-      const allUnits = getUnits();
-      const factions = getFactions();
-      const facData = factions[appState.selectedFaction];
+    function copyRosterToClipboard() {
+      if (state.roster.length === 0) return;
+      let total = 0;
+      let txt = `+++ MATYENICUS ARMY ROSTER (${state.faction.toUpperCase()}) +++\n`;
+      txt += `Detachment: ${state.detachmentName}\n`;
+      txt += `Battle Size: ${state.pointsLimit} pts\n\n`;
 
-      let output = `+++++++++++++++++++++++++++++++++++++++++++++++\n`;
-      output += `+ FACTION: ${appState.selectedFaction}\n`;
-      output += `+ ARMY RULE: ${facData.ruleTitle}\n`;
-      output += `+ DETACHMENTS:\n`;
-      appState.activeDetachments.forEach(dId => {
-        const d = facData.detachments.find(item => item.id === dId);
-        if (d) output += `  - ${d.name} (${d.dp} DP)\n`;
+      state.roster.forEach(r => {
+        const pts = r.basePts + (r.enhancement ? r.enhancement.pts : 0);
+        total += pts;
+        txt += `• ${r.unitName} (${r.models} models, ${pts} pts)${r.isWarlord ? ' [WARLORD]' : ''}\n`;
+        if (r.enhancement) txt += `  Enhancement: ${r.enhancement.name} (+${r.enhancement.pts} pts)\n`;
+        r.weapons.forEach(w => {
+          txt += `  - ${w.count}x ${w.WeaponName}\n`;
+        });
+        txt += `\n`;
       });
-      output += `+ TOTAL POINTS: ${document.getElementById("pointsDisplay").textContent}\n`;
-      output += `+++++++++++++++++++++++++++++++++++++++++++++++\n\n`;
-
-      appState.roster.forEach(entry => {
-        const u = allUnits.find(item => item.id === entry.unitId);
-        if (!u) return;
-        const tier = u.tiers[entry.tierIndex] || u.tiers[0];
-        output += `[${u.role.toUpperCase()}] ${u.name} (${tier.models} models, ${tier.points} pts)${entry.isWarlord ? ' - [WARLORD]' : ''}\n`;
-        output += `Stats: M:${u.m} T:${u.t} SV:${u.sv} W:${u.w} LD:${u.ld} OC:${u.oc} Invuln:${u.invuln}\n`;
-        output += `Weapons: ${u.weapons.map(w => w.name).join(', ')}\n\n`;
-      });
-
-      navigator.clipboard.writeText(output).then(() => {
-        alert("Army list successfully copied to clipboard in tournament format!");
-      }).catch(() => {
-        alert(output);
-      });
+      txt += `TOTAL POINTS: ${total} / ${state.pointsLimit} pts`;
+      navigator.clipboard.writeText(txt).then(() => alert("Army Roster copied to clipboard!"));
     }
 
-    // --- APPLICATION STARTUP ---
-    window.addEventListener("DOMContentLoaded", () => {
-      initDatabase();
-      populateFactionDropdown();
-      document.getElementById("selPointsLimit").value = appState.pointsLimit;
-      renderRosterView();
-    });
+    window.addEventListener("DOMContentLoaded", initApp);
   </script>
 </body>
 </html>
