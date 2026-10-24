@@ -72,7 +72,7 @@
 <body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
 
   <!-- =====================================================================
-       GLOSSARY MODAL POPUP (Closes on outside click or X button)
+       GLOSSARY MODAL POPUP
        ===================================================================== -->
   <div id="glossaryModal" onclick="closeGlossaryModal()" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl">
@@ -98,7 +98,7 @@
   </div>
 
   <!-- =====================================================================
-       CENTERED MECHANICUS HEADER
+       CENTERED MECHANICUS HEADER & VIEW TABS
        ===================================================================== -->
   <header class="py-6 px-4 border-b border-amber-500/20 bg-gradient-to-b from-red-950/20 to-transparent text-center relative overflow-hidden">
     <div class="max-w-xl mx-auto flex flex-col items-center">
@@ -118,15 +118,26 @@
           ESTABLISHING NOOSPHERIC LINK TO DATA-SLATE...
         </p>
       </div>
+
+      <!-- APP VIEW TABS -->
+      <div class="flex items-center gap-2 mt-4 bg-zinc-950/80 p-1 rounded border border-zinc-800">
+        <button onclick="switchTab('builder')" id="tabBtnBuilder" class="px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+          <i class="fa-solid fa-gears mr-1"></i> 1. Army Builder
+        </button>
+        <button onclick="switchTab('battle')" id="tabBtnBattle" class="px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+          <i class="fa-solid fa-shield-cat mr-1"></i> 2. Battle Cogitator (In-Game)
+        </button>
+      </div>
     </div>
   </header>
 
   <!-- =====================================================================
-       MAIN TWO-COLUMN WORKSPACE
+       MAIN CONTENT CONTAINER (Switches between Builder and Battle View)
        ===================================================================== -->
   <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
+    <!-- VIEW 1: ARMY BUILDER (Default) -->
+    <div id="viewBuilder" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- LEFT COLUMN -->
       <section class="lg:col-span-6 space-y-5">
         <!-- STEP 1 & 2 -->
@@ -272,14 +283,32 @@
           </div>
         </div>
       </section>
-
     </div>
+
+    <!-- VIEW 2: BATTLE COGITATOR (In-Game Tabletop Mode) -->
+    <div id="viewBattle" class="hidden space-y-4">
+      <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-chess-board text-red-600"></i> Battle Cogitator // In-Game Command Deck
+            </h2>
+            <p class="text-xs font-cogitator text-zinc-400">Click any unit below to expand its full operational dataslate and wargear.</p>
+          </div>
+          <div id="battleHeaderInfo" class="text-xs font-cogitator text-amber-300">0 Units Enlisted</div>
+        </div>
+
+        <div id="battleUnitsContainer" class="space-y-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <script>
     const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
 
-    // Built-in default glossary so X-rules work even if some entries aren't in the sheet yet
     const DEFAULT_GLOSSARY = [
       { KeywordOrAbility: "Devastating Wounds", Category: "Weapon Rule", Description: "A Critical Wound inflicts mortal wounds equal to the weapon's Damage characteristic instead of normal damage." },
       { KeywordOrAbility: "Lethal Hits", Category: "Weapon Rule", Description: "A Critical Hit automatically wounds the target without needing to roll to wound." },
@@ -292,20 +321,19 @@
       { KeywordOrAbility: "Heavy", Category: "Weapon Rule", Description: "Add 1 to Hit rolls if the bearer’s unit Remained Stationary this turn." },
       { KeywordOrAbility: "Assault", Category: "Weapon Rule", Description: "The unit can shoot even if it Advanced this turn." },
       { KeywordOrAbility: "Pistol", Category: "Weapon Rule", Description: "The bearer can shoot this weapon even while its unit is within Engagement Range of enemy units." },
-      { KeywordOrAbility: "Blast", Category: "Weapon Rule", Description: "Add 1 to the Attacks characteristic for every 5 models in the target unit (cannot be used in Engagement Range)." },
+      { KeywordOrAbility: "Blast", Category: "Weapon Rule", Description: "Add 1 to the Attacks characteristic for every 5 models in the target unit." },
       { KeywordOrAbility: "Torrent", Category: "Weapon Rule", Description: "This weapon automatically hits its target; do not make Hit rolls." },
       { KeywordOrAbility: "Ignores Cover", Category: "Weapon Rule", Description: "The target cannot have the Benefit of Cover against attacks made with this weapon." },
       { KeywordOrAbility: "Twin-linked", Category: "Weapon Rule", Description: "You can re-roll the Wound roll for attacks made with this weapon." },
-      { KeywordOrAbility: "Hazardous", Category: "Weapon Rule", Description: "After shooting or fighting, roll one D6 for each Hazardous weapon used. On a 1, one model suffers 3 mortal wounds or is destroyed." },
-      { KeywordOrAbility: "Precision", Category: "Weapon Rule", Description: "When targeting an Attached unit, the attacking player can allocate successful wounds directly to a visible Character model." },
-      { KeywordOrAbility: "Indirect Fire", Category: "Weapon Rule", Description: "Can target units that are not visible to the bearer. If no models are visible, subtract 1 from Hit rolls and the target has Benefit of Cover." },
-      { KeywordOrAbility: "Extra Attacks", Category: "Weapon Rule", Description: "The bearer can attack with this melee weapon in addition to any other melee weapon it fights with." },
+      { KeywordOrAbility: "Hazardous", Category: "Weapon Rule", Description: "After shooting or fighting, roll one D6 for each Hazardous weapon used. On a 1, one model suffers 3 mortal wounds." },
+      { KeywordOrAbility: "Precision", Category: "Weapon Rule", Description: "When targeting an Attached unit, you can allocate successful wounds directly to a visible Character." },
+      { KeywordOrAbility: "Indirect Fire", Category: "Weapon Rule", Description: "Can target units not visible to the bearer (-1 to Hit if no visibility)." },
+      { KeywordOrAbility: "Extra Attacks", Category: "Weapon Rule", Description: "The bearer can attack with this melee weapon in addition to any other melee weapon." },
       { KeywordOrAbility: "One Shot", Category: "Weapon Rule", Description: "The bearer can only shoot with this weapon once per battle." },
-      { KeywordOrAbility: "Feel No Pain X+", Category: "Ability", Description: "Each time a model with this ability suffers damage, roll one D6: on X+, that point of damage is ignored." },
-      { KeywordOrAbility: "Stealth", Category: "Ability", Description: "If every model in a unit has this ability, subtract 1 from Hit rolls for ranged attacks targeting it." },
+      { KeywordOrAbility: "Feel No Pain X+", Category: "Ability", Description: "Each time a model with this ability suffers damage, roll one D6: on X+, that damage is ignored." },
+      { KeywordOrAbility: "Stealth", Category: "Ability", Description: "Subtract 1 from Hit rolls for ranged attacks targeting this unit." },
       { KeywordOrAbility: "Scout X\"", Category: "Ability", Description: "Before the first turn begins, this unit can make a Normal Move of up to X\"." },
-      { KeywordOrAbility: "Lone Operative", Category: "Ability", Description: "Unless part of an Attached unit, this unit can only be targeted by ranged attacks if the attacking model is within 12\"." },
-      { KeywordOrAbility: "Firing Deck X", Category: "Ability", Description: "Each time this Transport shoots, select up to X models embarked within it to shoot with one weapon each." }
+      { KeywordOrAbility: "Lone Operative", Category: "Ability", Description: "Unless part of an Attached unit, this unit can only be targeted if the attacker is within 12\"." }
     ];
 
     let DB = { Factions: [], Detachments: [], Units: [], Weapons: [], Glossary: [] };
@@ -318,6 +346,27 @@
       roster: [],
       staging: { warlord: null, regular: null }
     };
+
+    // Tab Switcher
+    function switchTab(viewName) {
+      const btnBuilder = document.getElementById("tabBtnBuilder");
+      const btnBattle = document.getElementById("tabBtnBattle");
+      const viewBuilder = document.getElementById("viewBuilder");
+      const viewBattle = document.getElementById("viewBattle");
+
+      if (viewName === 'builder') {
+        btnBuilder.className = "px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        btnBattle.className = "px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        viewBuilder.classList.remove("hidden");
+        viewBattle.classList.add("hidden");
+      } else {
+        btnBattle.className = "px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        btnBuilder.className = "px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        viewBattle.classList.remove("hidden");
+        viewBuilder.classList.add("hidden");
+        renderBattleCogitatorView();
+      }
+    }
 
     async function fetchSheetTabCSV(tabName) {
       const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
@@ -367,18 +416,16 @@
           DB = { Factions: f, Detachments: d, Units: u, Weapons: w, Glossary: g };
         }
 
-        // Merge sheet Glossary with built-in DEFAULT_GLOSSARY so X-wildcards always work
         const mergedGlossary = [...DB.Glossary];
         DEFAULT_GLOSSARY.forEach(defItem => {
           const exists = mergedGlossary.some(g => String(g.KeywordOrAbility || "").trim().toLowerCase() === defItem.KeywordOrAbility.toLowerCase());
           if (!exists) mergedGlossary.push(defItem);
         });
         DB.Glossary = mergedGlossary;
-
         buildGlossaryMatchers();
 
         dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCED`;
+        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCIED`;
       } catch (err) {
         console.error("Sync Error:", err);
         DB.Glossary = [...DEFAULT_GLOSSARY];
@@ -391,13 +438,9 @@
       renderRoster();
     }
 
-    // =========================================================================
-    // SMART WILDCARD ("X") GLOSSARY ENGINE
-    // =========================================================================
+    // Glossary Engine
     function termToPattern(rawTerm) {
-      // Escape regex special characters
       let escaped = rawTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-      // Convert standalone "X" (like in "Anti-Infantry X+", "Melta X", "Scout X\"") into a number/dice matcher (e.g. 2, 4, D3, D6+2)
       let pattern = escaped.replace(/\bX\b/gi, '(?:\\d*D\\d+(?:\\+\\d+)?|\\d+)');
       const startsWord = /^[a-zA-Z0-9]/.test(rawTerm);
       const endsWord = /[a-zA-Z0-9]$/.test(rawTerm);
@@ -410,7 +453,6 @@
         .map(g => {
           const raw = String(g.KeywordOrAbility).trim();
           const pat = termToPattern(raw);
-          // Create a dynamic value extractor if the term has a standalone X
           const valRegexStr = '^' + raw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\bX\b/i, '(\\d*D\\d+(?:\\+\\d+)?|\\d+)') + '$';
           return {
             entry: g,
@@ -441,12 +483,9 @@
 
       const entry = matcher.entry;
       let description = String(entry.Description || "No description provided.");
-
-      // If the term had a dynamic X (e.g. "Anti-Infantry 4+"), extract "4" and replace "X" in the description too!
       const valMatch = clickedText.match(matcher.extractValRegex);
       if (valMatch && valMatch[1]) {
-        const dynamicVal = valMatch[1];
-        description = description.replace(/\bX\b/g, dynamicVal);
+        description = description.replace(/\bX\b/g, valMatch[1]);
       }
 
       document.getElementById("modalTermTitle").textContent = `${clickedText.toUpperCase()}`;
@@ -459,9 +498,7 @@
       document.getElementById("glossaryModal").classList.add("hidden");
     }
 
-    // =========================================================================
-    // WORKFLOW & STAGING CONTROLLERS
-    // =========================================================================
+    // Builder Workflows
     function populateFactionsDropdown() {
       const sel = document.getElementById("selFaction");
       sel.innerHTML = `<option value="">-- Choose Faction --</option>`;
@@ -848,7 +885,7 @@
     }
 
     // =========================================================================
-    // ROSTER RENDERER
+    // ROSTER RENDERER (Builder View)
     // =========================================================================
     function renderRoster() {
       const subtitle = document.getElementById("rosterSubtitle");
@@ -990,6 +1027,132 @@
         `;
         container.appendChild(card);
       });
+    }
+
+    // =========================================================================
+    // BATTLE COGITATOR (In-Game Tabletop Mode Renderer)
+    // =========================================================================
+    function renderBattleCogitatorView() {
+      const container = document.getElementById("battleUnitsContainer");
+      const headerInfo = document.getElementById("battleHeaderInfo");
+
+      headerInfo.textContent = `${state.roster.length} Units Enlisted // ${state.faction || 'No Faction'}`;
+
+      if (state.roster.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-16 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+            <i class="fa-solid fa-chess-board text-3xl mb-2 opacity-40"></i>
+            <p>NO BATTLE UNITS DETECTED IN ROSTER</p>
+            <p class="text-[11px] mt-1">Switch back to "Army Builder" tab and enlist your forces first.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      const sortedRoster = [...state.roster].sort((a, b) => (b.isWarlord ? 1 : 0) - (a.isWarlord ? 1 : 0));
+
+      sortedRoster.forEach((item, idx) => {
+        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        const collapseId = `battleUnit_${item.id}`;
+
+        const weaponsListHtml = item.weapons.map(w => `
+          <div class="flex flex-wrap items-center justify-between text-xs py-1.5 border-b border-zinc-800/80 text-zinc-200">
+            <div>
+              <span class="text-amber-400 font-cogitator font-bold text-sm">${w.count}x</span> <span class="font-bold">${w.WeaponName}</span>
+              <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 ml-1">${w.Type}</span>
+              ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/90 font-cogitator ml-1">[${linkifyText(w.Keywords)}]</span>` : ''}
+            </div>
+            <div class="font-cogitator text-xs text-amber-200/90 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+              Rng: ${w.Range} | A: ${w.A} | BS/WS: ${w.BS_WS} | S: ${w.S} | AP: ${w.AP} | D: ${w.D}
+            </div>
+          </div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = `rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500/80 shadow-[0_0_10px_rgba(197,155,39,0.15)]' : 'border-zinc-800'} overflow-hidden transition`;
+        
+        card.innerHTML = `
+          <!-- Collapsed Header Bar (Click to Expand) -->
+          <div onclick="toggleBattleUnitCard('${collapseId}')" class="p-3.5 bg-zinc-900/80 hover:bg-zinc-900 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="font-imperial font-bold text-sm text-zinc-100 uppercase">${item.unitName}</span>
+              ${item.isWarlord ? `<span class="px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-cogitator text-[10px] font-bold"><i class="fa-solid fa-crown"></i> WARLORD</span>` : ''}
+              <span class="text-[11px] font-cogitator text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">${item.models} Model(s)</span>
+              <span class="text-[11px] font-cogitator text-zinc-500">[${item.role}]</span>
+            </div>
+
+            <!-- Quick Glance Stat Strip -->
+            <div class="flex items-center gap-4">
+              <div class="hidden sm:flex items-center gap-3 font-cogitator text-xs text-zinc-300 bg-zinc-950 px-3 py-1 rounded border border-zinc-800">
+                <div><span class="text-zinc-500">M:</span> <strong class="text-zinc-100">${item.stats.M}</strong></div>
+                <div><span class="text-zinc-500">T:</span> <strong class="text-zinc-100">${item.stats.T}</strong></div>
+                <div><span class="text-zinc-500">SV:</span> <strong class="text-zinc-100">${item.stats.SV}</strong></div>
+                <div><span class="text-zinc-500">W:</span> <strong class="text-zinc-100">${item.stats.W}</strong></div>
+                <div><span class="text-zinc-500">LD:</span> <strong class="text-zinc-100">${item.stats.LD}</strong></div>
+                <div><span class="text-zinc-500">OC:</span> <strong class="text-zinc-100">${item.stats.OC}</strong></div>
+                <div><span class="text-zinc-500">INV:</span> <strong class="text-amber-400">${item.stats.Invuln}</strong></div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="font-cogitator font-bold text-sm text-amber-400">${totalItemPts} pts</span>
+                <i id="icon_${collapseId}" class="fa-solid fa-chevron-down text-zinc-400 text-xs transition-transform duration-200"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expanded Full Dataslate Body -->
+          <div id="${collapseId}" class="hidden p-4 space-y-3 bg-[#0f1115] border-t border-zinc-800">
+            <!-- Mobile Stat Strip -->
+            <div class="grid grid-cols-7 gap-1 sm:hidden bg-zinc-950 p-2 rounded border border-zinc-800 text-center font-cogitator text-[11px]">
+              <div><span class="text-[9px] text-zinc-500 block">M</span><strong class="text-zinc-100">${item.stats.M}</strong></div>
+              <div><span class="text-[9px] text-zinc-500 block">T</span><strong class="text-zinc-100">${item.stats.T}</strong></div>
+              <div><span class="text-[9px] text-zinc-500 block">SV</span><strong class="text-zinc-100">${item.stats.SV}</strong></div>
+              <div><span class="text-[9px] text-zinc-500 block">W</span><strong class="text-zinc-100">${item.stats.W}</strong></div>
+              <div><span class="text-[9px] text-zinc-500 block">LD</span><strong class="text-zinc-100">${item.stats.LD}</strong></div>
+              <div><span class="text-[9px] text-zinc-500 block">OC</span><strong class="text-zinc-100">${item.stats.OC}</strong></div>
+              <div><span class="text-[9px] text-zinc-500 block">INV</span><strong class="text-amber-400">${item.stats.Invuln}</strong></div>
+            </div>
+
+            ${item.enhancement ? `
+              <div class="p-2.5 rounded bg-amber-950/20 border border-amber-600/40 text-xs">
+                <span class="font-bold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
+                <p class="text-zinc-300 mt-1">${linkifyText(item.enhancement.desc)}</p>
+              </div>
+            ` : ''}
+
+            <!-- Wargear List -->
+            <div class="space-y-1">
+              <div class="text-[11px] font-cogitator text-amber-500 uppercase font-bold tracking-wider"><i class="fa-solid fa-crosshairs mr-1"></i> Equipped Wargear & Weapons</div>
+              <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800 space-y-1">
+                ${weaponsListHtml || '<div class="text-xs text-zinc-500 font-cogitator">Standard Close Combat Weapons</div>'}
+              </div>
+            </div>
+
+            <!-- Abilities & Keywords -->
+            <div class="space-y-1 pt-1">
+              <div class="text-[11px] font-cogitator text-amber-500 uppercase font-bold tracking-wider"><i class="fa-solid fa-book-bookmark mr-1"></i> Datasheet Abilities</div>
+              <div class="text-xs bg-zinc-950 p-3 rounded border border-zinc-800 text-zinc-300 leading-relaxed space-y-1">
+                <div>${linkifyText(item.abilities)}</div>
+                <div class="text-[10px] font-cogitator text-zinc-500 pt-2 border-t border-zinc-900"><span class="text-zinc-400">Keywords:</span> ${item.keywords}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleBattleUnitCard(collapseId) {
+      const body = document.getElementById(collapseId);
+      const icon = document.getElementById(`icon_${collapseId}`);
+      if (body.classList.contains("hidden")) {
+        body.classList.remove("hidden");
+        icon.className = "fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200";
+      } else {
+        body.classList.add("hidden");
+        icon.className = "fa-solid fa-chevron-down text-zinc-400 text-xs transition-transform duration-200";
+      }
     }
 
     function removeUnitFromRoster(id) {
