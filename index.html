@@ -132,11 +132,11 @@
   </header>
 
   <!-- =====================================================================
-       MAIN CONTENT CONTAINER (Switches between Builder and Battle View)
+       MAIN CONTENT CONTAINER
        ===================================================================== -->
   <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
 
-    <!-- VIEW 1: ARMY BUILDER (Default) -->
+    <!-- VIEW 1: ARMY BUILDER -->
     <div id="viewBuilder" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- LEFT COLUMN -->
       <section class="lg:col-span-6 space-y-5">
@@ -250,11 +250,18 @@
                 </h2>
                 <p id="rosterSubtitle" class="text-xs font-cogitator text-zinc-400">AWAITING INITIAL DIRECTIVES...</p>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="copyRosterToClipboard()" class="px-2.5 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-xs font-cogitator text-zinc-300 hover:text-amber-400 transition">
-                  <i class="fa-solid fa-copy"></i> Copy Text
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="copyRosterToClipboard()" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-zinc-300 hover:text-amber-400 transition" title="Copy Text Roster">
+                  <i class="fa-solid fa-copy"></i> Copy
                 </button>
-                <button onclick="clearArmyRoster()" class="px-2.5 py-1 rounded bg-red-950/40 border border-red-800/60 hover:bg-red-900/50 text-xs font-cogitator text-red-300 transition">
+                <button onclick="exportRosterJSON()" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-amber-300 hover:text-amber-200 transition" title="Save Roster File">
+                  <i class="fa-solid fa-download"></i> Save
+                </button>
+                <label class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-emerald-300 hover:text-emerald-200 transition cursor-pointer" title="Load Roster File">
+                  <i class="fa-solid fa-upload"></i> Load
+                  <input type="file" accept=".json" onchange="importRosterJSON(event)" class="hidden">
+                </label>
+                <button onclick="clearArmyRoster()" class="px-2 py-1 rounded bg-red-950/40 border border-red-800/60 hover:bg-red-900/50 text-[11px] font-cogitator text-red-300 transition" title="Purge Roster">
                   <i class="fa-solid fa-trash-can"></i> Purge
                 </button>
               </div>
@@ -425,7 +432,7 @@
         buildGlossaryMatchers();
 
         dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCIED`;
+        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCED`;
       } catch (err) {
         console.error("Sync Error:", err);
         DB.Glossary = [...DEFAULT_GLOSSARY];
@@ -435,7 +442,110 @@
       }
 
       populateFactionsDropdown();
+      loadRosterFromLocalStorage();
+    }
+
+    // LocalStorage Save & Load
+    function saveRosterToLocalStorage() {
+      localStorage.setItem("matyenicus_saved_roster", JSON.stringify({
+        faction: state.faction,
+        pointsLimit: state.pointsLimit,
+        detachmentName: state.detachmentName,
+        roster: state.roster
+      }));
+    }
+
+    function loadRosterFromLocalStorage() {
+      const saved = localStorage.getItem("matyenicus_saved_roster");
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          state.faction = data.faction || "";
+          state.pointsLimit = data.pointsLimit || 0;
+          state.detachmentName = data.detachmentName || "";
+          state.roster = data.roster || [];
+
+          if (state.faction) {
+            document.getElementById("selFaction").value = state.faction;
+            onSelectFaction();
+          }
+          if (state.pointsLimit) {
+            document.getElementById("selPoints").value = state.pointsLimit;
+            onSelectPoints();
+          }
+          if (state.detachmentName) {
+            setTimeout(() => {
+              const selDet = document.getElementById("selDetachment");
+              if (selDet) {
+                selDet.value = state.detachmentName;
+                onSelectDetachment();
+              }
+            }, 100);
+          }
+        } catch (e) {
+          console.error("Could not load saved roster:", e);
+        }
+      }
       renderRoster();
+    }
+
+    // JSON File Export & Import
+    function exportRosterJSON() {
+      if (state.roster.length === 0) {
+        alert("No units in roster to export.");
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+        faction: state.faction,
+        pointsLimit: state.pointsLimit,
+        detachmentName: state.detachmentName,
+        roster: state.roster
+      }, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `matyenicus_roster_${state.faction || 'army'}_${state.pointsLimit || 0}pts.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function importRosterJSON(event) {
+      const fileReader = new FileReader();
+      if (event.target.files[0]) {
+        fileReader.readAsText(event.target.files[0], "UTF-8");
+        fileReader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            state.faction = data.faction || "";
+            state.pointsLimit = data.pointsLimit || 0;
+            state.detachmentName = data.detachmentName || "";
+            state.roster = data.roster || [];
+
+            if (state.faction) {
+              document.getElementById("selFaction").value = state.faction;
+              onSelectFaction();
+            }
+            if (state.pointsLimit) {
+              document.getElementById("selPoints").value = state.pointsLimit;
+              onSelectPoints();
+            }
+            if (state.detachmentName) {
+              setTimeout(() => {
+                const selDet = document.getElementById("selDetachment");
+                if (selDet) {
+                  selDet.value = state.detachmentName;
+                  onSelectDetachment();
+                }
+              }, 100);
+            }
+            saveRosterToLocalStorage();
+            renderRoster();
+            alert("Roster successfully loaded from file!");
+          } catch (err) {
+            alert("Invalid roster JSON file.");
+          }
+        };
+      }
     }
 
     // Glossary Engine
@@ -515,7 +625,6 @@
       const fac = document.getElementById("selFaction").value;
       state.faction = fac;
       state.detachmentName = "";
-      state.roster = [];
 
       const ptsWrapper = document.getElementById("stepPointsWrapper");
       const ruleBox = document.getElementById("factionRuleBox");
@@ -526,7 +635,6 @@
         document.getElementById("stepDetachmentCard").classList.add("hidden");
         document.getElementById("stepWarlordCard").classList.add("hidden");
         document.getElementById("stepUnitsCard").classList.add("hidden");
-        renderRoster();
         return;
       }
 
@@ -539,14 +647,12 @@
       }
 
       if (state.pointsLimit > 0) unlockDetachmentStep();
-      renderRoster();
     }
 
     function onSelectPoints() {
       const pts = parseInt(document.getElementById("selPoints").value) || 0;
       state.pointsLimit = pts;
       if (pts > 0 && state.faction) unlockDetachmentStep();
-      renderRoster();
     }
 
     function unlockDetachmentStep() {
@@ -603,11 +709,9 @@
       if (!detName) {
         document.getElementById("stepWarlordCard").classList.add("hidden");
         document.getElementById("stepUnitsCard").classList.add("hidden");
-        renderRoster();
         return;
       }
       unlockWarlordAndUnitsSteps();
-      renderRoster();
     }
 
     function unlockWarlordAndUnitsSteps() {
@@ -881,6 +985,7 @@
         document.getElementById("regularUnitConfigPanel").classList.add("hidden");
         state.staging.regular = null;
       }
+      saveRosterToLocalStorage();
       renderRoster();
     }
 
@@ -901,13 +1006,22 @@
         ptsBar.style.width = "0%";
         detPill.classList.add("hidden");
         errorBox.classList.add("hidden");
+        if (container) {
+          container.innerHTML = `
+            <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+              <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
+              <p>NO UNITS AUTHORISED IN ROSTER</p>
+              <p class="text-[11px] mt-1">Select Faction and Warlord on the left panel to populate your army.</p>
+            </div>
+          `;
+        }
         return;
       }
 
       subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS`;
 
       const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      if (detObj) {
+      if (detObj && detPill) {
         detPill.classList.remove("hidden");
         detPill.innerHTML = `
           <div class="flex justify-between items-center">
@@ -916,7 +1030,7 @@
           </div>
           <p class="text-zinc-300 text-[11px]">${linkifyText(detObj.RuleDesc)}</p>
         `;
-      } else {
+      } else if (detPill) {
         detPill.classList.add("hidden");
       }
 
@@ -945,18 +1059,22 @@
 
       if (state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
 
-      ptsText.textContent = `${totalPts} / ${state.pointsLimit} pts`;
+      if (ptsText) ptsText.textContent = `${totalPts} / ${state.pointsLimit} pts`;
       const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
-      ptsBar.style.width = pct + "%";
-      ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
+      if (ptsBar) {
+        ptsBar.style.width = pct + "%";
+        ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
+      }
 
-      if (errors.length > 0) {
+      if (errors.length > 0 && errorBox) {
         errorBox.classList.remove("hidden");
         errorBox.innerHTML = `<div class="font-bold text-red-400 uppercase mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> COGITATOR ERROR LOG (${errors.length}):</div>` +
           errors.map(e => `<div>• ${e}</div>`).join("");
-      } else {
+      } else if (errorBox) {
         errorBox.classList.add("hidden");
       }
+
+      if (!container) return;
 
       if (state.roster.length === 0) {
         container.innerHTML = `
@@ -1036,7 +1154,9 @@
       const container = document.getElementById("battleUnitsContainer");
       const headerInfo = document.getElementById("battleHeaderInfo");
 
-      headerInfo.textContent = `${state.roster.length} Units Enlisted // ${state.faction || 'No Faction'}`;
+      if (headerInfo) headerInfo.textContent = `${state.roster.length} Units Enlisted // ${state.faction || 'No Faction'}`;
+
+      if (!container) return;
 
       if (state.roster.length === 0) {
         container.innerHTML = `
@@ -1052,7 +1172,7 @@
       container.innerHTML = "";
       const sortedRoster = [...state.roster].sort((a, b) => (b.isWarlord ? 1 : 0) - (a.isWarlord ? 1 : 0));
 
-      sortedRoster.forEach((item, idx) => {
+      sortedRoster.forEach((item) => {
         const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
         const collapseId = `battleUnit_${item.id}`;
 
@@ -1073,7 +1193,7 @@
         card.className = `rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500/80 shadow-[0_0_10px_rgba(197,155,39,0.15)]' : 'border-zinc-800'} overflow-hidden transition`;
         
         card.innerHTML = `
-          <!-- Collapsed Header Bar (Click to Expand) -->
+          <!-- Collapsed Header Bar -->
           <div onclick="toggleBattleUnitCard('${collapseId}')" class="p-3.5 bg-zinc-900/80 hover:bg-zinc-900 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none">
             <div class="flex items-center gap-3 flex-wrap">
               <span class="font-imperial font-bold text-sm text-zinc-100 uppercase">${item.unitName}</span>
@@ -1157,12 +1277,14 @@
 
     function removeUnitFromRoster(id) {
       state.roster = state.roster.filter(r => r.id !== id);
+      saveRosterToLocalStorage();
       renderRoster();
     }
 
     function clearArmyRoster() {
       if (confirm("Purge all enlisted units from current roster?")) {
         state.roster = [];
+        saveRosterToLocalStorage();
         renderRoster();
       }
     }
