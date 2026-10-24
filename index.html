@@ -52,13 +52,15 @@
     /* Glossary Clickable Term Styling */
     .glossary-term {
       color: #f59e0b;
-      border-bottom: 1px dashed rgba(245, 158, 11, 0.6);
+      border-bottom: 1px dashed rgba(245, 158, 11, 0.7);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease-in-out;
+      padding: 0 2px;
+      border-radius: 2px;
     }
     .glossary-term:hover {
-      color: #fbbf24;
-      background-color: rgba(245, 158, 11, 0.1);
+      color: #fde68a;
+      background-color: rgba(245, 158, 11, 0.2);
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -70,13 +72,13 @@
 <body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
 
   <!-- =====================================================================
-       GLOSSARY MODAL POPUP (Hidden by default)
+       GLOSSARY MODAL POPUP (Closes on outside click or X button)
        ===================================================================== -->
-  <div id="glossaryModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl animate-in fade-in zoom-in duration-200">
+  <div id="glossaryModal" onclick="closeGlossaryModal()" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
         <div class="flex items-center gap-2 text-amber-400">
-          <i class="fa-solid fa-book-tanakh text-red-600"></i>
+          <i class="fa-solid fa-book-journal-whills text-red-600"></i>
           <h3 id="modalTermTitle" class="font-imperial font-bold text-base uppercase">Term Definition</h3>
         </div>
         <button onclick="closeGlossaryModal()" class="text-zinc-400 hover:text-zinc-100 p-1">
@@ -84,11 +86,13 @@
         </button>
       </div>
       <div>
-        <span id="modalTermCategory" class="text-[10px] font-cogitator px-2 py-0.5 rounded bg-zinc-900 text-amber-500 uppercase">Category</span>
+        <span id="modalTermCategory" class="text-[10px] font-cogitator px-2 py-0.5 rounded bg-zinc-900 border border-amber-500/30 text-amber-400 uppercase">Category</span>
       </div>
-      <p id="modalTermDesc" class="text-zinc-300 text-xs leading-relaxed font-sans pt-1"></p>
+      <p id="modalTermDesc" class="text-zinc-200 text-sm leading-relaxed pt-1"></p>
       <div class="pt-2 border-t border-zinc-800/80 text-right">
-        <button onclick="closeGlossaryModal()" class="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-cogitator text-zinc-200 uppercase">Close Data-Slate</button>
+        <button onclick="closeGlossaryModal()" class="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-cogitator text-amber-300 uppercase transition">
+          Acknowledge
+        </button>
       </div>
     </div>
   </div>
@@ -275,7 +279,37 @@
   <script>
     const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
 
+    // Built-in default glossary so X-rules work even if some entries aren't in the sheet yet
+    const DEFAULT_GLOSSARY = [
+      { KeywordOrAbility: "Devastating Wounds", Category: "Weapon Rule", Description: "A Critical Wound inflicts mortal wounds equal to the weapon's Damage characteristic instead of normal damage." },
+      { KeywordOrAbility: "Lethal Hits", Category: "Weapon Rule", Description: "A Critical Hit automatically wounds the target without needing to roll to wound." },
+      { KeywordOrAbility: "Melta X", Category: "Weapon Rule", Description: "Increase the Damage characteristic by X when targeting units within half range." },
+      { KeywordOrAbility: "Rapid Fire X", Category: "Weapon Rule", Description: "Increase the Attacks characteristic by X when targeting units within half range." },
+      { KeywordOrAbility: "Sustained Hits X", Category: "Weapon Rule", Description: "Each Critical Hit scores X additional hits on the target." },
+      { KeywordOrAbility: "Anti-Infantry X+", Category: "Weapon Rule", Description: "An unmodified Wound roll of X+ against an Infantry target scores a Critical Wound." },
+      { KeywordOrAbility: "Anti-Vehicle X+", Category: "Weapon Rule", Description: "An unmodified Wound roll of X+ against a Vehicle target scores a Critical Wound." },
+      { KeywordOrAbility: "Anti-Monster X+", Category: "Weapon Rule", Description: "An unmodified Wound roll of X+ against a Monster target scores a Critical Wound." },
+      { KeywordOrAbility: "Heavy", Category: "Weapon Rule", Description: "Add 1 to Hit rolls if the bearer’s unit Remained Stationary this turn." },
+      { KeywordOrAbility: "Assault", Category: "Weapon Rule", Description: "The unit can shoot even if it Advanced this turn." },
+      { KeywordOrAbility: "Pistol", Category: "Weapon Rule", Description: "The bearer can shoot this weapon even while its unit is within Engagement Range of enemy units." },
+      { KeywordOrAbility: "Blast", Category: "Weapon Rule", Description: "Add 1 to the Attacks characteristic for every 5 models in the target unit (cannot be used in Engagement Range)." },
+      { KeywordOrAbility: "Torrent", Category: "Weapon Rule", Description: "This weapon automatically hits its target; do not make Hit rolls." },
+      { KeywordOrAbility: "Ignores Cover", Category: "Weapon Rule", Description: "The target cannot have the Benefit of Cover against attacks made with this weapon." },
+      { KeywordOrAbility: "Twin-linked", Category: "Weapon Rule", Description: "You can re-roll the Wound roll for attacks made with this weapon." },
+      { KeywordOrAbility: "Hazardous", Category: "Weapon Rule", Description: "After shooting or fighting, roll one D6 for each Hazardous weapon used. On a 1, one model suffers 3 mortal wounds or is destroyed." },
+      { KeywordOrAbility: "Precision", Category: "Weapon Rule", Description: "When targeting an Attached unit, the attacking player can allocate successful wounds directly to a visible Character model." },
+      { KeywordOrAbility: "Indirect Fire", Category: "Weapon Rule", Description: "Can target units that are not visible to the bearer. If no models are visible, subtract 1 from Hit rolls and the target has Benefit of Cover." },
+      { KeywordOrAbility: "Extra Attacks", Category: "Weapon Rule", Description: "The bearer can attack with this melee weapon in addition to any other melee weapon it fights with." },
+      { KeywordOrAbility: "One Shot", Category: "Weapon Rule", Description: "The bearer can only shoot with this weapon once per battle." },
+      { KeywordOrAbility: "Feel No Pain X+", Category: "Ability", Description: "Each time a model with this ability suffers damage, roll one D6: on X+, that point of damage is ignored." },
+      { KeywordOrAbility: "Stealth", Category: "Ability", Description: "If every model in a unit has this ability, subtract 1 from Hit rolls for ranged attacks targeting it." },
+      { KeywordOrAbility: "Scout X\"", Category: "Ability", Description: "Before the first turn begins, this unit can make a Normal Move of up to X\"." },
+      { KeywordOrAbility: "Lone Operative", Category: "Ability", Description: "Unless part of an Attached unit, this unit can only be targeted by ranged attacks if the attacking model is within 12\"." },
+      { KeywordOrAbility: "Firing Deck X", Category: "Ability", Description: "Each time this Transport shoots, select up to X models embarked within it to shoot with one weapon each." }
+    ];
+
     let DB = { Factions: [], Detachments: [], Units: [], Weapons: [], Glossary: [] };
+    let GLOSSARY_MATCHERS = [];
 
     let state = {
       faction: "",
@@ -333,10 +367,22 @@
           DB = { Factions: f, Detachments: d, Units: u, Weapons: w, Glossary: g };
         }
 
+        // Merge sheet Glossary with built-in DEFAULT_GLOSSARY so X-wildcards always work
+        const mergedGlossary = [...DB.Glossary];
+        DEFAULT_GLOSSARY.forEach(defItem => {
+          const exists = mergedGlossary.some(g => String(g.KeywordOrAbility || "").trim().toLowerCase() === defItem.KeywordOrAbility.toLowerCase());
+          if (!exists) mergedGlossary.push(defItem);
+        });
+        DB.Glossary = mergedGlossary;
+
+        buildGlossaryMatchers();
+
         dot.className = "w-2 h-2 rounded-full bg-emerald-500";
         statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCED`;
       } catch (err) {
         console.error("Sync Error:", err);
+        DB.Glossary = [...DEFAULT_GLOSSARY];
+        buildGlossaryMatchers();
         dot.className = "w-2 h-2 rounded-full bg-amber-500";
         statusTxt.textContent = `SYNC NOTICE: ${err.message.toUpperCase()}`;
       }
@@ -346,33 +392,66 @@
     }
 
     // =========================================================================
-    // GLOSSARY PARSER & MODAL POPUP ENGINE
+    // SMART WILDCARD ("X") GLOSSARY ENGINE
     // =========================================================================
-    function linkifyText(text) {
-      if (!text || DB.Glossary.length === 0) return text || "";
-      let html = String(text);
-
-      // Sort glossary terms by length descending to match multi-word terms first
-      const sortedTerms = [...DB.Glossary].sort((a, b) => String(b.KeywordOrAbility || "").length - String(a.KeywordOrAbility || "").length);
-
-      sortedTerms.forEach(item => {
-        const term = String(item.KeywordOrAbility || "").trim();
-        if (!term || term.length < 3) return;
-        const regex = new RegExp(`\\b(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})\\b`, 'gi');
-        html = html.replace(regex, `<span class="glossary-term" onclick="openGlossaryModal(event, '${term.replace(/'/g, "\\'")}')">$1</span>`);
-      });
-
-      return html;
+    function termToPattern(rawTerm) {
+      // Escape regex special characters
+      let escaped = rawTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      // Convert standalone "X" (like in "Anti-Infantry X+", "Melta X", "Scout X\"") into a number/dice matcher (e.g. 2, 4, D3, D6+2)
+      let pattern = escaped.replace(/\bX\b/gi, '(?:\\d*D\\d+(?:\\+\\d+)?|\\d+)');
+      const startsWord = /^[a-zA-Z0-9]/.test(rawTerm);
+      const endsWord = /[a-zA-Z0-9]$/.test(rawTerm);
+      return (startsWord ? '\\b' : '') + pattern + (endsWord ? '\\b' : '');
     }
 
-    function openGlossaryModal(event, termName) {
-      event.stopPropagation();
-      const entry = DB.Glossary.find(g => String(g.KeywordOrAbility || "").trim().toLowerCase() === termName.toLowerCase());
-      if (!entry) return;
+    function buildGlossaryMatchers() {
+      GLOSSARY_MATCHERS = DB.Glossary
+        .filter(g => g.KeywordOrAbility && String(g.KeywordOrAbility).trim().length >= 3)
+        .map(g => {
+          const raw = String(g.KeywordOrAbility).trim();
+          const pat = termToPattern(raw);
+          // Create a dynamic value extractor if the term has a standalone X
+          const valRegexStr = '^' + raw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\bX\b/i, '(\\d*D\\d+(?:\\+\\d+)?|\\d+)') + '$';
+          return {
+            entry: g,
+            rawTerm: raw,
+            pattern: pat,
+            exactRegex: new RegExp('^' + pat + '$', 'i'),
+            extractValRegex: new RegExp(valRegexStr, 'i')
+          };
+        })
+        .sort((a, b) => b.rawTerm.length - a.rawTerm.length);
+    }
 
-      document.getElementById("modalTermTitle").textContent = entry.KeywordOrAbility;
-      document.getElementById("modalTermCategory").textContent = entry.Category || "Rules Glossary";
-      document.getElementById("modalTermDesc").textContent = entry.Description || "No description provided.";
+    function linkifyText(text) {
+      if (!text || GLOSSARY_MATCHERS.length === 0) return text || "";
+      const combinedPattern = GLOSSARY_MATCHERS.map(m => m.pattern).join('|');
+      const masterRegex = new RegExp(`(${combinedPattern})`, 'gi');
+
+      return String(text).replace(masterRegex, (matchedText) => {
+        const safeArg = matchedText.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        return `<span class="glossary-term" onclick="openGlossaryModal(event, '${safeArg}')">${matchedText}</span>`;
+      });
+    }
+
+    function openGlossaryModal(event, clickedText) {
+      event.stopPropagation();
+      const matcher = GLOSSARY_MATCHERS.find(m => m.exactRegex.test(clickedText));
+      if (!matcher) return;
+
+      const entry = matcher.entry;
+      let description = String(entry.Description || "No description provided.");
+
+      // If the term had a dynamic X (e.g. "Anti-Infantry 4+"), extract "4" and replace "X" in the description too!
+      const valMatch = clickedText.match(matcher.extractValRegex);
+      if (valMatch && valMatch[1]) {
+        const dynamicVal = valMatch[1];
+        description = description.replace(/\bX\b/g, dynamicVal);
+      }
+
+      document.getElementById("modalTermTitle").textContent = `${clickedText.toUpperCase()}`;
+      document.getElementById("modalTermCategory").textContent = `${entry.Category || "Rule"} // Base: ${entry.KeywordOrAbility}`;
+      document.getElementById("modalTermDesc").textContent = description;
       document.getElementById("glossaryModal").classList.remove("hidden");
     }
 
@@ -509,7 +588,7 @@
       selWarlord.innerHTML = `<option value="">-- Select Character as Warlord --</option>`;
       charUnits.forEach(u => {
         const isEpic = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
-        const firstPts = String(u.Tiers || "1:0").split(",")[0].split(":")[1] || "0";
+        const firstPts = parseTiers(u.Tiers)[0].pts;
         const opt = document.createElement("option");
         opt.value = u.Name;
         opt.textContent = `${u.Name} [${isEpic ? 'Epic Hero' : 'Character'}] (${firstPts} pts)`;
@@ -528,7 +607,7 @@
 
     function parseTiers(tiersStr) {
       return String(tiersStr || "1:50").split(",").map(s => {
-        const [m, p] = s.trim().split(":");
+        const [m, p] = s.trim().split(/[:=\-x]/);
         return { models: parseInt(m) || 1, pts: parseInt(p) || 0 };
       });
     }
