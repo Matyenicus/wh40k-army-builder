@@ -49,6 +49,18 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Glossary Clickable Term Styling */
+    .glossary-term {
+      color: #f59e0b;
+      border-bottom: 1px dashed rgba(245, 158, 11, 0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .glossary-term:hover {
+      color: #fbbf24;
+      background-color: rgba(245, 158, 11, 0.1);
+    }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0b0c0e; }
     ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
@@ -58,11 +70,34 @@
 <body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
 
   <!-- =====================================================================
+       GLOSSARY MODAL POPUP (Hidden by default)
+       ===================================================================== -->
+  <div id="glossaryModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+        <div class="flex items-center gap-2 text-amber-400">
+          <i class="fa-solid fa-book-tanakh text-red-600"></i>
+          <h3 id="modalTermTitle" class="font-imperial font-bold text-base uppercase">Term Definition</h3>
+        </div>
+        <button onclick="closeGlossaryModal()" class="text-zinc-400 hover:text-zinc-100 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div>
+        <span id="modalTermCategory" class="text-[10px] font-cogitator px-2 py-0.5 rounded bg-zinc-900 text-amber-500 uppercase">Category</span>
+      </div>
+      <p id="modalTermDesc" class="text-zinc-300 text-xs leading-relaxed font-sans pt-1"></p>
+      <div class="pt-2 border-t border-zinc-800/80 text-right">
+        <button onclick="closeGlossaryModal()" class="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-cogitator text-zinc-200 uppercase">Close Data-Slate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
        CENTERED MECHANICUS HEADER
        ===================================================================== -->
   <header class="py-6 px-4 border-b border-amber-500/20 bg-gradient-to-b from-red-950/20 to-transparent text-center relative overflow-hidden">
     <div class="max-w-xl mx-auto flex flex-col items-center">
-      <!-- Mechanicus Cog-Skull SVG Emblem -->
       <div class="relative w-20 h-20 flex items-center justify-center mb-2">
         <svg class="w-20 h-20 text-amber-500/80 cog-spin absolute inset-0" viewBox="0 0 100 100" fill="currentColor">
           <path d="M94.5,43.5 L86.8,42.2 C85.8,38.8 84.4,35.6 82.7,32.6 L87.3,26.2 C88.1,25.1 88,23.6 87,22.6 L80.4,16 C79.4,15 77.9,14.9 76.8,15.7 L70.4,20.3 C67.4,18.6 64.2,17.2 60.8,16.2 L59.5,8.5 C59.3,7.2 58.1,6.2 56.8,6.2 L47.2,6.2 C45.9,6.2 44.7,7.2 44.5,8.5 L43.2,16.2 C39.8,17.2 36.6,18.6 33.6,20.3 L27.2,15.7 C26.1,14.9 24.6,15 23.6,16 L17,22.6 C16,23.6 15.9,25.1 16.7,26.2 L21.3,32.6 C19.6,35.6 18.2,38.8 17.2,42.2 L9.5,43.5 C8.2,43.7 7.2,44.9 7.2,46.2 L7.2,55.8 C7.2,57.1 8.2,58.3 9.5,58.5 L17.2,59.8 C18.2,63.2 19.6,66.4 21.3,69.4 L16.7,75.8 C15.9,76.9 16,78.4 17,79.4 L23.6,86 C24.6,87 26.1,87.1 27.2,86.3 L33.6,81.7 C36.6,83.4 39.8,84.8 43.2,85.8 L44.5,93.5 C44.7,94.8 45.9,95.8 47.2,95.8 L56.8,95.8 C58.1,95.8 59.3,94.8 59.5,93.5 L60.8,85.8 C64.2,84.8 67.4,83.4 70.4,81.7 L76.8,86.3 C77.9,87.1 79.4,87 80.4,86 L87,79.4 C88,78.4 88.1,76.9 87.3,75.8 L82.7,69.4 C84.4,66.4 85.8,63.2 86.8,59.8 L94.5,58.5 C95.8,58.3 96.8,57.1 96.8,55.8 L96.8,46.2 C96.8,44.9 95.8,43.7 94.5,43.5 Z M52,74 C39.3,74 29,63.7 29,51 C29,38.3 39.3,28 52,28 C64.7,28 75,38.3 75,51 C75,63.7 64.7,74 52,74 Z"/>
@@ -83,17 +118,14 @@
   </header>
 
   <!-- =====================================================================
-       MAIN TWO-COLUMN WORKSPACE (Left: Configuration, Right: Ready Army)
+       MAIN TWO-COLUMN WORKSPACE
        ===================================================================== -->
   <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-      <!-- =================================================================
-           LEFT COLUMN: STEP-BY-STEP MUSTER CONFIGURATION
-           ================================================================= -->
+      <!-- LEFT COLUMN -->
       <section class="lg:col-span-6 space-y-5">
-
-        <!-- STEP 1 & 2: FACTION & POINTS SELECTION -->
+        <!-- STEP 1 & 2 -->
         <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
           <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
             <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
@@ -103,7 +135,6 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- 1. Select Faction -->
             <div>
               <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">1. Select Faction</label>
               <select id="selFaction" onchange="onSelectFaction()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
@@ -111,7 +142,6 @@
               </select>
             </div>
 
-            <!-- 2. Select Points Limit -->
             <div id="stepPointsWrapper" class="opacity-40 pointer-events-none transition">
               <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">2. Battle Size (Points)</label>
               <select id="selPoints" onchange="onSelectPoints()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
@@ -126,7 +156,6 @@
             </div>
           </div>
 
-          <!-- Faction Rule Display -->
           <div id="factionRuleBox" class="hidden bg-zinc-950/80 border-l-2 border-red-700 p-3 rounded text-xs space-y-1">
             <div class="font-cogitator text-[10px] text-red-400 uppercase">Faction Army Rule</div>
             <div id="factionRuleName" class="font-bold text-amber-400 text-sm"></div>
@@ -134,7 +163,7 @@
           </div>
         </div>
 
-        <!-- STEP 3: DETACHMENT SELECTION & 11TH ED OVERVIEW -->
+        <!-- STEP 3 -->
         <div id="stepDetachmentCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
           <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
             <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
@@ -143,13 +172,11 @@
             <span class="text-[11px] font-cogitator text-zinc-500">STEP 3</span>
           </div>
 
-          <!-- Overview of all available detachments for this faction -->
           <div class="space-y-2">
             <div class="text-xs font-cogitator text-zinc-400 uppercase">Available Detachments & Rules:</div>
             <div id="detachmentOverviewList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
           </div>
 
-          <!-- Active Detachment Dropdown -->
           <div class="pt-2 border-t border-zinc-800">
             <label class="block text-xs font-cogitator text-amber-500 uppercase mb-1">3. Select Active Detachment</label>
             <select id="selDetachment" onchange="onSelectDetachment()" class="w-full bg-zinc-950 border border-amber-600/60 rounded px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
@@ -158,7 +185,7 @@
           </div>
         </div>
 
-        <!-- STEP 4: SELECT WARLORD (CHARACTER ONLY) -->
+        <!-- STEP 4 -->
         <div id="stepWarlordCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
           <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
             <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
@@ -174,11 +201,10 @@
             </select>
           </div>
 
-          <!-- Dynamic Warlord Customisation Area -->
           <div id="warlordConfigPanel" class="hidden"></div>
         </div>
 
-        <!-- STEP 5: ENLIST FORCE UNITS & WARGEAR -->
+        <!-- STEP 5 -->
         <div id="stepUnitsCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
           <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
             <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
@@ -194,19 +220,13 @@
             </select>
           </div>
 
-          <!-- Dynamic Unit Customisation Area -->
           <div id="regularUnitConfigPanel" class="hidden"></div>
         </div>
-
       </section>
 
-      <!-- =================================================================
-           RIGHT COLUMN: MOBILISED ARMY ROSTER & VALIDATION
-           ================================================================= -->
+      <!-- RIGHT COLUMN -->
       <section class="lg:col-span-6 space-y-4 lg:sticky lg:top-6">
         <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
-
-          <!-- Roster Header & Points Progress -->
           <div class="border-b border-zinc-800 pb-3 space-y-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
@@ -225,7 +245,6 @@
               </div>
             </div>
 
-            <!-- Points Bar -->
             <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
               <div class="flex justify-between items-center text-xs font-cogitator mb-1">
                 <span class="text-zinc-400">REQUISITIONED POINTS TOTAL</span>
@@ -237,13 +256,9 @@
             </div>
           </div>
 
-          <!-- COGITATOR ERROR / VALIDATION ALERTS -->
           <div id="cogitatorErrorBox" class="hidden p-3 bg-red-950/70 mech-border-red rounded text-xs font-cogitator text-red-200 space-y-1"></div>
-
-          <!-- Active Detachment Summary Pill -->
           <div id="rosterDetachmentPill" class="hidden bg-zinc-950 border border-amber-600/30 p-3 rounded text-xs space-y-1"></div>
 
-          <!-- Enlisted Units Container -->
           <div id="enlistedUnitsContainer" class="space-y-3">
             <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
               <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
@@ -251,7 +266,6 @@
               <p class="text-[11px] mt-1">Configure your Warlord and Units on the left panel to mobilise your force.</p>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -259,96 +273,72 @@
   </main>
 
   <script>
-    // =========================================================================
-    // 1. LIVE GOOGLE SHEET DATABASE CONNECTION
-    // =========================================================================
     const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
-    const GOOGLE_SHEET_XLSX_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`;
 
-    // Built-in fallback cache in case offline
-    const FALLBACK_DB = {
-      Factions: [
-        { Faction: "Adeptus Mechanicus", ArmyRuleName: "Doctrina Imperatives", ArmyRuleDesc: "At the start of the battle round, select Protector Imperative (Ranged weapons gain [HEAVY]; improve Save by 1 against ranged attacks in your deployment zone) or Conqueror Imperative (Ranged weapons gain [ASSAULT]; improve AP by 1 near friendly Battleline)." },
-        { Faction: "Space Marines", ArmyRuleName: "Oath of Moment", ArmyRuleDesc: "At the start of your Command phase, select one enemy unit. Until your next Command phase, friendly ADEPTUS ASTARTES models re-roll Hit rolls against that target." },
-        { Faction: "Necrons", ArmyRuleName: "Reanimation Protocols", ArmyRuleDesc: "At the end of your Command phase, each unit activates Reanimation Protocols and reanimates D3 wounds, restoring destroyed models where possible." },
-        { Faction: "T'au Empire", ArmyRuleName: "For the Greater Good", ArmyRuleDesc: "Observer units spot enemy targets for Guided units, improving Ballistic Skill by 1 (and granting Ignores Cover if equipped with Markerlights)." },
-        { Faction: "Drukhari", ArmyRuleName: "Power from Pain", ArmyRuleDesc: "Spend Pain Tokens to empower units with full Hit re-rolls, Advance/Charge re-rolls, and +1 Melee AP." }
-      ],
-      Detachments: [
-        {
-          Faction: "Adeptus Mechanicus", DetachmentName: "Rad-Zone Corps", RuleName: "Rad-Bombardment",
-          RuleDesc: "Round 1: Enemy units in their deployment zone suffer mortal wounds or must take a Battle-shock test. Rounds 2-5: Fallout continues on a 3+.",
-          Enh1Name: "Radial Suffusion", Enh1Pts: 25, Enh1Desc: "Tech-Priest model only. Fallout affects enemy units within 6\" of their deployment zone.",
-          Enh2Name: "Peerless Eradicator", Enh2Pts: 20, Enh2Desc: "Tech-Priest model only. Ranged weapons in the bearer's unit gain [SUSTAINED HITS 1].",
-          Enh3Name: "Autoclavic Denunciation", Enh3Pts: 15, Enh3Desc: "Tech-Priest model only. Bearer's ranged weapons gain [ANTI-INFANTRY 2+] and [ANTI-MONSTER 4+]."
-        },
-        {
-          Faction: "Adeptus Mechanicus", DetachmentName: "Skitarii Hunter Clade", RuleName: "Hunter Protocols",
-          RuleDesc: "Skitarii Infantry and Mounted units gain the Stealth ability. Sicarian units can Advance and Charge.",
-          Enh1Name: "Cantic Thrallnet", Enh1Pts: 25, Enh1Desc: "Skitarii Marshal only. Select one friendly Skitarii unit within 12\"; both Doctrina Imperatives are active for it.",
-          Enh2Name: "Veiled Hunter", Enh2Pts: 10, Enh2Desc: "Skitarii Marshal only. Redeploy up to 3 Skitarii Infantry units before Turn 1.",
-          Enh3Name: "Battle-Sphere Uplink", Enh3Pts: 30, Enh3Desc: "Skitarii Marshal only. Bearer's unit can make a Normal Move of up to 6\" after shooting."
-        }
-      ],
-      Units: [
-        { Faction: "Adeptus Mechanicus", Name: "Belisarius Cawl", Role: "Epic Hero", MaxInArmy: 1, M: "6\"", T: 8, SV: "2+", W: 10, LD: "6+", OC: 3, Invuln: "4++", Tiers: "1:150", Abilities: "Canticles of the Omnissiah (Aura), Mechanised Regeneration (D3 wounds)", Keywords: "Monster, Character, Epic Hero, Imperium, Tech-Priest, Belisarius Cawl" },
-        { Faction: "Adeptus Mechanicus", Name: "Tech-Priest Dominus", Role: "Character", MaxInArmy: 3, M: "6\"", T: 4, SV: "2+", W: 4, LD: "6+", OC: 1, Invuln: "5++", Tiers: "1:75", Abilities: "Lord of the Machine Cult (Led unit gains Feel No Pain 5+), Data-spike", Keywords: "Infantry, Character, Imperium, Tech-Priest, Dominus" },
-        { Faction: "Adeptus Mechanicus", Name: "Skitarii Rangers", Role: "Battleline", MaxInArmy: 6, M: "6\"", T: 3, SV: "5+", W: 1, LD: "7+", OC: 2, Invuln: "6++", Tiers: "10:85", Abilities: "Scout 6\", Objective Scouted (Sticky Objectives)", Keywords: "Infantry, Battleline, Imperium, Skitarii, Rangers" }
-      ],
-      Weapons: [
-        { UnitName: "Belisarius Cawl", WeaponName: "Solar Atomiser", Type: "Ranged", DefaultCount: 1, MaxCount: 1, PerModels: 0, Range: "18\"", A: "D3", BS_WS: "2+", S: 14, AP: -4, D: "D6", Keywords: "Blast, Melta 3" },
-        { UnitName: "Tech-Priest Dominus", WeaponName: "Volkite Blaster", Type: "Ranged", DefaultCount: 1, MaxCount: 1, PerModels: 0, Range: "24\"", A: 3, BS_WS: "3+", S: 5, AP: 0, D: 2, Keywords: "Devastating Wounds" },
-        { UnitName: "Skitarii Rangers", WeaponName: "Galvanic Rifle", Type: "Ranged", DefaultCount: 10, MaxCount: 1, PerModels: 1, Range: "30\"", A: 2, BS_WS: "4+", S: 4, AP: 0, D: 1, Keywords: "Heavy" },
-        { UnitName: "Skitarii Rangers", WeaponName: "Transuranic Arquebus", Type: "Ranged", DefaultCount: 0, MaxCount: 1, PerModels: 0, Range: "36\"", A: 1, BS_WS: "4+", S: 7, AP: -2, D: "D3", Keywords: "Heavy, Precision" }
-      ]
-    };
-
-    let DB = { Factions: [], Detachments: [], Units: [], Weapons: [] };
+    let DB = { Factions: [], Detachments: [], Units: [], Weapons: [], Glossary: [] };
 
     let state = {
       faction: "",
       pointsLimit: 0,
       detachmentName: "",
       roster: [],
-      staging: {
-        warlord: null,
-        regular: null
-      }
+      staging: { warlord: null, regular: null }
     };
+
+    async function fetchSheetTabCSV(tabName) {
+      const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status} on tab ${tabName}`);
+      const csvText = await res.text();
+      if (csvText.trim().startsWith("<!DOCTYPE html>")) throw new Error("Sheet is not public");
+      const wb = XLSX.read(csvText, { type: "string" });
+      return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    }
 
     async function initApp() {
       const dot = document.getElementById("noosphereStatusDot");
       const statusTxt = document.getElementById("noosphereStatusText");
 
       try {
-        const response = await fetch(GOOGLE_SHEET_XLSX_URL, { cache: "no-store" });
-        if (!response.ok) throw new Error("Google Sheet response not OK");
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
+        let loaded = false;
+        try {
+          const xlsxUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`;
+          const res = await fetch(xlsxUrl, { cache: "no-store" });
+          if (res.ok) {
+            const ab = await res.arrayBuffer();
+            const wb = XLSX.read(new Uint8Array(ab), { type: "array" });
+            const getTab = (name) => {
+              const found = wb.SheetNames.find(s => s.trim().toLowerCase() === name.toLowerCase());
+              return found ? XLSX.utils.sheet_to_json(wb.Sheets[found]) : [];
+            };
+            DB = {
+              Factions: getTab("Factions"),
+              Detachments: getTab("Detachments"),
+              Units: getTab("Units"),
+              Weapons: getTab("Weapons"),
+              Glossary: getTab("Glossary")
+            };
+            if (DB.Factions.length > 0 && DB.Units.length > 0) loaded = true;
+          }
+        } catch (e) {}
 
-        // Case-insensitive sheet matching helper
-        const findSheet = (name) => {
-          const match = workbook.SheetNames.find(s => s.trim().toLowerCase() === name.toLowerCase());
-          return match ? XLSX.utils.sheet_to_json(workbook.Sheets[match]) : [];
-        };
-
-        const factions = findSheet("Factions");
-        const detachments = findSheet("Detachments");
-        const units = findSheet("Units");
-        const weapons = findSheet("Weapons");
-
-        if (factions.length === 0 || units.length === 0) {
-          throw new Error("Missing Factions or Units tabs in Google Sheet");
+        if (!loaded) {
+          const [f, d, u, w, g] = await Promise.all([
+            fetchSheetTabCSV("Factions"),
+            fetchSheetTabCSV("Detachments"),
+            fetchSheetTabCSV("Units"),
+            fetchSheetTabCSV("Weapons"),
+            fetchSheetTabCSV("Glossary").catch(() => [])
+          ]);
+          DB = { Factions: f, Detachments: d, Units: u, Weapons: w, Glossary: g };
         }
 
-        DB = { Factions: factions, Detachments: detachments, Units: units, Weapons: weapons };
         dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Factions.length} FACTIONS & ${DB.Units.length} UNITS SYNCHRONISED`;
+        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCED`;
       } catch (err) {
-        console.warn("Falling back to internal cache:", err);
-        DB = JSON.parse(JSON.stringify(FALLBACK_DB));
+        console.error("Sync Error:", err);
         dot.className = "w-2 h-2 rounded-full bg-amber-500";
-        statusTxt.textContent = "OFFLINE BACKUP COGITATOR CACHE ACTIVE (CHECK SHEET TAB NAMES)";
+        statusTxt.textContent = `SYNC NOTICE: ${err.message.toUpperCase()}`;
       }
 
       populateFactionsDropdown();
@@ -356,7 +346,42 @@
     }
 
     // =========================================================================
-    // 2. STEP-BY-STEP WORKFLOW CONTROLLERS (Left Column)
+    // GLOSSARY PARSER & MODAL POPUP ENGINE
+    // =========================================================================
+    function linkifyText(text) {
+      if (!text || DB.Glossary.length === 0) return text || "";
+      let html = String(text);
+
+      // Sort glossary terms by length descending to match multi-word terms first
+      const sortedTerms = [...DB.Glossary].sort((a, b) => String(b.KeywordOrAbility || "").length - String(a.KeywordOrAbility || "").length);
+
+      sortedTerms.forEach(item => {
+        const term = String(item.KeywordOrAbility || "").trim();
+        if (!term || term.length < 3) return;
+        const regex = new RegExp(`\\b(${term.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})\\b`, 'gi');
+        html = html.replace(regex, `<span class="glossary-term" onclick="openGlossaryModal(event, '${term.replace(/'/g, "\\'")}')">$1</span>`);
+      });
+
+      return html;
+    }
+
+    function openGlossaryModal(event, termName) {
+      event.stopPropagation();
+      const entry = DB.Glossary.find(g => String(g.KeywordOrAbility || "").trim().toLowerCase() === termName.toLowerCase());
+      if (!entry) return;
+
+      document.getElementById("modalTermTitle").textContent = entry.KeywordOrAbility;
+      document.getElementById("modalTermCategory").textContent = entry.Category || "Rules Glossary";
+      document.getElementById("modalTermDesc").textContent = entry.Description || "No description provided.";
+      document.getElementById("glossaryModal").classList.remove("hidden");
+    }
+
+    function closeGlossaryModal() {
+      document.getElementById("glossaryModal").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // WORKFLOW & STAGING CONTROLLERS
     // =========================================================================
     function populateFactionsDropdown() {
       const sel = document.getElementById("selFaction");
@@ -370,7 +395,6 @@
       });
     }
 
-    // STEP 1: FACTION CHOSEN
     function onSelectFaction() {
       const fac = document.getElementById("selFaction").value;
       state.faction = fac;
@@ -391,35 +415,24 @@
       }
 
       ptsWrapper.classList.remove("opacity-40", "pointer-events-none");
-
       const facObj = DB.Factions.find(f => String(f.Faction).trim() === fac);
       if (facObj) {
         ruleBox.classList.remove("hidden");
         document.getElementById("factionRuleName").textContent = facObj.ArmyRuleName || "";
-        document.getElementById("factionRuleDesc").textContent = facObj.ArmyRuleDesc || "";
+        document.getElementById("factionRuleDesc").innerHTML = linkifyText(facObj.ArmyRuleDesc || "");
       }
 
-      if (state.pointsLimit > 0) {
-        unlockDetachmentStep();
-      }
+      if (state.pointsLimit > 0) unlockDetachmentStep();
       renderRoster();
     }
 
-    // STEP 2: POINTS CHOSEN
     function onSelectPoints() {
       const pts = parseInt(document.getElementById("selPoints").value) || 0;
       state.pointsLimit = pts;
-      if (pts > 0 && state.faction) {
-        unlockDetachmentStep();
-      } else {
-        document.getElementById("stepDetachmentCard").classList.add("hidden");
-        document.getElementById("stepWarlordCard").classList.add("hidden");
-        document.getElementById("stepUnitsCard").classList.add("hidden");
-      }
+      if (pts > 0 && state.faction) unlockDetachmentStep();
       renderRoster();
     }
 
-    // STEP 3: POPULATE DETACHMENTS & 11TH EDITION OVERVIEW
     function unlockDetachmentStep() {
       const detCard = document.getElementById("stepDetachmentCard");
       detCard.classList.remove("hidden");
@@ -430,7 +443,6 @@
       selDet.innerHTML = `<option value="">-- Select Active Detachment --</option>`;
 
       const facDets = DB.Detachments.filter(d => String(d.Faction).trim() === state.faction);
-
       facDets.forEach(d => {
         const item = document.createElement("div");
         item.className = "p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1";
@@ -442,7 +454,7 @@
             <span class="font-bold text-amber-400 uppercase font-imperial">${d.DetachmentName}</span>
             <span class="text-[10px] font-cogitator text-red-400">Rule: ${d.RuleName}</span>
           </div>
-          <p class="text-zinc-300 text-[11px] leading-relaxed">${d.RuleDesc}</p>
+          <p class="text-zinc-300 text-[11px] leading-relaxed">${linkifyText(d.RuleDesc)}</p>
           ${enhHtml ? `<div class="pt-1 border-t border-zinc-900"><span class="text-[10px] font-cogitator text-zinc-500 block">ENHANCEMENTS:</span>${enhHtml}</div>` : ''}
         `;
         overviewList.appendChild(item);
@@ -452,9 +464,6 @@
         opt.textContent = `${d.DetachmentName} — [${d.RuleName}]`;
         selDet.appendChild(opt);
       });
-
-      document.getElementById("stepWarlordCard").classList.add("hidden");
-      document.getElementById("stepUnitsCard").classList.add("hidden");
     }
 
     function getEnhancementsFromDetachment(detRow) {
@@ -475,26 +484,21 @@
     function onSelectDetachment() {
       const detName = document.getElementById("selDetachment").value;
       state.detachmentName = detName;
-
       if (!detName) {
         document.getElementById("stepWarlordCard").classList.add("hidden");
         document.getElementById("stepUnitsCard").classList.add("hidden");
         renderRoster();
         return;
       }
-
       unlockWarlordAndUnitsSteps();
       renderRoster();
     }
 
-    // STEP 4 & 5: WARLORD (CHARACTER ONLY) & REGULAR UNITS
     function unlockWarlordAndUnitsSteps() {
       document.getElementById("stepWarlordCard").classList.remove("hidden");
       document.getElementById("stepUnitsCard").classList.remove("hidden");
 
       const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
-
-      // Filter Characters via Keyword column
       const charUnits = facUnits.filter(u =>
         String(u.Keywords || "").toLowerCase().includes("character") ||
         String(u.Role || "").toLowerCase().includes("character") ||
@@ -520,14 +524,8 @@
         opt.textContent = `[${u.Role}] ${u.Name} (${u.Tiers})`;
         selRegular.appendChild(opt);
       });
-
-      document.getElementById("warlordConfigPanel").classList.add("hidden");
-      document.getElementById("regularUnitConfigPanel").classList.add("hidden");
     }
 
-    // =========================================================================
-    // 3. UNIT & WARLORD STAGING CONFIGURATOR (Weapons, Enhancements, Stats)
-    // =========================================================================
     function parseTiers(tiersStr) {
       return String(tiersStr || "1:50").split(",").map(s => {
         const [m, p] = s.trim().split(":");
@@ -629,7 +627,7 @@
               <div><span class="text-zinc-500">AP:</span> ${w.AP}</div>
               <div><span class="text-zinc-500">D:</span> ${w.D}</div>
             </div>
-            ${w.Keywords && w.Keywords !== '-' ? `<div class="text-[10px] font-cogitator text-amber-400/90">Keywords: [${w.Keywords}]</div>` : ''}
+            ${w.Keywords && w.Keywords !== '-' ? `<div class="text-[10px] font-cogitator text-amber-400/90">Keywords: [${linkifyText(w.Keywords)}]</div>` : ''}
           </div>
         `;
       }).join("");
@@ -660,7 +658,7 @@
           </div>
 
           <div class="text-xs bg-zinc-950/60 p-2 rounded border border-zinc-800/80 space-y-1">
-            <div><span class="text-amber-500 font-bold">Abilities:</span> <span class="text-zinc-300">${u.Abilities}</span></div>
+            <div><span class="text-amber-500 font-bold">Abilities:</span> <span class="text-zinc-300">${linkifyText(u.Abilities)}</span></div>
             <div class="text-[10px] font-cogitator text-zinc-400"><span class="text-zinc-500">Keywords:</span> ${u.Keywords}</div>
           </div>
 
@@ -682,7 +680,7 @@
                 <select onchange="changeStagingEnhancement('${mode}', this.value)" class="w-full bg-zinc-950 border border-amber-600/50 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                   ${enhOptionsHtml}
                 </select>
-                ${selectedEnhObj ? `<div class="mt-1.5 p-2 bg-amber-950/20 border border-amber-600/30 rounded text-[11px] text-amber-200">${selectedEnhObj.desc}</div>` : ''}
+                ${selectedEnhObj ? `<div class="mt-1.5 p-2 bg-amber-950/20 border border-amber-600/30 rounded text-[11px] text-amber-200">${linkifyText(selectedEnhObj.desc)}</div>` : ''}
               </div>
             `
           ) : ''}
@@ -737,19 +735,13 @@
       const enhList = getEnhancementsFromDetachment(detObj);
       const chosenEnh = enhList.find(e => e.name === stg.enhancementName) || null;
 
-      if (mode === "warlord") {
-        state.roster.forEach(r => r.isWarlord = false);
-      }
+      if (mode === "warlord") state.roster.forEach(r => r.isWarlord = false);
 
       const equippedWeapons = [];
       stg.weaponsList.forEach((w, idx) => {
         const c = stg.weaponCounts[idx] || 0;
         if (c > 0) {
-          equippedWeapons.push({
-            ...w,
-            count: c,
-            maxAllowed: getWeaponMaxForModels(w, activeTier.models)
-          });
+          equippedWeapons.push({ ...w, count: c, maxAllowed: getWeaponMaxForModels(w, activeTier.models) });
         }
       });
 
@@ -773,12 +765,11 @@
         document.getElementById("regularUnitConfigPanel").classList.add("hidden");
         state.staging.regular = null;
       }
-
       renderRoster();
     }
 
     // =========================================================================
-    // 4. RIGHT COLUMN: ROSTER DISPLAY & 11TH ED VALIDATION ENGINE
+    // ROSTER RENDERER
     // =========================================================================
     function renderRoster() {
       const subtitle = document.getElementById("rosterSubtitle");
@@ -807,7 +798,7 @@
             <span class="font-bold text-amber-400 uppercase font-imperial">${detObj.DetachmentName}</span>
             <span class="text-[10px] font-cogitator text-red-400">${detObj.RuleName}</span>
           </div>
-          <p class="text-zinc-300 text-[11px]">${detObj.RuleDesc}</p>
+          <p class="text-zinc-300 text-[11px]">${linkifyText(detObj.RuleDesc)}</p>
         `;
       } else {
         detPill.classList.add("hidden");
@@ -822,48 +813,26 @@
         const itemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
         totalPts += itemPts;
         unitCounts[item.unitName] = (unitCounts[item.unitName] || 0) + 1;
-
-        if (item.enhancement) {
-          enhancementNames.push(item.enhancement.name);
-        }
-
+        if (item.enhancement) enhancementNames.push(item.enhancement.name);
         item.weapons.forEach(w => {
-          if (w.count > w.maxAllowed) {
-            errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max permitted for ${item.models} models is ${w.maxAllowed}).`);
-          }
+          if (w.count > w.maxAllowed) errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max ${w.maxAllowed}).`);
         });
       });
 
       Object.keys(unitCounts).forEach(uName => {
         const sample = state.roster.find(r => r.unitName === uName);
-        const maxAllowed = sample ? sample.maxInArmy : 3;
-        if (unitCounts[uName] > maxAllowed) {
-          errors.push(`[FORCE ORG VIOLATION] ${uName} (${sample.role}): ${unitCounts[uName]} units enlisted, exceeding maximum cap of ${maxAllowed}.`);
-        }
+        if (unitCounts[uName] > sample.maxInArmy) errors.push(`[FORCE ORG] ${uName}: Exceeds max cap of ${sample.maxInArmy}.`);
       });
 
-      if (state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) {
-        errors.push(`[COMMAND ERROR] No Warlord designated. Every Battle-Forged army must include 1 Character Warlord.`);
-      }
+      if (state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) errors.push(`[COMMAND ERROR] No Warlord designated.`);
+      if (enhancementNames.length > 3) errors.push(`[ENHANCEMENT LIMIT] Max 3 enhancements permitted.`);
 
-      if (enhancementNames.length > 3) {
-        errors.push(`[ENHANCEMENT LIMIT] Army contains ${enhancementNames.length} Enhancements (Maximum permitted is 3).`);
-      }
-      const dupEnh = enhancementNames.filter((item, index) => enhancementNames.indexOf(item) !== index);
-      if (dupEnh.length > 0) {
-        errors.push(`[DUPLICATE ENHANCEMENT] "${dupEnh[0]}" has been assigned to multiple Characters.`);
-      }
-
-      if (state.pointsLimit > 0 && totalPts > state.pointsLimit) {
-        errors.push(`[POINTS EXCEEDED] Total requisitioned points (${totalPts} pts) exceeds battle size limit (${state.pointsLimit} pts) by ${totalPts - state.pointsLimit} pts.`);
-      }
+      if (state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
 
       ptsText.textContent = `${totalPts} / ${state.pointsLimit} pts`;
       const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
       ptsBar.style.width = pct + "%";
-      ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit)
-        ? "bg-red-600 h-full transition-all duration-300"
-        : "bg-amber-500 h-full transition-all duration-300";
+      ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
 
       if (errors.length > 0) {
         errorBox.classList.remove("hidden");
@@ -889,14 +858,11 @@
 
       sortedRoster.forEach(item => {
         const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
-        const isOverUnitCap = unitCounts[item.unitName] > item.maxInArmy;
-        const hasWeaponError = item.weapons.some(w => w.count > w.maxAllowed);
-
         const weaponsListHtml = item.weapons.map(w => `
           <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
             <div>
               <span class="text-amber-400 font-cogitator font-bold">${w.count}x</span> ${w.WeaponName}
-              ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/80 font-cogitator ml-1">[${w.Keywords}]</span>` : ''}
+              ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/80 font-cogitator ml-1">[${linkifyText(w.Keywords)}]</span>` : ''}
             </div>
             <div class="font-cogitator text-[10px] text-zinc-400">
               Rng:${w.Range} | A:${w.A} | BS/WS:${w.BS_WS} | S:${w.S} | AP:${w.AP} | D:${w.D}
@@ -905,7 +871,7 @@
         `).join("");
 
         const card = document.createElement("div");
-        card.className = `p-3.5 rounded bg-zinc-950 border ${isOverUnitCap || hasWeaponError ? 'border-red-600' : item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} space-y-2`;
+        card.className = `p-3.5 rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} space-y-2`;
         card.innerHTML = `
           <div class="flex items-start justify-between gap-2 border-b border-zinc-800 pb-2">
             <div>
@@ -930,7 +896,7 @@
           ${item.enhancement ? `
             <div class="p-2 rounded bg-amber-950/20 border border-amber-600/30 text-xs">
               <span class="font-bold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
-              <p class="text-[11px] text-zinc-300 mt-0.5">${item.enhancement.desc}</p>
+              <p class="text-[11px] text-zinc-300 mt-0.5">${linkifyText(item.enhancement.desc)}</p>
             </div>
           ` : ''}
 
@@ -940,7 +906,7 @@
           </div>
 
           <div class="text-[11px] text-zinc-400 pt-1">
-            <span class="text-amber-500/90 font-bold">Abilities:</span> ${item.abilities}
+            <span class="text-amber-500/90 font-bold">Abilities:</span> ${linkifyText(item.abilities)}
           </div>
         `;
         container.appendChild(card);
@@ -971,9 +937,7 @@
         total += pts;
         txt += `• ${r.unitName} (${r.models} models, ${pts} pts)${r.isWarlord ? ' [WARLORD]' : ''}\n`;
         if (r.enhancement) txt += `  Enhancement: ${r.enhancement.name} (+${r.enhancement.pts} pts)\n`;
-        r.weapons.forEach(w => {
-          txt += `  - ${w.count}x ${w.WeaponName}\n`;
-        });
+        r.weapons.forEach(w => { txt += `  - ${w.count}x ${w.WeaponName}\n`; });
         txt += `\n`;
       });
       txt += `TOTAL POINTS: ${total} / ${state.pointsLimit} pts`;
