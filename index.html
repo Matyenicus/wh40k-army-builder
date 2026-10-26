@@ -292,7 +292,7 @@
       </section>
     </div>
 
-    <!-- VIEW 2: BATTLE COGITATOR (In-Game Tabletop Mode) -->
+    <!-- VIEW 2: BATTLE COGITATOR (In-Game Tabletop Mode - Extra Large Readability) -->
     <div id="viewBattle" class="hidden space-y-4">
       <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
         <div class="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-3">
@@ -305,7 +305,7 @@
           <div id="battleHeaderInfo" class="text-xs font-cogitator text-amber-300">0 Units Enlisted</div>
         </div>
 
-        <div id="battleUnitsContainer" class="space-y-2">
+        <div id="battleUnitsContainer" class="space-y-3">
           <!-- Populated dynamically -->
         </div>
       </div>
@@ -719,11 +719,12 @@
       document.getElementById("stepUnitsCard").classList.remove("hidden");
 
       const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
-      const charUnits = facUnits.filter(u =>
-        String(u.Keywords || "").toLowerCase().includes("character") ||
-        String(u.Role || "").toLowerCase().includes("character") ||
-        String(u.Role || "").toLowerCase().includes("epic hero")
-      );
+      
+      // Filter characters where CanBeWarlord == "yes" (case-insensitive)
+      const charUnits = facUnits.filter(u => {
+        const canWarlord = String(u.CanBeWarlord || "").trim().toLowerCase();
+        return canWarlord === "yes";
+      });
 
       const selWarlord = document.getElementById("selWarlordUnit");
       selWarlord.innerHTML = `<option value="">-- Select Character as Warlord --</option>`;
@@ -1148,7 +1149,7 @@
     }
 
     // =========================================================================
-    // BATTLE COGITATOR (In-Game Tabletop Mode Renderer)
+    // BATTLE COGITATOR (In-Game Tabletop Mode - Extra Large Readability)
     // =========================================================================
     function renderBattleCogitatorView() {
       const container = document.getElementById("battleUnitsContainer");
@@ -1177,84 +1178,84 @@
         const collapseId = `battleUnit_${item.id}`;
 
         const weaponsListHtml = item.weapons.map(w => `
-          <div class="flex flex-wrap items-center justify-between text-xs py-1.5 border-b border-zinc-800/80 text-zinc-200">
-            <div>
-              <span class="text-amber-400 font-cogitator font-bold text-sm">${w.count}x</span> <span class="font-bold">${w.WeaponName}</span>
-              <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 ml-1">${w.Type}</span>
-              ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/90 font-cogitator ml-1">[${linkifyText(w.Keywords)}]</span>` : ''}
-            </div>
-            <div class="font-cogitator text-xs text-amber-200/90 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-              Rng: ${w.Range} | A: ${w.A} | BS/WS: ${w.BS_WS} | S: ${w.S} | AP: ${w.AP} | D: ${w.D}
+          <div class="p-3 rounded-md bg-zinc-950 border border-zinc-800 space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="font-bold text-sm md:text-base text-amber-300">${w.count}x ${w.WeaponName}</span>
+                <span class="text-xs font-cogitator px-2 py-0.5 rounded bg-zinc-900 text-zinc-300 ml-1.5">${w.Type}</span>
+                ${w.Keywords && w.Keywords !== '-' ? `<span class="text-xs text-amber-400/90 font-cogitator block mt-1">[${linkifyText(w.Keywords)}]</span>` : ''}
+              </div>
+              <div class="font-cogitator text-xs md:text-sm text-zinc-200 bg-zinc-900 px-3 py-1.5 rounded-md border border-zinc-800 flex flex-wrap gap-3">
+                <div><span class="text-zinc-500">RNG:</span> <strong class="text-zinc-100">${w.Range}</strong></div>
+                <div><span class="text-zinc-500">A:</span> <strong class="text-zinc-100">${w.A}</strong></div>
+                <div><span class="text-zinc-500">BS/WS:</span> <strong class="text-zinc-100">${w.BS_WS}</strong></div>
+                <div><span class="text-zinc-500">S:</span> <strong class="text-zinc-100">${w.S}</strong></div>
+                <div><span class="text-zinc-500">AP:</span> <strong class="text-zinc-100">${w.AP}</strong></div>
+                <div><span class="text-zinc-500">D:</span> <strong class="text-amber-400">${w.D}</strong></div>
+              </div>
             </div>
           </div>
         `).join("");
 
         const card = document.createElement("div");
-        card.className = `rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500/80 shadow-[0_0_10px_rgba(197,155,39,0.15)]' : 'border-zinc-800'} overflow-hidden transition`;
+        card.className = `rounded-lg bg-zinc-950 border ${item.isWarlord ? 'border-amber-500 shadow-[0_0_20px_rgba(197,155,39,0.25)]' : 'border-zinc-800'} overflow-hidden transition`;
         
         card.innerHTML = `
-          <!-- Collapsed Header Bar -->
-          <div onclick="toggleBattleUnitCard('${collapseId}')" class="p-3.5 bg-zinc-900/80 hover:bg-zinc-900 flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none">
+          <!-- Collapsed Header Bar with Extra Large Stats -->
+          <div onclick="toggleBattleUnitCard('${collapseId}')" class="p-4 md:p-5 bg-zinc-900/95 hover:bg-zinc-900 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 cursor-pointer select-none">
             <div class="flex items-center gap-3 flex-wrap">
-              <span class="font-imperial font-bold text-sm text-zinc-100 uppercase">${item.unitName}</span>
-              ${item.isWarlord ? `<span class="px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-cogitator text-[10px] font-bold"><i class="fa-solid fa-crown"></i> WARLORD</span>` : ''}
-              <span class="text-[11px] font-cogitator text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">${item.models} Model(s)</span>
-              <span class="text-[11px] font-cogitator text-zinc-500">[${item.role}]</span>
+              <span class="font-imperial font-bold text-base md:text-xl text-zinc-100 uppercase tracking-wide">${item.unitName}</span>
+              ${item.isWarlord ? `<span class="px-2.5 py-1 rounded bg-amber-500 text-zinc-950 font-cogitator text-xs md:text-sm font-bold"><i class="fa-solid fa-crown mr-1"></i> WARLORD</span>` : ''}
+              <span class="text-xs md:text-sm font-cogitator text-zinc-200 bg-zinc-950 px-3 py-1 rounded border border-zinc-800">${item.models} Model(s)</span>
+              <span class="text-xs md:text-sm font-cogitator text-zinc-400">[${item.role}]</span>
             </div>
 
-            <!-- Quick Glance Stat Strip -->
-            <div class="flex items-center gap-4">
-              <div class="hidden sm:flex items-center gap-3 font-cogitator text-xs text-zinc-300 bg-zinc-950 px-3 py-1 rounded border border-zinc-800">
-                <div><span class="text-zinc-500">M:</span> <strong class="text-zinc-100">${item.stats.M}</strong></div>
-                <div><span class="text-zinc-500">T:</span> <strong class="text-zinc-100">${item.stats.T}</strong></div>
-                <div><span class="text-zinc-500">SV:</span> <strong class="text-zinc-100">${item.stats.SV}</strong></div>
-                <div><span class="text-zinc-500">W:</span> <strong class="text-zinc-100">${item.stats.W}</strong></div>
-                <div><span class="text-zinc-500">LD:</span> <strong class="text-zinc-100">${item.stats.LD}</strong></div>
-                <div><span class="text-zinc-500">OC:</span> <strong class="text-zinc-100">${item.stats.OC}</strong></div>
-                <div><span class="text-zinc-500">INV:</span> <strong class="text-amber-400">${item.stats.Invuln}</strong></div>
+            <!-- Extra Large Tabletop Stat Strip -->
+            <div class="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
+              <div class="grid grid-cols-7 gap-1 md:gap-2 font-cogitator text-xs md:text-sm text-zinc-200 bg-zinc-950 px-3.5 py-2 rounded-lg border border-zinc-800 text-center">
+                <div class="px-1.5"><span class="text-[10px] md:text-xs text-zinc-500 block">M</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.M}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">T</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.T}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">SV</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.SV}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">W</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.W}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">LD</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.LD}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">OC</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.OC}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">INV</span> <strong class="text-base md:text-lg text-amber-400">${item.stats.Invuln}</strong></div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <span class="font-cogitator font-bold text-sm text-amber-400">${totalItemPts} pts</span>
-                <i id="icon_${collapseId}" class="fa-solid fa-chevron-down text-zinc-400 text-xs transition-transform duration-200"></i>
+              <div class="flex items-center gap-3">
+                <span class="font-cogitator font-bold text-lg md:text-xl text-amber-400">${totalItemPts} pts</span>
+                <i id="icon_${collapseId}" class="fa-solid fa-chevron-down text-zinc-400 text-base transition-transform duration-200"></i>
               </div>
             </div>
           </div>
 
           <!-- Expanded Full Dataslate Body -->
-          <div id="${collapseId}" class="hidden p-4 space-y-3 bg-[#0f1115] border-t border-zinc-800">
-            <!-- Mobile Stat Strip -->
-            <div class="grid grid-cols-7 gap-1 sm:hidden bg-zinc-950 p-2 rounded border border-zinc-800 text-center font-cogitator text-[11px]">
-              <div><span class="text-[9px] text-zinc-500 block">M</span><strong class="text-zinc-100">${item.stats.M}</strong></div>
-              <div><span class="text-[9px] text-zinc-500 block">T</span><strong class="text-zinc-100">${item.stats.T}</strong></div>
-              <div><span class="text-[9px] text-zinc-500 block">SV</span><strong class="text-zinc-100">${item.stats.SV}</strong></div>
-              <div><span class="text-[9px] text-zinc-500 block">W</span><strong class="text-zinc-100">${item.stats.W}</strong></div>
-              <div><span class="text-[9px] text-zinc-500 block">LD</span><strong class="text-zinc-100">${item.stats.LD}</strong></div>
-              <div><span class="text-[9px] text-zinc-500 block">OC</span><strong class="text-zinc-100">${item.stats.OC}</strong></div>
-              <div><span class="text-[9px] text-zinc-500 block">INV</span><strong class="text-amber-400">${item.stats.Invuln}</strong></div>
-            </div>
-
+          <div id="${collapseId}" class="hidden p-4 md:p-5 space-y-4 bg-[#0d0f13] border-t border-zinc-800">
             ${item.enhancement ? `
-              <div class="p-2.5 rounded bg-amber-950/20 border border-amber-600/40 text-xs">
-                <span class="font-bold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
-                <p class="text-zinc-300 mt-1">${linkifyText(item.enhancement.desc)}</p>
+              <div class="p-3.5 rounded-md bg-amber-950/20 border border-amber-600/40 text-sm">
+                <span class="font-bold text-base text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
+                <p class="text-zinc-200 mt-1.5 text-sm md:text-base leading-relaxed">${linkifyText(item.enhancement.desc)}</p>
               </div>
             ` : ''}
 
-            <!-- Wargear List -->
-            <div class="space-y-1">
-              <div class="text-[11px] font-cogitator text-amber-500 uppercase font-bold tracking-wider"><i class="fa-solid fa-crosshairs mr-1"></i> Equipped Wargear & Weapons</div>
-              <div class="bg-zinc-950 p-2.5 rounded border border-zinc-800 space-y-1">
+            <!-- Wargear & Weapons Section -->
+            <div class="space-y-2">
+              <div class="text-xs md:text-sm font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-base"></i> Equipped Wargear & Weapons
+              </div>
+              <div class="space-y-2">
                 ${weaponsListHtml || '<div class="text-xs text-zinc-500 font-cogitator">Standard Close Combat Weapons</div>'}
               </div>
             </div>
 
-            <!-- Abilities & Keywords -->
-            <div class="space-y-1 pt-1">
-              <div class="text-[11px] font-cogitator text-amber-500 uppercase font-bold tracking-wider"><i class="fa-solid fa-book-bookmark mr-1"></i> Datasheet Abilities</div>
-              <div class="text-xs bg-zinc-950 p-3 rounded border border-zinc-800 text-zinc-300 leading-relaxed space-y-1">
+            <!-- Abilities & Keywords Section -->
+            <div class="space-y-2 pt-3 border-t border-zinc-900">
+              <div class="text-xs md:text-sm font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-book-bookmark text-base"></i> Datasheet Abilities & Rules
+              </div>
+              <div class="text-sm md:text-base bg-zinc-950 p-4 rounded-md border border-zinc-800 text-zinc-200 leading-relaxed space-y-3">
                 <div>${linkifyText(item.abilities)}</div>
-                <div class="text-[10px] font-cogitator text-zinc-500 pt-2 border-t border-zinc-900"><span class="text-zinc-400">Keywords:</span> ${item.keywords}</div>
+                <div class="text-xs md:text-sm font-cogitator text-zinc-400 pt-3 border-t border-zinc-900"><span class="text-zinc-500">Keywords:</span> ${item.keywords}</div>
               </div>
             </div>
           </div>
@@ -1268,10 +1269,10 @@
       const icon = document.getElementById(`icon_${collapseId}`);
       if (body.classList.contains("hidden")) {
         body.classList.remove("hidden");
-        icon.className = "fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200";
+        icon.className = "fa-solid fa-chevron-up text-amber-400 text-base transition-transform duration-200";
       } else {
         body.classList.add("hidden");
-        icon.className = "fa-solid fa-chevron-down text-zinc-400 text-xs transition-transform duration-200";
+        icon.className = "fa-solid fa-chevron-down text-zinc-400 text-base transition-transform duration-200";
       }
     }
 
