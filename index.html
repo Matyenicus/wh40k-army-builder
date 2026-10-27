@@ -188,7 +188,7 @@
           </div>
 
           <div class="space-y-2">
-            <div class="text-xs font-cogitator text-zinc-400 uppercase">Available Detachments & Rules:</div>
+            <div class="text-xs font-cogitator text-zinc-400 uppercase">Available Detachments & Force Dispositions:</div>
             <div id="detachmentOverviewList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
           </div>
 
@@ -343,7 +343,7 @@
       { KeywordOrAbility: "Lone Operative", Category: "Ability", Description: "Unless part of an Attached unit, this unit can only be targeted if the attacker is within 12\"." }
     ];
 
-    let DB = { Factions: [], Detachments: [], Units: [], Weapons: [], Glossary: [] };
+    let DB = { Factions: [], Detachments: [], Dispositions: [], Units: [], Weapons: [], Glossary: [] };
     let GLOSSARY_MATCHERS = [];
 
     let state = {
@@ -404,6 +404,7 @@
             DB = {
               Factions: getTab("Factions"),
               Detachments: getTab("Detachments"),
+              Dispositions: getTab("Dispositions"),
               Units: getTab("Units"),
               Weapons: getTab("Weapons"),
               Glossary: getTab("Glossary")
@@ -413,14 +414,15 @@
         } catch (e) {}
 
         if (!loaded) {
-          const [f, d, u, w, g] = await Promise.all([
+          const [f, d, disp, u, w, g] = await Promise.all([
             fetchSheetTabCSV("Factions"),
             fetchSheetTabCSV("Detachments"),
+            fetchSheetTabCSV("Dispositions").catch(() => []),
             fetchSheetTabCSV("Units"),
             fetchSheetTabCSV("Weapons"),
             fetchSheetTabCSV("Glossary").catch(() => [])
           ]);
-          DB = { Factions: f, Detachments: d, Units: u, Weapons: w, Glossary: g };
+          DB = { Factions: f, Detachments: d, Dispositions: disp, Units: u, Weapons: w, Glossary: g };
         }
 
         const mergedGlossary = [...DB.Glossary];
@@ -666,6 +668,10 @@
 
       const facDets = DB.Detachments.filter(d => String(d.Faction).trim() === state.faction);
       facDets.forEach(d => {
+        const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(d.DetachmentName).trim().toLowerCase());
+        const dispositionName = dispObj ? dispObj.ForceDisposition : "Standard Deployment";
+        const focusDesc = dispObj ? dispObj.MissionFocus : "";
+
         const item = document.createElement("div");
         item.className = "p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1";
         const enhs = getEnhancementsFromDetachment(d);
@@ -674,16 +680,18 @@
         item.innerHTML = `
           <div class="flex justify-between items-center">
             <span class="font-bold text-amber-400 uppercase font-imperial">${d.DetachmentName}</span>
-            <span class="text-[10px] font-cogitator text-red-400">Rule: ${d.RuleName}</span>
+            <span class="text-[10px] font-cogitator text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/50">Disposition: ${dispositionName}</span>
           </div>
+          <div class="text-[10px] font-cogitator text-red-400">Rule: ${d.RuleName}</div>
           <p class="text-zinc-300 text-[11px] leading-relaxed">${linkifyText(d.RuleDesc)}</p>
+          ${focusDesc ? `<div class="text-[10px] text-zinc-400 italic">Focus: ${focusDesc}</div>` : ''}
           ${enhHtml ? `<div class="pt-1 border-t border-zinc-900"><span class="text-[10px] font-cogitator text-zinc-500 block">ENHANCEMENTS:</span>${enhHtml}</div>` : ''}
         `;
         overviewList.appendChild(item);
 
         const opt = document.createElement("option");
         opt.value = d.DetachmentName;
-        opt.textContent = `${d.DetachmentName} — [${d.RuleName}]`;
+        opt.textContent = `${d.DetachmentName} — [${dispositionName}]`;
         selDet.appendChild(opt);
       });
     }
@@ -720,7 +728,6 @@
 
       const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
       
-      // Filter characters where CanBeWarlord == "yes" (case-insensitive)
       const charUnits = facUnits.filter(u => {
         const canWarlord = String(u.CanBeWarlord || "").trim().toLowerCase();
         return canWarlord === "yes";
@@ -1022,11 +1029,14 @@
       subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS`;
 
       const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
+      const dispText = dispObj ? ` // Force Disposition: ${dispObj.ForceDisposition}` : '';
+
       if (detObj && detPill) {
         detPill.classList.remove("hidden");
         detPill.innerHTML = `
           <div class="flex justify-between items-center">
-            <span class="font-bold text-amber-400 uppercase font-imperial">${detObj.DetachmentName}</span>
+            <span class="font-bold text-amber-400 uppercase font-imperial">${detObj.DetachmentName} ${dispText}</span>
             <span class="text-[10px] font-cogitator text-red-400">${detObj.RuleName}</span>
           </div>
           <p class="text-zinc-300 text-[11px]">${linkifyText(detObj.RuleDesc)}</p>
