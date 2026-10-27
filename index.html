@@ -158,15 +158,15 @@
             </div>
 
             <div id="stepPointsWrapper" class="opacity-40 pointer-events-none transition">
-              <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">2. Battle Size (Points)</label>
+              <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">2. Battle Size & DP Budget</label>
               <select id="selPoints" onchange="onSelectPoints()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
                 <option value="">-- Choose Points --</option>
-                <option value="500">500 pts</option>
-                <option value="1000">1000 pts</option>
-                <option value="1500">1500 pts</option>
-                <option value="2000">2000 pts</option>
-                <option value="2500">2500 pts</option>
-                <option value="3000">3000 pts</option>
+                <option value="500">500 pts (1 DP)</option>
+                <option value="1000">1000 pts (2 DP)</option>
+                <option value="1500">1500 pts (3 DP)</option>
+                <option value="2000">2000 pts (3 DP)</option>
+                <option value="2500">2500 pts (4 DP)</option>
+                <option value="3000">3000 pts (4 DP)</option>
               </select>
             </div>
           </div>
@@ -178,25 +178,32 @@
           </div>
         </div>
 
-        <!-- STEP 3 -->
-        <div id="stepDetachmentCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
+        <!-- STEP 3 (Simplified & Clean Detachment & Disposition Selector) -->
+        <div id="stepDetachmentCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-3">
           <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
             <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
-              <i class="fa-solid fa-scroll text-red-600"></i> II. 11th Edition Detachment Doctrine
+              <i class="fa-solid fa-scroll text-red-600"></i> II. Detachment Selection
             </h2>
-            <span class="text-[11px] font-cogitator text-zinc-500">STEP 3</span>
+            <span id="dpBudgetText" class="text-[11px] font-cogitator text-amber-400 font-bold">BUDGET: -- DP</span>
           </div>
 
-          <div class="space-y-2">
-            <div class="text-xs font-cogitator text-zinc-400 uppercase">Available Detachments & Force Dispositions:</div>
-            <div id="detachmentOverviewList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
-          </div>
-
-          <div class="pt-2 border-t border-zinc-800">
-            <label class="block text-xs font-cogitator text-amber-500 uppercase mb-1">3. Select Active Detachment</label>
+          <div>
+            <label class="block text-xs font-cogitator text-amber-500 uppercase mb-1">3. Select Active Detachment (From DP Budget)</label>
             <select id="selDetachment" onchange="onSelectDetachment()" class="w-full bg-zinc-950 border border-amber-600/60 rounded px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
               <option value="">-- Select Active Detachment --</option>
             </select>
+          </div>
+
+          <div id="selectedDetachmentInfoBox" class="hidden bg-zinc-950/90 border border-zinc-800 p-3 rounded space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span id="infoDetRuleName" class="font-bold text-red-400 font-cogitator uppercase">Rule Name</span>
+              <span id="infoForceDisp" class="px-2 py-0.5 rounded bg-emerald-950/50 border border-emerald-800 text-emerald-400 font-cogitator text-[10px]">Disposition</span>
+            </div>
+            <p id="infoDetDesc" class="text-zinc-300 leading-relaxed"></p>
+            <div id="infoEnhancementsWrapper" class="pt-2 border-t border-zinc-900">
+              <span class="text-[10px] font-cogitator text-zinc-500 block mb-1">AVAILABLE ENHANCEMENTS:</span>
+              <div id="infoEnhancementsList" class="flex flex-wrap gap-1"></div>
+            </div>
           </div>
         </div>
 
@@ -349,10 +356,18 @@
     let state = {
       faction: "",
       pointsLimit: 0,
+      dpBudget: 0,
       detachmentName: "",
       roster: [],
       staging: { warlord: null, regular: null }
     };
+
+    function getDPBudgetForPoints(pts) {
+      if (pts <= 500) return 1;
+      if (pts <= 1000) return 2;
+      if (pts <= 2000) return 3;
+      return 4; // 2500+ pts
+    }
 
     // Tab Switcher
     function switchTab(viewName) {
@@ -452,6 +467,7 @@
       localStorage.setItem("matyenicus_saved_roster", JSON.stringify({
         faction: state.faction,
         pointsLimit: state.pointsLimit,
+        dpBudget: state.dpBudget,
         detachmentName: state.detachmentName,
         roster: state.roster
       }));
@@ -464,6 +480,7 @@
           const data = JSON.parse(saved);
           state.faction = data.faction || "";
           state.pointsLimit = data.pointsLimit || 0;
+          state.dpBudget = data.dpBudget || getDPBudgetForPoints(state.pointsLimit);
           state.detachmentName = data.detachmentName || "";
           state.roster = data.roster || [];
 
@@ -500,6 +517,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
         faction: state.faction,
         pointsLimit: state.pointsLimit,
+        dpBudget: state.dpBudget,
         detachmentName: state.detachmentName,
         roster: state.roster
       }, null, 2));
@@ -520,6 +538,7 @@
             const data = JSON.parse(e.target.result);
             state.faction = data.faction || "";
             state.pointsLimit = data.pointsLimit || 0;
+            state.dpBudget = data.dpBudget || getDPBudgetForPoints(state.pointsLimit);
             state.detachmentName = data.detachmentName || "";
             state.roster = data.roster || [];
 
@@ -654,6 +673,11 @@
     function onSelectPoints() {
       const pts = parseInt(document.getElementById("selPoints").value) || 0;
       state.pointsLimit = pts;
+      state.dpBudget = getDPBudgetForPoints(pts);
+      
+      const dpBudgetEl = document.getElementById("dpBudgetText");
+      if (dpBudgetEl) dpBudgetEl.textContent = `BUDGET: ${state.dpBudget} DP`;
+
       if (pts > 0 && state.faction) unlockDetachmentStep();
     }
 
@@ -661,39 +685,22 @@
       const detCard = document.getElementById("stepDetachmentCard");
       detCard.classList.remove("hidden");
 
-      const overviewList = document.getElementById("detachmentOverviewList");
       const selDet = document.getElementById("selDetachment");
-      overviewList.innerHTML = "";
-      selDet.innerHTML = `<option value="">-- Select Active Detachment --</option>`;
+      selDet.innerHTML = `<option value="">-- Select Active Detachment (${state.dpBudget} DP Available) --</option>`;
 
       const facDets = DB.Detachments.filter(d => String(d.Faction).trim() === state.faction);
       facDets.forEach(d => {
         const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(d.DetachmentName).trim().toLowerCase());
         const dispositionName = dispObj ? dispObj.ForceDisposition : "Standard Deployment";
-        const focusDesc = dispObj ? dispObj.MissionFocus : "";
-
-        const item = document.createElement("div");
-        item.className = "p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1";
-        const enhs = getEnhancementsFromDetachment(d);
-        const enhHtml = enhs.map(e => `<span class="inline-block bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded text-[10px] text-amber-300 mr-1 mt-1">${e.name} (${e.pts} pts)</span>`).join("");
-
-        item.innerHTML = `
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-amber-400 uppercase font-imperial">${d.DetachmentName}</span>
-            <span class="text-[10px] font-cogitator text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/50">Disposition: ${dispositionName}</span>
-          </div>
-          <div class="text-[10px] font-cogitator text-red-400">Rule: ${d.RuleName}</div>
-          <p class="text-zinc-300 text-[11px] leading-relaxed">${linkifyText(d.RuleDesc)}</p>
-          ${focusDesc ? `<div class="text-[10px] text-zinc-400 italic">Focus: ${focusDesc}</div>` : ''}
-          ${enhHtml ? `<div class="pt-1 border-t border-zinc-900"><span class="text-[10px] font-cogitator text-zinc-500 block">ENHANCEMENTS:</span>${enhHtml}</div>` : ''}
-        `;
-        overviewList.appendChild(item);
 
         const opt = document.createElement("option");
         opt.value = d.DetachmentName;
-        opt.textContent = `${d.DetachmentName} — [${dispositionName}]`;
+        opt.textContent = `${d.DetachmentName} [${dispositionName}]`;
         selDet.appendChild(opt);
       });
+
+      // Hide info box until selection
+      document.getElementById("selectedDetachmentInfoBox").classList.add("hidden");
     }
 
     function getEnhancementsFromDetachment(detRow) {
@@ -714,11 +721,31 @@
     function onSelectDetachment() {
       const detName = document.getElementById("selDetachment").value;
       state.detachmentName = detName;
+
+      const infoBox = document.getElementById("selectedDetachmentInfoBox");
       if (!detName) {
+        infoBox.classList.add("hidden");
         document.getElementById("stepWarlordCard").classList.add("hidden");
         document.getElementById("stepUnitsCard").classList.add("hidden");
         return;
       }
+
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === detName);
+      const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === detName.toLowerCase());
+      
+      if (detObj) {
+        infoBox.classList.remove("hidden");
+        document.getElementById("infoDetRuleName").textContent = `Rule: ${detObj.RuleName}`;
+        document.getElementById("infoForceDisp").textContent = dispObj ? `Disposition: ${dispObj.ForceDisposition}` : "Disposition: Standard";
+        document.getElementById("infoDetDesc").innerHTML = linkifyText(detObj.RuleDesc);
+
+        const enhs = getEnhancementsFromDetachment(detObj);
+        const enhListEl = document.getElementById("infoEnhancementsList");
+        enhListEl.innerHTML = enhs.length > 0 
+          ? enhs.map(e => `<span class="inline-block bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded text-[10px] text-amber-300" title="${e.desc}">${e.name} (${e.pts} pts)</span>`).join("")
+          : '<span class="text-zinc-500 text-[10px]">No enhancements listed.</span>';
+      }
+
       unlockWarlordAndUnitsSteps();
     }
 
@@ -1026,7 +1053,7 @@
         return;
       }
 
-      subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS`;
+      subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS (${state.dpBudget} DP)`;
 
       const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
       const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
@@ -1305,7 +1332,7 @@
       let total = 0;
       let txt = `+++ MATYENICUS ARMY ROSTER (${state.faction.toUpperCase()}) +++\n`;
       txt += `Detachment: ${state.detachmentName}\n`;
-      txt += `Battle Size: ${state.pointsLimit} pts\n\n`;
+      txt += `Battle Size: ${state.pointsLimit} pts (${state.dpBudget} DP)\n\n`;
 
       state.roster.forEach(r => {
         const pts = r.basePts + (r.enhancement ? r.enhancement.pts : 0);
