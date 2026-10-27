@@ -74,14 +74,14 @@
   <!-- =====================================================================
        GLOSSARY MODAL POPUP
        ===================================================================== -->
-  <div id="glossaryModal" onclick="closeGlossaryModal()" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="glossaryModal" onclick="closeGlossaryModal(); playCogitatorClick();" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
         <div class="flex items-center gap-2 text-amber-400">
           <i class="fa-solid fa-book-journal-whills text-red-600"></i>
           <h3 id="modalTermTitle" class="font-imperial font-bold text-base uppercase">Term Definition</h3>
         </div>
-        <button onclick="closeGlossaryModal()" class="text-zinc-400 hover:text-zinc-100 p-1">
+        <button onclick="closeGlossaryModal(); playCogitatorClick();" class="text-zinc-400 hover:text-zinc-100 p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
@@ -90,7 +90,7 @@
       </div>
       <p id="modalTermDesc" class="text-zinc-200 text-sm leading-relaxed pt-1"></p>
       <div class="pt-2 border-t border-zinc-800/80 text-right">
-        <button onclick="closeGlossaryModal()" class="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-cogitator text-amber-300 uppercase transition">
+        <button onclick="closeGlossaryModal(); playCogitatorClick();" class="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-cogitator text-amber-300 uppercase transition">
           Acknowledge
         </button>
       </div>
@@ -121,10 +121,10 @@
 
       <!-- APP VIEW TABS -->
       <div class="flex items-center gap-2 mt-4 bg-zinc-950/80 p-1 rounded border border-zinc-800">
-        <button onclick="switchTab('builder')" id="tabBtnBuilder" class="px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+        <button onclick="switchTab('builder'); playRoboticBeep();" id="tabBtnBuilder" class="px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition">
           <i class="fa-solid fa-gears mr-1"></i> 1. Army Builder
         </button>
-        <button onclick="switchTab('battle')" id="tabBtnBattle" class="px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+        <button onclick="switchTab('battle'); playRoboticBeep();" id="tabBtnBattle" class="px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition">
           <i class="fa-solid fa-shield-cat mr-1"></i> 2. Battle Cogitator (In-Game)
         </button>
       </div>
@@ -152,14 +152,14 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">1. Select Faction</label>
-              <select id="selFaction" onchange="onSelectFaction()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+              <select id="selFaction" onchange="onSelectFaction(); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
                 <option value="">-- Choose Faction --</option>
               </select>
             </div>
 
             <div id="stepPointsWrapper" class="opacity-40 pointer-events-none transition">
               <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">2. Battle Size & DP Budget</label>
-              <select id="selPoints" onchange="onSelectPoints()" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+              <select id="selPoints" onchange="onSelectPoints(); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
                 <option value="">-- Choose Points --</option>
                 <option value="500">500 pts (1 DP)</option>
                 <option value="1000">1000 pts (2 DP)</option>
@@ -178,7 +178,7 @@
           </div>
         </div>
 
-        <!-- STEP 3 (Simplified & Clean Detachment & Disposition Selector) -->
+        <!-- STEP 3 -->
         <div id="stepDetachmentCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-3">
           <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
             <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
@@ -189,7 +189,7 @@
 
           <div>
             <label class="block text-xs font-cogitator text-amber-500 uppercase mb-1">3. Select Active Detachment (From DP Budget)</label>
-            <select id="selDetachment" onchange="onSelectDetachment()" class="w-full bg-zinc-950 border border-amber-600/60 rounded px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
+            <select id="selDetachment" onchange="onSelectDetachment(); playCogitatorClick();" class="w-full bg-zinc-950 border border-amber-600/60 rounded px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
               <option value="">-- Select Active Detachment --</option>
             </select>
           </div>
@@ -218,7 +218,7 @@
 
           <div>
             <label class="block text-xs font-cogitator text-zinc-400 uppercase mb-1">4. Choose Warlord Unit (Characters Only)</label>
-            <select id="selWarlordUnit" onchange="onChangeBuilderUnit('warlord')" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+            <select id="selWarlordUnit" onchange="onChangeBuilderUnit('warlord'); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
               <option value="">-- Select Character as Warlord --</option>
             </select>
           </div>
@@ -237,7 +237,7 @@
 
           <div>
             <label class="block text-xs font-cogitator text-zinc-400 uppercase mb-1">5. Select Unit to Customise & Enlist</label>
-            <select id="selRegularUnit" onchange="onChangeBuilderUnit('regular')" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+            <select id="selRegularUnit" onchange="onChangeBuilderUnit('regular'); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
               <option value="">-- Choose Unit from Datasheets --</option>
             </select>
           </div>
@@ -258,17 +258,17 @@
                 <p id="rosterSubtitle" class="text-xs font-cogitator text-zinc-400">AWAITING INITIAL DIRECTIVES...</p>
               </div>
               <div class="flex items-center gap-1.5 flex-wrap">
-                <button onclick="copyRosterToClipboard()" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-zinc-300 hover:text-amber-400 transition" title="Copy Text Roster">
+                <button onclick="copyRosterToClipboard(); playCogitatorClick();" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-zinc-300 hover:text-amber-400 transition" title="Copy Text Roster">
                   <i class="fa-solid fa-copy"></i> Copy
                 </button>
-                <button onclick="exportRosterJSON()" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-amber-300 hover:text-amber-200 transition" title="Save Roster File">
+                <button onclick="exportRosterJSON(); playCogitatorClick();" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-amber-300 hover:text-amber-200 transition" title="Save Roster File">
                   <i class="fa-solid fa-download"></i> Save
                 </button>
                 <label class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-emerald-300 hover:text-emerald-200 transition cursor-pointer" title="Load Roster File">
                   <i class="fa-solid fa-upload"></i> Load
-                  <input type="file" accept=".json" onchange="importRosterJSON(event)" class="hidden">
+                  <input type="file" accept=".json" onchange="importRosterJSON(event); playRoboticBeep();" class="hidden">
                 </label>
-                <button onclick="clearArmyRoster()" class="px-2 py-1 rounded bg-red-950/40 border border-red-800/60 hover:bg-red-900/50 text-[11px] font-cogitator text-red-300 transition" title="Purge Roster">
+                <button onclick="clearArmyRoster(); playRoboticBeep();" class="px-2 py-1 rounded bg-red-950/40 border border-red-800/60 hover:bg-red-900/50 text-[11px] font-cogitator text-red-300 transition" title="Purge Roster">
                   <i class="fa-solid fa-trash-can"></i> Purge
                 </button>
               </div>
@@ -323,6 +323,53 @@
   <script>
     const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
 
+    // --- SOUND SYNTHESIZER ENGINE (Web Audio API) ---
+    function playCogitatorClick() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.08);
+
+        gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.08);
+      } catch (e) {}
+    }
+
+    function playRoboticBeep() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.setValueAtTime(300, now + 0.05);
+        osc.frequency.setValueAtTime(220, now + 0.1);
+
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0.0, now + 0.2);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } catch (e) {}
+    }
+    // ------------------------------------------------
+
     const DEFAULT_GLOSSARY = [
       { KeywordOrAbility: "Devastating Wounds", Category: "Weapon Rule", Description: "A Critical Wound inflicts mortal wounds equal to the weapon's Damage characteristic instead of normal damage." },
       { KeywordOrAbility: "Lethal Hits", Category: "Weapon Rule", Description: "A Critical Hit automatically wounds the target without needing to roll to wound." },
@@ -366,7 +413,7 @@
       if (pts <= 500) return 1;
       if (pts <= 1000) return 2;
       if (pts <= 2000) return 3;
-      return 4; // 2500+ pts
+      return 4;
     }
 
     // Tab Switcher
@@ -603,7 +650,7 @@
 
       return String(text).replace(masterRegex, (matchedText) => {
         const safeArg = matchedText.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        return `<span class="glossary-term" onclick="openGlossaryModal(event, '${safeArg}')">${matchedText}</span>`;
+        return `<span class="glossary-term" onclick="openGlossaryModal(event, '${safeArg}'); playCogitatorClick();">${matchedText}</span>`;
       });
     }
 
@@ -699,7 +746,6 @@
         selDet.appendChild(opt);
       });
 
-      // Hide info box until selection
       document.getElementById("selectedDetachmentInfoBox").classList.add("hidden");
     }
 
@@ -869,9 +915,9 @@
                 </div>
               </div>
               <div class="flex items-center gap-1.5">
-                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, -1)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs">-</button>
+                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, -1); playCogitatorClick();" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs">-</button>
                 <span class="w-7 text-center font-cogitator text-xs font-bold ${isOver ? 'text-red-400' : 'text-amber-400'}">${count}x</span>
-                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, 1)" class="w-6 h-6 rounded bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-zinc-200 font-bold text-xs">+</button>
+                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, 1); playCogitatorClick();" class="w-6 h-6 rounded bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-zinc-200 font-bold text-xs">+</button>
               </div>
             </div>
             <div class="grid grid-cols-6 gap-1 text-[10px] font-cogitator bg-zinc-900/90 p-1 rounded text-center text-zinc-300">
@@ -919,7 +965,7 @@
 
           <div>
             <label class="block text-[11px] font-cogitator text-zinc-400 uppercase mb-1">Unit Size & Base Points</label>
-            <select onchange="changeStagingTier('${mode}', this.value)" class="w-full bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-amber-300 font-cogitator">
+            <select onchange="changeStagingTier('${mode}', this.value); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-amber-300 font-cogitator">
               ${tiersHtml}
             </select>
           </div>
@@ -932,7 +978,7 @@
             ` : `
               <div>
                 <label class="block text-[11px] font-cogitator text-amber-400 uppercase mb-1">Detachment Enhancement (Optional)</label>
-                <select onchange="changeStagingEnhancement('${mode}', this.value)" class="w-full bg-zinc-950 border border-amber-600/50 rounded px-2.5 py-1.5 text-xs text-zinc-100">
+                <select onchange="changeStagingEnhancement('${mode}', this.value); playCogitatorClick();" class="w-full bg-zinc-950 border border-amber-600/50 rounded px-2.5 py-1.5 text-xs text-zinc-100">
                   ${enhOptionsHtml}
                 </select>
                 ${selectedEnhObj ? `<div class="mt-1.5 p-2 bg-amber-950/20 border border-amber-600/30 rounded text-[11px] text-amber-200">${linkifyText(selectedEnhObj.desc)}</div>` : ''}
@@ -947,7 +993,7 @@
             </div>
           </div>
 
-          <button onclick="commitStagedUnitToRoster('${mode}')" class="w-full py-2.5 rounded bg-gradient-to-r from-red-800 via-red-700 to-red-800 hover:from-red-700 hover:to-red-600 border border-amber-500/60 text-amber-100 font-imperial font-bold text-xs uppercase tracking-wider shadow-lg transition">
+          <button onclick="commitStagedUnitToRoster('${mode}'); playRoboticBeep();" class="w-full py-2.5 rounded bg-gradient-to-r from-red-800 via-red-700 to-red-800 hover:from-red-700 hover:to-red-600 border border-amber-500/60 text-amber-100 font-imperial font-bold text-xs uppercase tracking-wider shadow-lg transition">
             <i class="fa-solid fa-check-double mr-1"></i> ${mode === 'warlord' ? 'Authorise Warlord & Add to Roster' : 'Authorise Unit & Add to Roster'}
           </button>
         </div>
@@ -1159,7 +1205,7 @@
             </div>
             <div class="flex items-center gap-2">
               <span class="font-cogitator font-bold text-sm text-amber-400">${totalItemPts} pts</span>
-              <button onclick="removeUnitFromRoster('${item.id}')" class="p-1 px-2 rounded bg-zinc-900 hover:bg-red-900/60 text-zinc-400 hover:text-red-300 text-xs transition" title="Remove Unit">
+              <button onclick="removeUnitFromRoster('${item.id}'); playRoboticBeep();" class="p-1 px-2 rounded bg-zinc-900 hover:bg-red-900/60 text-zinc-400 hover:text-red-300 text-xs transition" title="Remove Unit">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -1239,7 +1285,7 @@
         
         card.innerHTML = `
           <!-- Collapsed Header Bar with Extra Large Stats -->
-          <div onclick="toggleBattleUnitCard('${collapseId}')" class="p-4 md:p-5 bg-zinc-900/95 hover:bg-zinc-900 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 cursor-pointer select-none">
+          <div onclick="toggleBattleUnitCard('${collapseId}'); playCogitatorClick();" class="p-4 md:p-5 bg-zinc-900/95 hover:bg-zinc-900 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 cursor-pointer select-none">
             <div class="flex items-center gap-3 flex-wrap">
               <span class="font-imperial font-bold text-base md:text-xl text-zinc-100 uppercase tracking-wide">${item.unitName}</span>
               ${item.isWarlord ? `<span class="px-2.5 py-1 rounded bg-amber-500 text-zinc-950 font-cogitator text-xs md:text-sm font-bold"><i class="fa-solid fa-crown mr-1"></i> WARLORD</span>` : ''}
