@@ -30,4 +30,1462 @@
     }
 
     .font-imperial { font-family: 'Cinzel', serif; }
-    .font-cogitator { font-family: 'Share Tech Mono', monospace;
+    .font-cogitator { font-family: 'Share Tech Mono', monospace; }
+
+    .mech-border {
+      border: 1px solid rgba(197, 155, 39, 0.35);
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7);
+    }
+
+    .mech-border-red {
+      border: 1px solid rgba(185, 28, 28, 0.5);
+    }
+
+    .cog-spin {
+      animation: slowSpin 40s linear infinite;
+    }
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Glossary Clickable Term Styling */
+    .glossary-term {
+      color: #f59e0b;
+      border-bottom: 1px dashed rgba(245, 158, 11, 0.7);
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .glossary-term:hover {
+      color: #fde68a;
+      background-color: rgba(245, 158, 11, 0.2);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0c0e; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c59b27; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
+
+  <!-- =====================================================================
+       GLOSSARY MODAL POPUP
+       ===================================================================== -->
+  <div id="glossaryModal" onclick="closeGlossaryModal(); playCogitatorClick();" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+        <div class="flex items-center gap-2 text-amber-400">
+          <i class="fa-solid fa-book-journal-whills text-red-600"></i>
+          <h3 id="modalTermTitle" class="font-imperial font-bold text-base uppercase">Term Definition</h3>
+        </div>
+        <button onclick="closeGlossaryModal(); playCogitatorClick();" class="text-zinc-400 hover:text-zinc-100 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div>
+        <span id="modalTermCategory" class="text-[10px] font-cogitator px-2 py-0.5 rounded bg-zinc-900 border border-amber-500/30 text-amber-400 uppercase">Category</span>
+      </div>
+      <p id="modalTermDesc" class="text-zinc-200 text-sm leading-relaxed pt-1"></p>
+      <div class="pt-2 border-t border-zinc-800/80 text-right">
+        <button onclick="closeGlossaryModal(); playCogitatorClick();" class="px-4 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-cogitator text-amber-300 uppercase transition">
+          Acknowledge
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       CENTERED MECHANICUS HEADER & VIEW TABS
+       ===================================================================== -->
+  <header class="py-6 px-4 border-b border-amber-500/20 bg-gradient-to-b from-red-950/20 to-transparent text-center relative overflow-hidden">
+    <div class="max-w-xl mx-auto flex flex-col items-center">
+      <div class="relative w-20 h-20 flex items-center justify-center mb-2">
+        <svg class="w-20 h-20 text-amber-500/80 cog-spin absolute inset-0" viewBox="0 0 100 100" fill="currentColor">
+          <path d="M94.5,43.5 L86.8,42.2 C85.8,38.8 84.4,35.6 82.7,32.6 L87.3,26.2 C88.1,25.1 88,23.6 87,22.6 L80.4,16 C79.4,15 77.9,14.9 76.8,15.7 L70.4,20.3 C67.4,18.6 64.2,17.2 60.8,16.2 L59.5,8.5 C59.3,7.2 58.1,6.2 56.8,6.2 L47.2,6.2 C45.9,6.2 44.7,7.2 44.5,8.5 L43.2,16.2 C39.8,17.2 36.6,18.6 33.6,20.3 L27.2,15.7 C26.1,14.9 24.6,15 23.6,16 L17,22.6 C16,23.6 15.9,25.1 16.7,26.2 L21.3,32.6 C19.6,35.6 18.2,38.8 17.2,42.2 L9.5,43.5 C8.2,43.7 7.2,44.9 7.2,46.2 L7.2,55.8 C7.2,57.1 8.2,58.3 9.5,58.5 L17.2,59.8 C18.2,63.2 19.6,66.4 21.3,69.4 L16.7,75.8 C15.9,76.9 16,78.4 17,79.4 L23.6,86 C24.6,87 26.1,87.1 27.2,86.3 L33.6,81.7 C36.6,83.4 39.8,84.8 43.2,85.8 L44.5,93.5 C44.7,94.8 45.9,95.8 47.2,95.8 L56.8,95.8 C58.1,95.8 59.3,94.8 59.5,93.5 L60.8,85.8 C64.2,84.8 67.4,83.4 70.4,81.7 L76.8,86.3 C77.9,87.1 79.4,87 80.4,86 L87,79.4 C88,78.4 88.1,76.9 87.3,75.8 L82.7,69.4 C84.4,66.4 85.8,63.2 86.8,59.8 L94.5,58.5 C95.8,58.3 96.8,57.1 96.8,55.8 L96.8,46.2 C96.8,44.9 95.8,43.7 94.5,43.5 Z M52,74 C39.3,74 29,63.7 29,51 C29,38.3 39.3,28 52,28 C64.7,28 75,38.3 75,51 C75,63.7 64.7,74 52,74 Z"/>
+        </svg>
+        <i class="fa-solid fa-skull text-3xl text-zinc-200 z-10 drop-shadow-[0_2px_6px_rgba(185,28,28,0.8)]"></i>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-extrabold font-imperial tracking-widest text-amber-500 uppercase drop-shadow">
+        Matyenicus Army Builder
+      </h1>
+      <div class="w-48 h-0.5 bg-gradient-to-r from-transparent via-red-700 to-transparent mt-1"></div>
+      <div class="flex items-center gap-2 mt-1.5">
+        <span id="noosphereStatusDot" class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+        <p id="noosphereStatusText" class="text-[11px] font-cogitator text-zinc-400 tracking-widest uppercase">
+          ESTABLISHING NOOSPHERIC LINK TO DATA-SLATE...
+        </p>
+      </div>
+
+      <!-- APP VIEW TABS & AUDIO MUTE TOGGLE -->
+      <div class="flex items-center gap-2 mt-4 bg-zinc-950/80 p-1 rounded border border-zinc-800 flex-wrap justify-center">
+        <button onclick="switchTab('builder'); playRoboticBeep();" id="tabBtnBuilder" class="px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+          <i class="fa-solid fa-gears mr-1"></i> 1. Army Builder
+        </button>
+        <button onclick="switchTab('battle'); playRoboticBeep();" id="tabBtnBattle" class="px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+          <i class="fa-solid fa-shield-cat mr-1"></i> 2. Battle Cogitator
+        </button>
+        <button onclick="toggleAudioMute()" id="audioMuteBtn" class="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-amber-400 font-cogitator text-xs font-bold uppercase transition" title="Toggle Audio Feedback">
+          <i id="audioMuteIcon" class="fa-solid fa-volume-high"></i> <span id="audioMuteText">Audio ON</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       MAIN CONTENT CONTAINER
+       ===================================================================== -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+
+    <!-- VIEW 1: ARMY BUILDER -->
+    <div id="viewBuilder" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- LEFT COLUMN -->
+      <section class="lg:col-span-6 space-y-4">
+        
+        <!-- STEP 1 & 2 -->
+        <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 cursor-pointer select-none" onclick="toggleStepBody('step1Body', 'step1Icon')">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-gears text-red-600"></i> I. Primary Directives (Faction & Points)
+            </h2>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-cogitator text-zinc-500">STEP 1 & 2</span>
+              <i id="step1Icon" class="fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200"></i>
+            </div>
+          </div>
+
+          <div id="step1Body" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">1. Select Faction</label>
+                <select id="selFaction" onchange="onSelectFaction(); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                  <option value="">-- Choose Faction --</option>
+                </select>
+              </div>
+
+              <div id="stepPointsWrapper" class="opacity-40 pointer-events-none transition">
+                <label class="block text-xs font-cogitator text-amber-500/90 uppercase mb-1">2. Battle Size & DP Budget</label>
+                <select id="selPoints" onchange="onSelectPoints(); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                  <option value="">-- Choose Points --</option>
+                  <option value="500">500 pts (1 DP)</option>
+                  <option value="1000">1000 pts (2 DP)</option>
+                  <option value="1500">1500 pts (3 DP)</option>
+                  <option value="2000">2000 pts (3 DP)</option>
+                  <option value="2500">2500 pts (4 DP)</option>
+                  <option value="3000">3000 pts (4 DP)</option>
+                  <option value="christmas">🎄 Christmas (Free Form)</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="factionRuleBox" class="hidden bg-zinc-950/80 border-l-2 border-red-700 p-3 rounded text-xs space-y-1">
+              <div class="font-cogitator text-[10px] text-red-400 uppercase">Faction Army Rule</div>
+              <div id="factionRuleName" class="font-bold text-amber-400 text-sm"></div>
+              <p id="factionRuleDesc" class="text-zinc-300 leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div id="stepDetachmentCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 cursor-pointer select-none" onclick="toggleStepBody('step3Body', 'step3Icon')">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-scroll text-red-600"></i> II. Detachment Selection
+            </h2>
+            <div class="flex items-center gap-2">
+              <span id="dpBudgetText" class="text-[11px] font-cogitator text-amber-400 font-bold">BUDGET: -- DP</span>
+              <i id="step3Icon" class="fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200"></i>
+            </div>
+          </div>
+
+          <div id="step3Body" class="space-y-3">
+            <div>
+              <label class="block text-xs font-cogitator text-amber-500 uppercase mb-1">3. Select Active Detachment (From DP Budget)</label>
+              <select id="selDetachment" onchange="onSelectDetachment(); playCogitatorClick();" class="w-full bg-zinc-950 border border-amber-600/60 rounded px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
+                <option value="">-- Select Active Detachment --</option>
+              </select>
+            </div>
+
+            <div id="selectedDetachmentInfoBox" class="hidden bg-zinc-950/90 border border-zinc-800 p-3 rounded space-y-2 text-xs">
+              <div class="flex justify-between items-center">
+                <span id="infoDetRuleName" class="font-bold text-red-400 font-cogitator uppercase">Rule Name</span>
+                <span id="infoForceDisp" class="px-2 py-0.5 rounded bg-emerald-950/50 border border-emerald-800 text-emerald-400 font-cogitator text-[10px]">Disposition</span>
+              </div>
+              <p id="infoDetDesc" class="text-zinc-300 leading-relaxed"></p>
+              <div id="infoEnhancementsWrapper" class="pt-2 border-t border-zinc-900">
+                <span class="text-[10px] font-cogitator text-zinc-500 block mb-1">AVAILABLE ENHANCEMENTS:</span>
+                <div id="infoEnhancementsList" class="flex flex-wrap gap-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div id="stepWarlordCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 cursor-pointer select-none" onclick="toggleStepBody('step4Body', 'step4Icon')">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-crown text-amber-500"></i> III. Supreme Warlord
+            </h2>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-cogitator text-zinc-500">CHARACTER</span>
+              <i id="step4Icon" class="fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200"></i>
+            </div>
+          </div>
+
+          <div id="step4Body" class="space-y-4">
+            <div>
+              <label class="block text-xs font-cogitator text-zinc-400 uppercase mb-1">4. Choose Warlord Unit (Characters Only)</label>
+              <select id="selWarlordUnit" onchange="onChangeBuilderUnit('warlord'); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="">-- Select Character as Warlord --</option>
+              </select>
+            </div>
+
+            <div id="warlordConfigPanel" class="hidden"></div>
+          </div>
+        </div>
+
+        <!-- STEP 5 -->
+        <div id="stepUnitsCard" class="hidden bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-2 cursor-pointer select-none" onclick="toggleStepBody('step5Body', 'step5Icon')">
+            <h2 class="text-sm font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-red-600"></i> IV. Force Requisition
+            </h2>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-cogitator text-zinc-500">UNITS & WARGEAR</span>
+              <i id="step5Icon" class="fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200"></i>
+            </div>
+          </div>
+
+          <div id="step5Body" class="space-y-4">
+            <div>
+              <label class="block text-xs font-cogitator text-zinc-400 uppercase mb-1">5. Select Unit to Customise & Enlist</label>
+              <select id="selRegularUnit" onchange="onChangeBuilderUnit('regular'); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-amber-500">
+                <option value="">-- Choose Unit from Datasheets --</option>
+              </select>
+            </div>
+
+            <div id="regularUnitConfigPanel" class="hidden"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN -->
+      <section class="lg:col-span-6 space-y-4 lg:sticky lg:top-6">
+        <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+          <div class="border-b border-zinc-800 pb-3 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+                  <i class="fa-solid fa-clipboard-check text-red-600"></i> Mobilised Battle-Forged Roster
+                </h2>
+                <p id="rosterSubtitle" class="text-xs font-cogitator text-zinc-400">AWAITING INITIAL DIRECTIVES...</p>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="copyRosterToClipboard(); playCogitatorClick();" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-zinc-300 hover:text-amber-400 transition" title="Copy Text Roster">
+                  <i class="fa-solid fa-copy"></i> Copy
+                </button>
+                <button onclick="exportRosterJSON(); playCogitatorClick();" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-amber-300 hover:text-amber-200 transition" title="Save Roster File">
+                  <i class="fa-solid fa-download"></i> Save
+                </button>
+                <label class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-emerald-300 hover:text-emerald-200 transition cursor-pointer" title="Load Roster File">
+                  <i class="fa-solid fa-upload"></i> Load
+                  <input type="file" accept=".json" onchange="importRosterJSON(event); playRoboticBeep();" class="hidden">
+                </label>
+                <button onclick="clearArmyRoster(); playRoboticBeep();" class="px-2 py-1 rounded bg-red-950/40 border border-red-800/60 hover:bg-red-900/50 text-[11px] font-cogitator text-red-300 transition" title="Purge Roster">
+                  <i class="fa-solid fa-trash-can"></i> Purge
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
+              <div class="flex justify-between items-center text-xs font-cogitator mb-1">
+                <span class="text-zinc-400">REQUISITIONED POINTS TOTAL</span>
+                <span id="rosterPointsText" class="text-sm font-bold text-amber-400">0 pts</span>
+              </div>
+              <div class="w-full bg-zinc-900 h-2.5 rounded overflow-hidden">
+                <div id="rosterPointsBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 100%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="cogitatorErrorBox" class="hidden p-3 bg-red-950/70 mech-border-red rounded text-xs font-cogitator text-red-200 space-y-1"></div>
+          <div id="rosterDetachmentPill" class="hidden bg-zinc-950 border border-amber-600/30 p-3 rounded text-xs space-y-1"></div>
+
+          <div id="enlistedUnitsContainer" class="space-y-3">
+            <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+              <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
+              <p>NO UNITS AUTHORISED IN ROSTER</p>
+              <p class="text-[11px] mt-1">Configure your Warlord and Units on the left panel to populate your army.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW 2: BATTLE COGITATOR (In-Game Tabletop Mode - Extra Large Readability) -->
+    <div id="viewBattle" class="hidden space-y-4">
+      <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-3">
+          <div>
+            <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-chess-board text-red-600"></i> Battle Cogitator // In-Game Command Deck
+            </h2>
+            <p class="text-xs font-cogitator text-zinc-400">Click any unit below to expand its full operational dataslate and wargear.</p>
+          </div>
+          <div id="battleHeaderInfo" class="text-xs font-cogitator text-amber-300">0 Units Enlisted</div>
+        </div>
+
+        <div id="battleUnitsContainer" class="space-y-3">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
+
+    // --- SOUND SYNTHESIZER ENGINE & MUTE CONTROLLER ---
+    let isAudioMuted = localStorage.getItem("matyenicus_audio_muted") === "true";
+
+    function updateAudioMuteUI() {
+      const icon = document.getElementById("audioMuteIcon");
+      const text = document.getElementById("audioMuteText");
+      const btn = document.getElementById("audioMuteBtn");
+      if (!icon || !text || !btn) return;
+
+      if (isAudioMuted) {
+        icon.className = "fa-solid fa-volume-xmark";
+        text.textContent = "Audio OFF";
+        btn.className = "px-3 py-1.5 rounded bg-red-950/60 border border-red-800 text-red-400 font-cogitator text-xs font-bold uppercase transition";
+      } else {
+        icon.className = "fa-solid fa-volume-high";
+        text.textContent = "Audio ON";
+        btn.className = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-amber-400 font-cogitator text-xs font-bold uppercase transition";
+      }
+    }
+
+    function toggleAudioMute() {
+      isAudioMuted = !isAudioMuted;
+      localStorage.setItem("matyenicus_audio_muted", isAudioMuted);
+      updateAudioMuteUI();
+      if (!isAudioMuted) playCogitatorClick();
+    }
+
+    // --- STEP MINIMIZE / COLLAPSE FUNCTION ---
+    function toggleStepBody(bodyId, iconId) {
+      const body = document.getElementById(bodyId);
+      const icon = document.getElementById(iconId);
+      if (!body || !icon) return;
+
+      if (body.classList.contains("hidden")) {
+        body.classList.remove("hidden");
+        icon.className = "fa-solid fa-chevron-up text-amber-400 text-xs transition-transform duration-200";
+      } else {
+        body.classList.add("hidden");
+        icon.className = "fa-solid fa-chevron-down text-zinc-500 text-xs transition-transform duration-200";
+      }
+      playCogitatorClick();
+    }
+
+    function playCogitatorClick() {
+      if (isAudioMuted) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.08);
+
+        gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.08);
+      } catch (e) {}
+    }
+
+    function playRoboticBeep() {
+      if (isAudioMuted) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.setValueAtTime(300, now + 0.05);
+        osc.frequency.setValueAtTime(220, now + 0.1);
+
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0.0, now + 0.2);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } catch (e) {}
+    }
+    // ------------------------------------------------
+
+    const DEFAULT_GLOSSARY = [
+      { KeywordOrAbility: "Devastating Wounds", Category: "Weapon Rule", Description: "A Critical Wound inflicts mortal wounds equal to the weapon's Damage characteristic instead of normal damage." },
+      { KeywordOrAbility: "Lethal Hits", Category: "Weapon Rule", Description: "A Critical Hit automatically wounds the target without needing to roll to wound." },
+      { KeywordOrAbility: "Melta X", Category: "Weapon Rule", Description: "Increase the Damage characteristic by X when targeting units within half range." },
+      { KeywordOrAbility: "Rapid Fire X", Category: "Weapon Rule", Description: "Increase the Attacks characteristic by X when targeting units within half range." },
+      { KeywordOrAbility: "Sustained Hits X", Category: "Weapon Rule", Description: "Each Critical Hit scores X additional hits on the target." },
+      { KeywordOrAbility: "Anti-Infantry X+", Category: "Weapon Rule", Description: "An unmodified Wound roll of X+ against an Infantry target scores a Critical Wound." },
+      { KeywordOrAbility: "Anti-Vehicle X+", Category: "Weapon Rule", Description: "An unmodified Wound roll of X+ against a Vehicle target scores a Critical Wound." },
+      { KeywordOrAbility: "Anti-Monster X+", Category: "Weapon Rule", Description: "An unmodified Wound roll of X+ against a Monster target scores a Critical Wound." },
+      { KeywordOrAbility: "Heavy", Category: "Weapon Rule", Description: "Add 1 to Hit rolls if the bearer’s unit Remained Stationary this turn." },
+      { KeywordOrAbility: "Assault", Category: "Weapon Rule", Description: "The unit can shoot even if it Advanced this turn." },
+      { KeywordOrAbility: "Pistol", Category: "Weapon Rule", Description: "The bearer can shoot this weapon even while its unit is within Engagement Range of enemy units." },
+      { KeywordOrAbility: "Blast", Category: "Weapon Rule", Description: "Add 1 to the Attacks characteristic for every 5 models in the target unit." },
+      { KeywordOrAbility: "Torrent", Category: "Weapon Rule", Description: "This weapon automatically hits its target; do not make Hit rolls." },
+      { KeywordOrAbility: "Ignores Cover", Category: "Weapon Rule", Description: "The target cannot have the Benefit of Cover against attacks made with this weapon." },
+      { KeywordOrAbility: "Twin-linked", Category: "Weapon Rule", Description: "You can re-roll the Wound roll for attacks made with this weapon." },
+      { KeywordOrAbility: "Hazardous", Category: "Weapon Rule", Description: "After shooting or fighting, roll one D6 for each Hazardous weapon used. On a 1, one model suffers 3 mortal wounds." },
+      { KeywordOrAbility: "Precision", Category: "Weapon Rule", Description: "When targeting an Attached unit, you can allocate successful wounds directly to a visible Character." },
+      { KeywordOrAbility: "Indirect Fire", Category: "Weapon Rule", Description: "Can target units not visible to the bearer (-1 to Hit if no visibility)." },
+      { KeywordOrAbility: "Extra Attacks", Category: "Weapon Rule", Description: "The bearer can attack with this melee weapon in addition to any other melee weapon." },
+      { KeywordOrAbility: "One Shot", Category: "Weapon Rule", Description: "The bearer can only shoot with this weapon once per battle." },
+      { KeywordOrAbility: "Feel No Pain X+", Category: "Ability", Description: "Each time a model with this ability suffers damage, roll one D6: on X+, that damage is ignored." },
+      { KeywordOrAbility: "Stealth", Category: "Ability", Description: "Subtract 1 from Hit rolls for ranged attacks targeting this unit." },
+      { KeywordOrAbility: "Scout X\"", Category: "Ability", Description: "Before the first turn begins, this unit can make a Normal Move of up to X\"." },
+      { KeywordOrAbility: "Lone Operative", Category: "Ability", Description: "Unless part of an Attached unit, this unit can only be targeted if the attacker is within 12\"." }
+    ];
+
+    let DB = { Factions: [], Detachments: [], Dispositions: [], Units: [], Weapons: [], Glossary: [] };
+    let GLOSSARY_MATCHERS = [];
+
+    let state = {
+      faction: "",
+      pointsLimit: 0,
+      isChristmas: false,
+      dpBudget: 0,
+      detachmentName: "",
+      roster: [],
+      staging: { warlord: null, regular: null }
+    };
+
+    function getDPBudgetForPoints(pts) {
+      if (pts <= 500) return 1;
+      if (pts <= 1000) return 2;
+      if (pts <= 2000) return 3;
+      return 4;
+    }
+
+    // Tab Switcher
+    function switchTab(viewName) {
+      const btnBuilder = document.getElementById("tabBtnBuilder");
+      const btnBattle = document.getElementById("tabBtnBattle");
+      const viewBuilder = document.getElementById("viewBuilder");
+      const viewBattle = document.getElementById("viewBattle");
+
+      if (viewName === 'builder') {
+        btnBuilder.className = "px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        btnBattle.className = "px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        viewBuilder.classList.remove("hidden");
+        viewBattle.classList.add("hidden");
+      } else {
+        btnBattle.className = "px-4 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        btnBuilder.className = "px-4 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        viewBattle.classList.remove("hidden");
+        viewBuilder.classList.add("hidden");
+        renderBattleCogitatorView();
+      }
+    }
+
+    async function fetchSheetTabCSV(tabName) {
+      const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status} on tab ${tabName}`);
+      const csvText = await res.text();
+      if (csvText.trim().startsWith("<!DOCTYPE html>")) throw new Error("Sheet is not public");
+      const wb = XLSX.read(csvText, { type: "string" });
+      return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    }
+
+    async function initApp() {
+      updateAudioMuteUI();
+      const dot = document.getElementById("noosphereStatusDot");
+      const statusTxt = document.getElementById("noosphereStatusText");
+
+      try {
+        let loaded = false;
+        try {
+          const xlsxUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/export?format=xlsx`;
+          const res = await fetch(xlsxUrl, { cache: "no-store" });
+          if (res.ok) {
+            const ab = await res.arrayBuffer();
+            const wb = XLSX.read(new Uint8Array(ab), { type: "array" });
+            const getTab = (name) => {
+              const found = wb.SheetNames.find(s => s.trim().toLowerCase() === name.toLowerCase());
+              return found ? XLSX.utils.sheet_to_json(wb.Sheets[found]) : [];
+            };
+            DB = {
+              Factions: getTab("Factions"),
+              Detachments: getTab("Detachments"),
+              Dispositions: getTab("Dispositions"),
+              Units: getTab("Units"),
+              Weapons: getTab("Weapons"),
+              Glossary: getTab("Glossary")
+            };
+            if (DB.Factions.length > 0 && DB.Units.length > 0) loaded = true;
+          }
+        } catch (e) {}
+
+        if (!loaded) {
+          const [f, d, disp, u, w, g] = await Promise.all([
+            fetchSheetTabCSV("Factions"),
+            fetchSheetTabCSV("Detachments"),
+            fetchSheetTabCSV("Dispositions").catch(() => []),
+            fetchSheetTabCSV("Units"),
+            fetchSheetTabCSV("Weapons"),
+            fetchSheetTabCSV("Glossary").catch(() => [])
+          ]);
+          DB = { Factions: f, Detachments: d, Dispositions: disp, Units: u, Weapons: w, Glossary: g };
+        }
+
+        const mergedGlossary = [...DB.Glossary];
+        DEFAULT_GLOSSARY.forEach(defItem => {
+          const exists = mergedGlossary.some(g => String(g.KeywordOrAbility || "").trim().toLowerCase() === defItem.KeywordOrAbility.toLowerCase());
+          if (!exists) mergedGlossary.push(defItem);
+        });
+        DB.Glossary = mergedGlossary;
+        buildGlossaryMatchers();
+
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        statusTxt.textContent = `NOOSPHERIC LINK ACTIVE // ${DB.Units.length} UNITS & ${DB.Glossary.length} RULES SYNCED`;
+      } catch (err) {
+        console.error("Sync Error:", err);
+        DB.Glossary = [...DEFAULT_GLOSSARY];
+        buildGlossaryMatchers();
+        dot.className = "w-2 h-2 rounded-full bg-amber-500";
+        statusTxt.textContent = `SYNC NOTICE: ${err.message.toUpperCase()}`;
+      }
+
+      populateFactionsDropdown();
+      loadRosterFromLocalStorage();
+    }
+
+    // LocalStorage Save & Load
+    function saveRosterToLocalStorage() {
+      localStorage.setItem("matyenicus_saved_roster", JSON.stringify({
+        faction: state.faction,
+        pointsLimit: state.pointsLimit,
+        isChristmas: state.isChristmas,
+        dpBudget: state.dpBudget,
+        detachmentName: state.detachmentName,
+        roster: state.roster
+      }));
+    }
+
+    function loadRosterFromLocalStorage() {
+      const saved = localStorage.getItem("matyenicus_saved_roster");
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          state.faction = data.faction || "";
+          state.isChristmas = data.isChristmas || false;
+          state.pointsLimit = data.pointsLimit || (state.isChristmas ? "christmas" : 0);
+          state.dpBudget = data.dpBudget || getDPBudgetForPoints(typeof state.pointsLimit === 'number' ? state.pointsLimit : 2000);
+          state.detachmentName = data.detachmentName || "";
+          state.roster = data.roster || [];
+
+          if (state.faction) {
+            document.getElementById("selFaction").value = state.faction;
+            onSelectFaction();
+          }
+          if (state.pointsLimit !== undefined && state.pointsLimit !== 0) {
+            document.getElementById("selPoints").value = state.pointsLimit;
+            onSelectPoints();
+          }
+          if (state.detachmentName && !state.isChristmas) {
+            setTimeout(() => {
+              const selDet = document.getElementById("selDetachment");
+              if (selDet) {
+                selDet.value = state.detachmentName;
+                onSelectDetachment();
+              }
+            }, 100);
+          }
+        } catch (e) {
+          console.error("Could not load saved roster:", e);
+        }
+      }
+      renderRoster();
+    }
+
+    // JSON File Export & Import
+    function exportRosterJSON() {
+      if (state.roster.length === 0) {
+        alert("No units in roster to export.");
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+        faction: state.faction,
+        pointsLimit: state.pointsLimit,
+        isChristmas: state.isChristmas,
+        dpBudget: state.dpBudget,
+        detachmentName: state.detachmentName,
+        roster: state.roster
+      }, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `matyenicus_roster_${state.faction || 'army'}_${state.isChristmas ? 'christmas' : (state.pointsLimit || 0) + 'pts'}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function importRosterJSON(event) {
+      const fileReader = new FileReader();
+      if (event.target.files[0]) {
+        fileReader.readAsText(event.target.files[0], "UTF-8");
+        fileReader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            state.faction = data.faction || "";
+            state.isChristmas = data.isChristmas || false;
+            state.pointsLimit = data.pointsLimit || (state.isChristmas ? "christmas" : 0);
+            state.dpBudget = data.dpBudget || getDPBudgetForPoints(typeof state.pointsLimit === 'number' ? state.pointsLimit : 2000);
+            state.detachmentName = data.detachmentName || "";
+            state.roster = data.roster || [];
+
+            if (state.faction) {
+              document.getElementById("selFaction").value = state.faction;
+              onSelectFaction();
+            }
+            if (state.pointsLimit !== undefined && state.pointsLimit !== 0) {
+              document.getElementById("selPoints").value = state.pointsLimit;
+              onSelectPoints();
+            }
+            if (state.detachmentName && !state.isChristmas) {
+              setTimeout(() => {
+                const selDet = document.getElementById("selDetachment");
+                if (selDet) {
+                  selDet.value = state.detachmentName;
+                  onSelectDetachment();
+                }
+              }, 100);
+            }
+            saveRosterToLocalStorage();
+            renderRoster();
+            alert("Roster successfully loaded from file!");
+          } catch (err) {
+            alert("Invalid roster JSON file.");
+          }
+        };
+      }
+    }
+
+    // Glossary Engine
+    function termToPattern(rawTerm) {
+      let escaped = rawTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      let pattern = escaped.replace(/\bX\b/gi, '(?:\\d*D\\d+(?:\\+\\d+)?|\\d+)');
+      const startsWord = /^[a-zA-Z0-9]/.test(rawTerm);
+      const endsWord = /[a-zA-Z0-9]$/.test(rawTerm);
+      return (startsWord ? '\\b' : '') + pattern + (endsWord ? '\\b' : '');
+    }
+
+    function buildGlossaryMatchers() {
+      GLOSSARY_MATCHERS = DB.Glossary
+        .filter(g => g.KeywordOrAbility && String(g.KeywordOrAbility).trim().length >= 3)
+        .map(g => {
+          const raw = String(g.KeywordOrAbility).trim();
+          const pat = termToPattern(raw);
+          const valRegexStr = '^' + raw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\bX\b/i, '(\\d*D\\d+(?:\\+\\d+)?|\\d+)') + '$';
+          return {
+            entry: g,
+            rawTerm: raw,
+            pattern: pat,
+            exactRegex: new RegExp('^' + pat + '$', 'i'),
+            extractValRegex: new RegExp(valRegexStr, 'i')
+          };
+        })
+        .sort((a, b) => b.rawTerm.length - a.rawTerm.length);
+    }
+
+    function linkifyText(text) {
+      if (!text || GLOSSARY_MATCHERS.length === 0) return text || "";
+      const combinedPattern = GLOSSARY_MATCHERS.map(m => m.pattern).join('|');
+      const masterRegex = new RegExp(`(${combinedPattern})`, 'gi');
+
+      return String(text).replace(masterRegex, (matchedText) => {
+        const safeArg = matchedText.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        return `<span class="glossary-term" onclick="openGlossaryModal(event, '${safeArg}'); playCogitatorClick();">${matchedText}</span>`;
+      });
+    }
+
+    function openGlossaryModal(event, clickedText) {
+      event.stopPropagation();
+      const matcher = GLOSSARY_MATCHERS.find(m => m.exactRegex.test(clickedText));
+      if (!matcher) return;
+
+      const entry = matcher.entry;
+      let description = String(entry.Description || "No description provided.");
+      const valMatch = clickedText.match(matcher.extractValRegex);
+      if (valMatch && valMatch[1]) {
+        description = description.replace(/\bX\b/g, valMatch[1]);
+      }
+
+      document.getElementById("modalTermTitle").textContent = `${clickedText.toUpperCase()}`;
+      document.getElementById("modalTermCategory").textContent = `${entry.Category || "Rule"} // Base: ${entry.KeywordOrAbility}`;
+      document.getElementById("modalTermDesc").textContent = description;
+      document.getElementById("glossaryModal").classList.remove("hidden");
+    }
+
+    function closeGlossaryModal() {
+      document.getElementById("glossaryModal").classList.add("hidden");
+    }
+
+    // Builder Workflows
+    function populateFactionsDropdown() {
+      const sel = document.getElementById("selFaction");
+      sel.innerHTML = `<option value="">-- Choose Faction --</option>`;
+      DB.Factions.forEach(f => {
+        if (!f.Faction) return;
+        const opt = document.createElement("option");
+        opt.value = String(f.Faction).trim();
+        opt.textContent = String(f.Faction).trim();
+        sel.appendChild(opt);
+      });
+    }
+
+    function onSelectFaction() {
+      const fac = document.getElementById("selFaction").value;
+      state.faction = fac;
+      state.detachmentName = "";
+
+      const ptsWrapper = document.getElementById("stepPointsWrapper");
+      const ruleBox = document.getElementById("factionRuleBox");
+
+      if (!fac) {
+        ptsWrapper.classList.add("opacity-40", "pointer-events-none");
+        ruleBox.classList.add("hidden");
+        document.getElementById("stepDetachmentCard").classList.add("hidden");
+        document.getElementById("stepWarlordCard").classList.add("hidden");
+        document.getElementById("stepUnitsCard").classList.add("hidden");
+        return;
+      }
+
+      ptsWrapper.classList.remove("opacity-40", "pointer-events-none");
+      const facObj = DB.Factions.find(f => String(f.Faction).trim() === fac);
+      if (facObj) {
+        ruleBox.classList.remove("hidden");
+        document.getElementById("factionRuleName").textContent = facObj.ArmyRuleName || "";
+        document.getElementById("factionRuleDesc").innerHTML = linkifyText(facObj.ArmyRuleDesc || "");
+      }
+
+      if (state.pointsLimit !== 0 && state.pointsLimit !== "") unlockDetachmentStep();
+    }
+
+    function onSelectPoints() {
+      const rawVal = document.getElementById("selPoints").value;
+      const detCard = document.getElementById("stepDetachmentCard");
+
+      if (rawVal === "christmas") {
+        state.isChristmas = true;
+        state.pointsLimit = "christmas";
+        state.dpBudget = 0;
+        state.detachmentName = "Christmas Free-Form Protocol";
+        
+        // Hide detachment card in christmas mode
+        detCard.classList.add("hidden");
+        if (state.faction) unlockWarlordAndUnitsSteps();
+      } else {
+        state.isChristmas = false;
+        const pts = parseInt(rawVal) || 0;
+        state.pointsLimit = pts;
+        state.dpBudget = getDPBudgetForPoints(pts);
+        
+        const dpBudgetEl = document.getElementById("dpBudgetText");
+        if (dpBudgetEl) dpBudgetEl.textContent = `BUDGET: ${state.dpBudget} DP`;
+
+        if (pts > 0 && state.faction) unlockDetachmentStep();
+      }
+    }
+
+    function unlockDetachmentStep() {
+      if (state.isChristmas) return;
+      const detCard = document.getElementById("stepDetachmentCard");
+      detCard.classList.remove("hidden");
+
+      const selDet = document.getElementById("selDetachment");
+      selDet.innerHTML = `<option value="">-- Select Active Detachment (${state.dpBudget} DP Available) --</option>`;
+
+      const facDets = DB.Detachments.filter(d => String(d.Faction).trim() === state.faction);
+      facDets.forEach(d => {
+        const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(d.DetachmentName).trim().toLowerCase());
+        const dispositionName = dispObj ? dispObj.ForceDisposition : "Standard Deployment";
+
+        const opt = document.createElement("option");
+        opt.value = d.DetachmentName;
+        opt.textContent = `${d.DetachmentName} [${dispositionName}]`;
+        selDet.appendChild(opt);
+      });
+
+      document.getElementById("selectedDetachmentInfoBox").classList.add("hidden");
+    }
+
+    function getEnhancementsFromDetachment(detRow) {
+      if (!detRow) return [];
+      const list = [];
+      for (let i = 1; i <= 4; i++) {
+        if (detRow[`Enh${i}Name`]) {
+          list.push({
+            name: String(detRow[`Enh${i}Name`]).trim(),
+            pts: parseInt(detRow[`Enh${i}Pts`]) || 0,
+            desc: String(detRow[`Enh${i}Desc`] || "").trim()
+          });
+        }
+      }
+      return list;
+    }
+
+    function onSelectDetachment() {
+      const detName = document.getElementById("selDetachment").value;
+      state.detachmentName = detName;
+
+      const infoBox = document.getElementById("selectedDetachmentInfoBox");
+      if (!detName) {
+        infoBox.classList.add("hidden");
+        document.getElementById("stepWarlordCard").classList.add("hidden");
+        document.getElementById("stepUnitsCard").classList.add("hidden");
+        return;
+      }
+
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === detName);
+      const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === detName.toLowerCase());
+      
+      if (detObj) {
+        infoBox.classList.remove("hidden");
+        document.getElementById("infoDetRuleName").textContent = `Rule: ${detObj.RuleName}`;
+        document.getElementById("infoForceDisp").textContent = dispObj ? `Disposition: ${dispObj.ForceDisposition}` : "Disposition: Standard";
+        document.getElementById("infoDetDesc").innerHTML = linkifyText(detObj.RuleDesc);
+
+        const enhs = getEnhancementsFromDetachment(detObj);
+        const enhListEl = document.getElementById("infoEnhancementsList");
+        enhListEl.innerHTML = enhs.length > 0 
+          ? enhs.map(e => `<span class="inline-block bg-zinc-900 border border-zinc-700 px-1.5 py-0.5 rounded text-[10px] text-amber-300" title="${e.desc}">${e.name} (${e.pts} pts)</span>`).join("")
+          : '<span class="text-zinc-500 text-[10px]">No enhancements listed.</span>';
+      }
+
+      unlockWarlordAndUnitsSteps();
+    }
+
+    function unlockWarlordAndUnitsSteps() {
+      document.getElementById("stepWarlordCard").classList.remove("hidden");
+      document.getElementById("stepUnitsCard").classList.remove("hidden");
+
+      const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
+      
+      const charUnits = facUnits.filter(u => {
+        const canWarlord = String(u.CanBeWarlord || "").trim().toLowerCase();
+        return canWarlord === "yes";
+      });
+
+      const selWarlord = document.getElementById("selWarlordUnit");
+      selWarlord.innerHTML = `<option value="">-- Select Character as Warlord --</option>`;
+      charUnits.forEach(u => {
+        const isEpic = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
+        const firstPts = parseTiers(u.Tiers)[0].pts;
+        const opt = document.createElement("option");
+        opt.value = u.Name;
+        opt.textContent = `${u.Name} [${isEpic ? 'Epic Hero' : 'Character'}] (${firstPts} pts)`;
+        selWarlord.appendChild(opt);
+      });
+
+      const selRegular = document.getElementById("selRegularUnit");
+      selRegular.innerHTML = `<option value="">-- Choose Unit from Datasheets --</option>`;
+      facUnits.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.Name;
+        opt.textContent = `[${u.Role}] ${u.Name} (${u.Tiers})`;
+        selRegular.appendChild(opt);
+      });
+    }
+
+    function parseTiers(tiersStr) {
+      return String(tiersStr || "1:50").split(",").map(s => {
+        const [m, p] = s.trim().split(/[:=\-x]/);
+        return { models: parseInt(m) || 1, pts: parseInt(p) || 0 };
+      });
+    }
+
+    function getWeaponMaxForModels(w, modelCount) {
+      const maxC = parseInt(w.MaxCount) || 1;
+      const perM = parseInt(w.PerModels) || 0;
+      if (perM <= 0) return maxC;
+      if (perM === 1) return maxC * modelCount;
+      return Math.floor(modelCount / perM) * maxC;
+    }
+
+    function onChangeBuilderUnit(mode) {
+      const selectId = mode === "warlord" ? "selWarlordUnit" : "selRegularUnit";
+      const panelId = mode === "warlord" ? "warlordConfigPanel" : "regularUnitConfigPanel";
+      const unitName = document.getElementById(selectId).value;
+      const panel = document.getElementById(panelId);
+
+      if (!unitName) {
+        panel.classList.add("hidden");
+        state.staging[mode] = null;
+        return;
+      }
+
+      const unitObj = DB.Units.find(u => String(u.Faction).trim() === state.faction && String(u.Name).trim() === unitName);
+      if (!unitObj) return;
+
+      const tiers = parseTiers(unitObj.Tiers);
+      const unitWeapons = DB.Weapons.filter(w => String(w.UnitName || "").trim().toLowerCase() === unitName.toLowerCase());
+
+      state.staging[mode] = {
+        unitObj,
+        tiers,
+        tierIdx: 0,
+        enhancementName: "",
+        weaponCounts: unitWeapons.map(w => parseInt(w.DefaultCount) || 0),
+        weaponsList: unitWeapons
+      };
+
+      renderStagingPanel(mode);
+    }
+
+    function renderStagingPanel(mode) {
+      const panelId = mode === "warlord" ? "warlordConfigPanel" : "regularUnitConfigPanel";
+      const panel = document.getElementById(panelId);
+      const stg = state.staging[mode];
+      if (!stg) return;
+
+      panel.classList.remove("hidden");
+      const u = stg.unitObj;
+      const activeTier = stg.tiers[stg.tierIdx] || stg.tiers[0];
+      const isCharacter = String(u.Keywords || "").toLowerCase().includes("character") || String(u.Role || "").toLowerCase().includes("character");
+      const isEpicHero = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
+
+      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const availableEnhancements = (!state.isChristmas && isCharacter && !isEpicHero) ? getEnhancementsFromDetachment(detObj) : [];
+
+      let tiersHtml = stg.tiers.map((t, idx) =>
+        `<option value="${idx}" ${idx === stg.tierIdx ? 'selected' : ''}>${t.models} Model(s) — ${t.pts} pts</option>`
+      ).join("");
+
+      let enhOptionsHtml = `<option value="">-- No Enhancement (0 pts) --</option>` +
+        availableEnhancements.map(e =>
+          `<option value="${e.name}" ${stg.enhancementName === e.name ? 'selected' : ''}>${e.name} (+${e.pts} pts)</option>`
+        ).join("");
+
+      const selectedEnhObj = availableEnhancements.find(e => e.name === stg.enhancementName);
+
+      let weaponsHtml = stg.weaponsList.map((w, wIdx) => {
+        const count = stg.weaponCounts[wIdx] || 0;
+        const maxAllowed = getWeaponMaxForModels(w, activeTier.models);
+        const isOver = count > maxAllowed;
+        const limitLabel = w.PerModels > 1 ? `Max ${w.MaxCount} per ${w.PerModels} models` : w.PerModels == 1 ? `Max ${w.MaxCount} per model` : `Max ${w.MaxCount} per unit`;
+
+        return `
+          <div class="p-2.5 rounded bg-zinc-950 border ${isOver ? 'border-red-500 bg-red-950/30' : count > 0 ? 'border-amber-500/40' : 'border-zinc-800'} space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-bold text-zinc-100">${w.WeaponName}</span>
+                <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 ml-1">${w.Type}</span>
+                <div class="text-[10px] font-cogitator ${isOver ? 'text-red-400 font-bold' : 'text-zinc-500'}">
+                  Limit: ${count} / ${maxAllowed} (${limitLabel})
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, -1); playCogitatorClick();" class="w-6 h-6 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs">-</button>
+                <span class="w-7 text-center font-cogitator text-xs font-bold ${isOver ? 'text-red-400' : 'text-amber-400'}">${count}x</span>
+                <button onclick="adjustStagingWeapon('${mode}', ${wIdx}, 1); playCogitatorClick();" class="w-6 h-6 rounded bg-zinc-800 hover:bg-amber-500 hover:text-zinc-950 text-zinc-200 font-bold text-xs">+</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-6 gap-1 text-[10px] font-cogitator bg-zinc-900/90 p-1 rounded text-center text-zinc-300">
+              <div><span class="text-zinc-500">RNG:</span> ${w.Range}</div>
+              <div><span class="text-zinc-500">A:</span> ${w.A}</div>
+              <div><span class="text-zinc-500">BS/WS:</span> ${w.BS_WS}</div>
+              <div><span class="text-zinc-500">S:</span> ${w.S}</div>
+              <div><span class="text-zinc-500">AP:</span> ${w.AP}</div>
+              <div><span class="text-zinc-500">D:</span> ${w.D}</div>
+            </div>
+            ${w.Keywords && w.Keywords !== '-' ? `<div class="text-[10px] font-cogitator text-amber-400/90">Keywords: [${linkifyText(w.Keywords)}]</div>` : ''}
+          </div>
+        `;
+      }).join("");
+
+      const totalUnitPts = activeTier.pts + (selectedEnhObj ? selectedEnhObj.pts : 0);
+
+      panel.innerHTML = `
+        <div class="p-3.5 bg-zinc-900/70 border border-amber-500/30 rounded space-y-3 mt-2">
+          <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+            <div>
+              <div class="text-sm font-bold text-amber-400 font-imperial uppercase">${u.Name}</div>
+              <div class="text-[10px] font-cogitator text-zinc-400">Role: ${u.Role} (Max ${u.MaxInArmy} in Army)</div>
+            </div>
+            <div class="text-right font-cogitator">
+              <span class="text-xs text-zinc-400">Unit Cost:</span>
+              <span class="text-sm font-bold text-amber-400">${totalUnitPts} pts</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 gap-1 bg-zinc-950 p-2 rounded border border-zinc-800 text-center font-cogitator text-xs">
+            <div><span class="text-[10px] text-zinc-500 block">M</span><span class="font-bold text-zinc-100">${u.M}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">T</span><span class="font-bold text-zinc-100">${u.T}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">SV</span><span class="font-bold text-zinc-100">${u.SV}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">W</span><span class="font-bold text-zinc-100">${u.W}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">LD</span><span class="font-bold text-zinc-100">${u.LD}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">OC</span><span class="font-bold text-zinc-100">${u.OC}</span></div>
+            <div><span class="text-[10px] text-zinc-500 block">INV</span><span class="font-bold text-amber-400">${u.Invuln}</span></div>
+          </div>
+
+          <div class="text-xs bg-zinc-950/60 p-2 rounded border border-zinc-800/80 space-y-1">
+            <div><span class="text-amber-500 font-bold">Abilities:</span> <span class="text-zinc-300">${linkifyText(u.Abilities)}</span></div>
+            <div class="text-[10px] font-cogitator text-zinc-400"><span class="text-zinc-500">Keywords:</span> ${u.Keywords}</div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-cogitator text-zinc-400 uppercase mb-1">Unit Size & Base Points</label>
+            <select onchange="changeStagingTier('${mode}', this.value); playCogitatorClick();" class="w-full bg-zinc-950 border border-zinc-700 rounded px-2.5 py-1.5 text-xs text-amber-300 font-cogitator">
+              ${tiersHtml}
+            </select>
+          </div>
+
+          ${!state.isChristmas && isCharacter ? (
+            isEpicHero ? `
+              <div class="p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-cogitator text-zinc-500">
+                <i class="fa-solid fa-ban text-red-500 mr-1"></i> EPIC HERO RULE: Epic Heroes cannot be given Enhancements.
+              </div>
+            ` : `
+              <div>
+                <label class="block text-[11px] font-cogitator text-amber-400 uppercase mb-1">Detachment Enhancement (Optional)</label>
+                <select onchange="changeStagingEnhancement('${mode}', this.value); playCogitatorClick();" class="w-full bg-zinc-950 border border-amber-600/50 rounded px-2.5 py-1.5 text-xs text-zinc-100">
+                  ${enhOptionsHtml}
+                </select>
+                ${selectedEnhObj ? `<div class="mt-1.5 p-2 bg-amber-950/20 border border-amber-600/30 rounded text-[11px] text-amber-200">${linkifyText(selectedEnhObj.desc)}</div>` : ''}
+              </div>
+            `
+          ) : ''}
+
+          <div class="space-y-2">
+            <div class="text-[11px] font-cogitator text-amber-400 uppercase">Wargear & Weapon Options</div>
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              ${weaponsHtml || '<div class="text-xs text-zinc-500 font-cogitator">No customisable weapons listed.</div>'}
+            </div>
+          </div>
+
+          <button onclick="commitStagedUnitToRoster('${mode}'); playRoboticBeep();" class="w-full py-2.5 rounded bg-gradient-to-r from-red-800 via-red-700 to-red-800 hover:from-red-700 hover:to-red-600 border border-amber-500/60 text-amber-100 font-imperial font-bold text-xs uppercase tracking-wider shadow-lg transition">
+            <i class="fa-solid fa-check-double mr-1"></i> ${mode === 'warlord' ? 'Authorise Warlord & Add to Roster' : 'Authorise Unit & Add to Roster'}
+          </button>
+        </div>
+      `;
+    }
+
+    function changeStagingTier(mode, tierIdx) {
+      const stg = state.staging[mode];
+      if (!stg) return;
+      stg.tierIdx = parseInt(tierIdx) || 0;
+      const newModels = stg.tiers[stg.tierIdx].models;
+      stg.weaponsList.forEach((w, idx) => {
+        if (parseInt(w.PerModels) === 1 && parseInt(w.DefaultCount) > 0) {
+          stg.weaponCounts[idx] = newModels;
+        }
+      });
+      renderStagingPanel(mode);
+    }
+
+    function changeStagingEnhancement(mode, enhName) {
+      if (!state.staging[mode]) return;
+      state.staging[mode].enhancementName = enhName;
+      renderStagingPanel(mode);
+    }
+
+    function adjustStagingWeapon(mode, wIdx, delta) {
+      const stg = state.staging[mode];
+      if (!stg) return;
+      stg.weaponCounts[wIdx] = Math.max(0, (stg.weaponCounts[wIdx] || 0) + delta);
+      renderStagingPanel(mode);
+    }
+
+    function commitStagedUnitToRoster(mode) {
+      const stg = state.staging[mode];
+      if (!stg) return;
+
+      const u = stg.unitObj;
+      const activeTier = stg.tiers[stg.tierIdx] || stg.tiers[0];
+      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const enhList = state.isChristmas ? [] : getEnhancementsFromDetachment(detObj);
+      const chosenEnh = enhList.find(e => e.name === stg.enhancementName) || null;
+
+      if (mode === "warlord") state.roster.forEach(r => r.isWarlord = false);
+
+      const equippedWeapons = [];
+      stg.weaponsList.forEach((w, idx) => {
+        const c = stg.weaponCounts[idx] || 0;
+        if (c > 0) {
+          equippedWeapons.push({ ...w, count: c, maxAllowed: getWeaponMaxForModels(w, activeTier.models) });
+        }
+      });
+
+      state.roster.push({
+        id: "unit_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+        unitName: u.Name,
+        role: u.Role,
+        maxInArmy: parseInt(u.MaxInArmy) || 99,
+        stats: { M: u.M, T: u.T, SV: u.SV, W: u.W, LD: u.LD, OC: u.OC, Invuln: u.Invuln },
+        abilities: u.Abilities,
+        keywords: u.Keywords,
+        isWarlord: mode === "warlord",
+        models: activeTier.models,
+        basePts: activeTier.pts,
+        enhancement: chosenEnh,
+        weapons: equippedWeapons
+      });
+
+      if (mode === "regular") {
+        document.getElementById("selRegularUnit").value = "";
+        document.getElementById("regularUnitConfigPanel").classList.add("hidden");
+        state.staging.regular = null;
+      }
+      saveRosterToLocalStorage();
+      renderRoster();
+    }
+
+    // =========================================================================
+    // ROSTER RENDERER (Builder View)
+    // =========================================================================
+    function renderRoster() {
+      const subtitle = document.getElementById("rosterSubtitle");
+      const ptsText = document.getElementById("rosterPointsText");
+      const ptsBar = document.getElementById("rosterPointsBar");
+      const detPill = document.getElementById("rosterDetachmentPill");
+      const container = document.getElementById("enlistedUnitsContainer");
+      const errorBox = document.getElementById("cogitatorErrorBox");
+
+      if (!state.faction) {
+        subtitle.textContent = "AWAITING INITIAL DIRECTIVES...";
+        ptsText.textContent = "0 pts";
+        if (ptsBar) ptsBar.style.width = "100%";
+        detPill.classList.add("hidden");
+        errorBox.classList.add("hidden");
+        if (container) {
+          container.innerHTML = `
+            <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+              <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
+              <p>NO UNITS AUTHORISED IN ROSTER</p>
+              <p class="text-[11px] mt-1">Select Faction and Warlord on the left panel to populate your army.</p>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      if (state.isChristmas) {
+        subtitle.textContent = `🎄 CHRISTMAS MODE // ${state.faction.toUpperCase()} // FREE-FORM ROSTER`;
+      } else {
+        subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS (${state.dpBudget} DP)`;
+      }
+
+      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const dispObj = state.isChristmas ? null : DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
+      const dispText = dispObj ? ` // Force Disposition: ${dispObj.ForceDisposition}` : '';
+
+      if (detObj && detPill && !state.isChristmas) {
+        detPill.classList.remove("hidden");
+        detPill.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-amber-400 uppercase font-imperial">${detObj.DetachmentName} ${dispText}</span>
+            <span class="text-[10px] font-cogitator text-red-400">${detObj.RuleName}</span>
+          </div>
+          <p class="text-zinc-300 text-[11px]">${linkifyText(detObj.RuleDesc)}</p>
+        `;
+      } else if (detPill) {
+        detPill.classList.add("hidden");
+      }
+
+      let totalPts = 0;
+      const errors = [];
+
+      state.roster.forEach(item => {
+        const itemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        totalPts += itemPts;
+        item.weapons.forEach(w => {
+          if (!state.isChristmas && w.count > w.maxAllowed) errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max ${w.maxAllowed}).`);
+        });
+      });
+
+      if (!state.isChristmas && state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) errors.push(`[COMMAND ERROR] No Warlord designated.`);
+      if (!state.isChristmas && typeof state.pointsLimit === 'number' && state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
+
+      if (ptsText) ptsText.textContent = `${totalPts} ${state.isChristmas ? 'pts (Free Form)' : '/ ' + state.pointsLimit + ' pts'}`;
+      if (ptsBar) {
+        if (state.isChristmas) {
+          ptsBar.style.width = "100%";
+          ptsBar.className = "bg-emerald-500 h-full transition-all duration-300";
+        } else {
+          const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
+          ptsBar.style.width = pct + "%";
+          ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
+        }
+      }
+
+      if (errors.length > 0 && errorBox) {
+        errorBox.classList.remove("hidden");
+        errorBox.innerHTML = `<div class="font-bold text-red-400 uppercase mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> COGITATOR ERROR LOG (${errors.length}):</div>` +
+          errors.map(e => `<div>• ${e}</div>`).join("");
+      } else if (errorBox) {
+        errorBox.classList.add("hidden");
+      }
+
+      if (!container) return;
+
+      if (state.roster.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+            <i class="fa-solid fa-skull-crossbones text-2xl mb-2 opacity-40"></i>
+            <p>NO UNITS AUTHORISED IN ROSTER</p>
+            <p class="text-[11px] mt-1">Select Warlord and Units on the left panel to populate your army.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      const sortedRoster = [...state.roster].sort((a, b) => (b.isWarlord ? 1 : 0) - (a.isWarlord ? 1 : 0));
+
+      sortedRoster.forEach(item => {
+        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        const weaponsListHtml = item.weapons.map(w => `
+          <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${!state.isChristmas && w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
+            <div>
+              <span class="text-amber-400 font-cogitator font-bold">${w.count}x</span> ${w.WeaponName}
+              ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/80 font-cogitator ml-1">[${linkifyText(w.Keywords)}]</span>` : ''}
+            </div>
+            <div class="font-cogitator text-[10px] text-zinc-400">
+              Rng:${w.Range} | A:${w.A} | BS/WS:${w.BS_WS} | S:${w.S} | AP:${w.AP} | D:${w.D}
+            </div>
+          </div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = `p-3.5 rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} space-y-2`;
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 border-b border-zinc-800 pb-2">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-imperial font-bold text-sm text-zinc-100 uppercase">${item.unitName}</span>
+                ${item.isWarlord ? `<span class="px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-cogitator text-[10px] font-bold"><i class="fa-solid fa-crown"></i> WARLORD</span>` : ''}
+                <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400">${item.models} Model(s)</span>
+                <span class="text-[10px] font-cogitator px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-500">${item.role}</span>
+              </div>
+              <div class="text-[10px] font-cogitator text-zinc-400 mt-1">
+                M:${item.stats.M} | T:${item.stats.T} | SV:${item.stats.SV} | W:${item.stats.W} | LD:${item.stats.LD} | OC:${item.stats.OC} | INV:${item.stats.Invuln}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-cogitator font-bold text-sm text-amber-400">${totalItemPts} pts</span>
+              <button onclick="removeUnitFromRoster('${item.id}'); playRoboticBeep();" class="p-1 px-2 rounded bg-zinc-900 hover:bg-red-900/60 text-zinc-400 hover:text-red-300 text-xs transition" title="Remove Unit">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+          ${item.enhancement ? `
+            <div class="p-2 rounded bg-amber-950/20 border border-amber-600/30 text-xs">
+              <span class="font-bold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
+              <p class="text-[11px] text-zinc-300 mt-0.5">${linkifyText(item.enhancement.desc)}</p>
+            </div>
+          ` : ''}
+
+          <div class="space-y-0.5">
+            <div class="text-[10px] font-cogitator text-zinc-500 uppercase">Equipped Wargear:</div>
+            ${weaponsListHtml || '<div class="text-xs text-zinc-600">Standard Close Combat Weapons</div>'}
+          </div>
+
+          <div class="text-[11px] text-zinc-400 pt-1">
+            <span class="text-amber-500/90 font-bold">Abilities:</span> ${linkifyText(item.abilities)}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // =========================================================================
+    // BATTLE COGITATOR (In-Game Tabletop Mode - Extra Large Readability)
+    // =========================================================================
+    function renderBattleCogitatorView() {
+      const container = document.getElementById("battleUnitsContainer");
+      const headerInfo = document.getElementById("battleHeaderInfo");
+
+      if (headerInfo) headerInfo.textContent = `${state.roster.length} Units Enlisted // ${state.faction || 'No Faction'}`;
+
+      if (!container) return;
+
+      if (state.roster.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-16 border border-dashed border-zinc-800 rounded text-zinc-600 font-cogitator text-xs">
+            <i class="fa-solid fa-chess-board text-3xl mb-2 opacity-40"></i>
+            <p>NO BATTLE UNITS DETECTED IN ROSTER</p>
+            <p class="text-[11px] mt-1">Switch back to "Army Builder" tab and enlist your forces first.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      const sortedRoster = [...state.roster].sort((a, b) => (b.isWarlord ? 1 : 0) - (a.isWarlord ? 1 : 0));
+
+      sortedRoster.forEach((item) => {
+        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        const collapseId = `battleUnit_${item.id}`;
+
+        const weaponsListHtml = item.weapons.map(w => `
+          <div class="p-3 rounded-md bg-zinc-950 border border-zinc-800 space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="font-bold text-sm md:text-base text-amber-300">${w.count}x ${w.WeaponName}</span>
+                <span class="text-xs font-cogitator px-2 py-0.5 rounded bg-zinc-900 text-zinc-300 ml-1.5">${w.Type}</span>
+                ${w.Keywords && w.Keywords !== '-' ? `<span class="text-xs text-amber-400/90 font-cogitator block mt-1">[${linkifyText(w.Keywords)}]</span>` : ''}
+              </div>
+              <div class="font-cogitator text-xs md:text-sm text-zinc-200 bg-zinc-900 px-3 py-1.5 rounded-md border border-zinc-800 flex flex-wrap gap-3">
+                <div><span class="text-zinc-500">RNG:</span> <strong class="text-zinc-100">${w.Range}</strong></div>
+                <div><span class="text-zinc-500">A:</span> <strong class="text-zinc-100">${w.A}</strong></div>
+                <div><span class="text-zinc-500">BS/WS:</span> <strong class="text-zinc-100">${w.BS_WS}</strong></div>
+                <div><span class="text-zinc-500">S:</span> <strong class="text-zinc-100">${w.S}</strong></div>
+                <div><span class="text-zinc-500">AP:</span> <strong class="text-zinc-100">${w.AP}</strong></div>
+                <div><span class="text-zinc-500">D:</span> <strong class="text-amber-400">${w.D}</strong></div>
+              </div>
+            </div>
+          </div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = `rounded-lg bg-zinc-950 border ${item.isWarlord ? 'border-amber-500 shadow-[0_0_20px_rgba(197,155,39,0.25)]' : 'border-zinc-800'} overflow-hidden transition`;
+        
+        card.innerHTML = `
+          <!-- Collapsed Header Bar with Extra Large Stats -->
+          <div onclick="toggleBattleUnitCard('${collapseId}'); playCogitatorClick();" class="p-4 md:p-5 bg-zinc-900/95 hover:bg-zinc-900 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 cursor-pointer select-none">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="font-imperial font-bold text-base md:text-xl text-zinc-100 uppercase tracking-wide">${item.unitName}</span>
+              ${item.isWarlord ? `<span class="px-2.5 py-1 rounded bg-amber-500 text-zinc-950 font-cogitator text-xs md:text-sm font-bold"><i class="fa-solid fa-crown mr-1"></i> WARLORD</span>` : ''}
+              <span class="text-xs md:text-sm font-cogitator text-zinc-200 bg-zinc-950 px-3 py-1 rounded border border-zinc-800">${item.models} Model(s)</span>
+              <span class="text-xs md:text-sm font-cogitator text-zinc-400">[${item.role}]</span>
+            </div>
+
+            <!-- Extra Large Tabletop Stat Strip -->
+            <div class="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
+              <div class="grid grid-cols-7 gap-1 md:gap-2 font-cogitator text-xs md:text-sm text-zinc-200 bg-zinc-950 px-3.5 py-2 rounded-lg border border-zinc-800 text-center">
+                <div class="px-1.5"><span class="text-[10px] md:text-xs text-zinc-500 block">M</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.M}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">T</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.T}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">SV</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.SV}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">W</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.W}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">LD</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.LD}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">OC</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.OC}</strong></div>
+                <div class="px-1.5 border-l border-zinc-800"><span class="text-[10px] md:text-xs text-zinc-500 block">INV</span> <strong class="text-base md:text-lg text-amber-400">${item.stats.Invuln}</strong></div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="font-cogitator font-bold text-lg md:text-xl text-amber-400">${totalItemPts} pts</span>
+                <i id="icon_${collapseId}" class="fa-solid fa-chevron-down text-zinc-400 text-base transition-transform duration-200"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expanded Full Dataslate Body -->
+          <div id="${collapseId}" class="hidden p-4 md:p-5 space-y-4 bg-[#0d0f13] border-t border-zinc-800">
+            ${item.enhancement ? `
+              <div class="p-3.5 rounded-md bg-amber-950/20 border border-amber-600/40 text-sm">
+                <span class="font-bold text-base text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</span>
+                <p class="text-zinc-200 mt-1.5 text-sm md:text-base leading-relaxed">${linkifyText(item.enhancement.desc)}</p>
+              </div>
+            ` : ''}
+
+            <!-- Wargear & Weapons Section -->
+            <div class="space-y-2">
+              <div class="text-xs md:text-sm font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-base"></i> Equipped Wargear & Weapons
+              </div>
+              <div class="space-y-2">
+                ${weaponsListHtml || '<div class="text-xs text-zinc-500 font-cogitator">Standard Close Combat Weapons</div>'}
+              </div>
+            </div>
+
+            <!-- Abilities & Keywords Section -->
+            <div class="space-y-2 pt-3 border-t border-zinc-900">
+              <div class="text-xs md:text-sm font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-book-bookmark text-base"></i> Datasheet Abilities & Rules
+              </div>
+              <div class="text-sm md:text-base bg-zinc-950 p-4 rounded-md border border-zinc-800 text-zinc-200 leading-relaxed space-y-3">
+                <div>${linkifyText(item.abilities)}</div>
+                <div class="text-xs md:text-sm font-cogitator text-zinc-400 pt-3 border-t border-zinc-900"><span class="text-zinc-500">Keywords:</span> ${item.keywords}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleBattleUnitCard(collapseId) {
+      const body = document.getElementById(collapseId);
+      const icon = document.getElementById(`icon_${collapseId}`);
+      if (body.classList.contains("hidden")) {
+        body.classList.remove("hidden");
+        icon.className = "fa-solid fa-chevron-up text-amber-400 text-base transition-transform duration-200";
+      } else {
+        body.classList.add("hidden");
+        icon.className = "fa-solid fa-chevron-down text-zinc-400 text-base transition-transform duration-200";
+      }
+    }
+
+    function removeUnitFromRoster(id) {
+      state.roster = state.roster.filter(r => r.id !== id);
+      saveRosterToLocalStorage();
+      renderRoster();
+    }
+
+    function clearArmyRoster() {
+      if (confirm("Purge all enlisted units from current roster?")) {
+        state.roster = [];
+        saveRosterToLocalStorage();
+        renderRoster();
+      }
+    }
+
+    function copyRosterToClipboard() {
+      if (state.roster.length === 0) return;
+      let total = 0;
+      let txt = `+++ MATYENICUS ARMY ROSTER (${state.faction.toUpperCase()}) +++\n`;
+      if (!state.isChristmas) {
+        txt += `Detachment: ${state.detachmentName}\n`;
+        txt += `Battle Size: ${state.pointsLimit} pts (${state.dpBudget} DP)\n\n`;
+      } else {
+        txt += `Mode: CHRISTMAS FREE-FORM\n\n`;
+      }
+
+      state.roster.forEach(r => {
+        const pts = r.basePts + (r.enhancement ? r.enhancement.pts : 0);
+        total += pts;
+        txt += `• ${r.unitName} (${r.models} models, ${pts} pts)${r.isWarlord ? ' [WARLORD]' : ''}\n`;
+        if (r.enhancement) txt += `  Enhancement: ${r.enhancement.name} (+${r.enhancement.pts} pts)\n`;
+        r.weapons.forEach(w => { txt += `  - ${w.count}x ${w.WeaponName}\n`; });
+        txt += `\n`;
+      });
+      txt += `TOTAL POINTS: ${total} pts`;
+      navigator.clipboard.writeText(txt).then(() => alert("Army Roster copied to clipboard!"));
+    }
+
+    window.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>
