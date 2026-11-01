@@ -175,7 +175,6 @@
                   <option value="2000">2000 pts (3 DP)</option>
                   <option value="2500">2500 pts (4 DP)</option>
                   <option value="3000">3000 pts (4 DP)</option>
-                  <option value="christmas">🎄 Christmas (Free Form)</option>
                 </select>
               </div>
             </div>
@@ -302,10 +301,10 @@
             <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
               <div class="flex justify-between items-center text-xs font-cogitator mb-1">
                 <span class="text-zinc-400">REQUISITIONED POINTS TOTAL</span>
-                <span id="rosterPointsText" class="text-sm font-bold text-amber-400">0 pts</span>
+                <span id="rosterPointsText" class="text-sm font-bold text-amber-400">0 / 0 pts</span>
               </div>
               <div class="w-full bg-zinc-900 h-2.5 rounded overflow-hidden">
-                <div id="rosterPointsBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 100%"></div>
+                <div id="rosterPointsBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
               </div>
             </div>
           </div>
@@ -472,7 +471,6 @@
     let state = {
       faction: "",
       pointsLimit: 0,
-      isChristmas: false,
       dpBudget: 0,
       detachmentName: "",
       roster: [],
@@ -585,7 +583,6 @@
       localStorage.setItem("matyenicus_saved_roster", JSON.stringify({
         faction: state.faction,
         pointsLimit: state.pointsLimit,
-        isChristmas: state.isChristmas,
         dpBudget: state.dpBudget,
         detachmentName: state.detachmentName,
         roster: state.roster
@@ -598,9 +595,8 @@
         try {
           const data = JSON.parse(saved);
           state.faction = data.faction || "";
-          state.isChristmas = data.isChristmas || false;
-          state.pointsLimit = data.pointsLimit || (state.isChristmas ? "christmas" : 0);
-          state.dpBudget = data.dpBudget || getDPBudgetForPoints(typeof state.pointsLimit === 'number' ? state.pointsLimit : 2000);
+          state.pointsLimit = data.pointsLimit || 0;
+          state.dpBudget = data.dpBudget || getDPBudgetForPoints(state.pointsLimit);
           state.detachmentName = data.detachmentName || "";
           state.roster = data.roster || [];
 
@@ -608,11 +604,11 @@
             document.getElementById("selFaction").value = state.faction;
             onSelectFaction();
           }
-          if (state.pointsLimit !== undefined && state.pointsLimit !== 0) {
+          if (state.pointsLimit) {
             document.getElementById("selPoints").value = state.pointsLimit;
             onSelectPoints();
           }
-          if (state.detachmentName && !state.isChristmas) {
+          if (state.detachmentName) {
             setTimeout(() => {
               const selDet = document.getElementById("selDetachment");
               if (selDet) {
@@ -637,14 +633,13 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
         faction: state.faction,
         pointsLimit: state.pointsLimit,
-        isChristmas: state.isChristmas,
         dpBudget: state.dpBudget,
         detachmentName: state.detachmentName,
         roster: state.roster
       }, null, 2));
       const dlAnchor = document.createElement('a');
       dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", `matyenicus_roster_${state.faction || 'army'}_${state.isChristmas ? 'christmas' : (state.pointsLimit || 0) + 'pts'}.json`);
+      dlAnchor.setAttribute("download", `matyenicus_roster_${state.faction || 'army'}_${state.pointsLimit || 0}pts.json`);
       document.body.appendChild(dlAnchor);
       dlAnchor.click();
       dlAnchor.remove();
@@ -658,9 +653,8 @@
           try {
             const data = JSON.parse(e.target.result);
             state.faction = data.faction || "";
-            state.isChristmas = data.isChristmas || false;
-            state.pointsLimit = data.pointsLimit || (state.isChristmas ? "christmas" : 0);
-            state.dpBudget = data.dpBudget || getDPBudgetForPoints(typeof state.pointsLimit === 'number' ? state.pointsLimit : 2000);
+            state.pointsLimit = data.pointsLimit || 0;
+            state.dpBudget = data.dpBudget || getDPBudgetForPoints(state.pointsLimit);
             state.detachmentName = data.detachmentName || "";
             state.roster = data.roster || [];
 
@@ -668,11 +662,11 @@
               document.getElementById("selFaction").value = state.faction;
               onSelectFaction();
             }
-            if (state.pointsLimit !== undefined && state.pointsLimit !== 0) {
+            if (state.pointsLimit) {
               document.getElementById("selPoints").value = state.pointsLimit;
               onSelectPoints();
             }
-            if (state.detachmentName && !state.isChristmas) {
+            if (state.detachmentName) {
               setTimeout(() => {
                 const selDet = document.getElementById("selDetachment");
                 if (selDet) {
@@ -789,37 +783,21 @@
         document.getElementById("factionRuleDesc").innerHTML = linkifyText(facObj.ArmyRuleDesc || "");
       }
 
-      if (state.pointsLimit !== 0 && state.pointsLimit !== "") unlockDetachmentStep();
+      if (state.pointsLimit > 0) unlockDetachmentStep();
     }
 
     function onSelectPoints() {
-      const rawVal = document.getElementById("selPoints").value;
-      const detCard = document.getElementById("stepDetachmentCard");
+      const pts = parseInt(document.getElementById("selPoints").value) || 0;
+      state.pointsLimit = pts;
+      state.dpBudget = getDPBudgetForPoints(pts);
+      
+      const dpBudgetEl = document.getElementById("dpBudgetText");
+      if (dpBudgetEl) dpBudgetEl.textContent = `BUDGET: ${state.dpBudget} DP`;
 
-      if (rawVal === "christmas") {
-        state.isChristmas = true;
-        state.pointsLimit = "christmas";
-        state.dpBudget = 0;
-        state.detachmentName = "Christmas Free-Form Protocol";
-        
-        // Hide detachment card in christmas mode
-        detCard.classList.add("hidden");
-        if (state.faction) unlockWarlordAndUnitsSteps();
-      } else {
-        state.isChristmas = false;
-        const pts = parseInt(rawVal) || 0;
-        state.pointsLimit = pts;
-        state.dpBudget = getDPBudgetForPoints(pts);
-        
-        const dpBudgetEl = document.getElementById("dpBudgetText");
-        if (dpBudgetEl) dpBudgetEl.textContent = `BUDGET: ${state.dpBudget} DP`;
-
-        if (pts > 0 && state.faction) unlockDetachmentStep();
-      }
+      if (pts > 0 && state.faction) unlockDetachmentStep();
     }
 
     function unlockDetachmentStep() {
-      if (state.isChristmas) return;
       const detCard = document.getElementById("stepDetachmentCard");
       detCard.classList.remove("hidden");
 
@@ -975,8 +953,8 @@
       const isCharacter = String(u.Keywords || "").toLowerCase().includes("character") || String(u.Role || "").toLowerCase().includes("character");
       const isEpicHero = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
 
-      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      const availableEnhancements = (!state.isChristmas && isCharacter && !isEpicHero) ? getEnhancementsFromDetachment(detObj) : [];
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const availableEnhancements = (isCharacter && !isEpicHero) ? getEnhancementsFromDetachment(detObj) : [];
 
       let tiersHtml = stg.tiers.map((t, idx) =>
         `<option value="${idx}" ${idx === stg.tierIdx ? 'selected' : ''}>${t.models} Model(s) — ${t.pts} pts</option>`
@@ -1061,7 +1039,7 @@
             </select>
           </div>
 
-          ${!state.isChristmas && isCharacter ? (
+          ${isCharacter ? (
             isEpicHero ? `
               <div class="p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-cogitator text-zinc-500">
                 <i class="fa-solid fa-ban text-red-500 mr-1"></i> EPIC HERO RULE: Epic Heroes cannot be given Enhancements.
@@ -1123,8 +1101,8 @@
 
       const u = stg.unitObj;
       const activeTier = stg.tiers[stg.tierIdx] || stg.tiers[0];
-      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      const enhList = state.isChristmas ? [] : getEnhancementsFromDetachment(detObj);
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const enhList = getEnhancementsFromDetachment(detObj);
       const chosenEnh = enhList.find(e => e.name === stg.enhancementName) || null;
 
       if (mode === "warlord") state.roster.forEach(r => r.isWarlord = false);
@@ -1141,7 +1119,7 @@
         id: "unit_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
         unitName: u.Name,
         role: u.Role,
-        maxInArmy: parseInt(u.MaxInArmy) || 99,
+        maxInArmy: parseInt(u.MaxInArmy) || 3,
         stats: { M: u.M, T: u.T, SV: u.SV, W: u.W, LD: u.LD, OC: u.OC, Invuln: u.Invuln },
         abilities: u.Abilities,
         keywords: u.Keywords,
@@ -1174,8 +1152,8 @@
 
       if (!state.faction) {
         subtitle.textContent = "AWAITING INITIAL DIRECTIVES...";
-        ptsText.textContent = "0 pts";
-        if (ptsBar) ptsBar.style.width = "100%";
+        ptsText.textContent = "0 / 0 pts";
+        ptsBar.style.width = "0%";
         detPill.classList.add("hidden");
         errorBox.classList.add("hidden");
         if (container) {
@@ -1190,17 +1168,13 @@
         return;
       }
 
-      if (state.isChristmas) {
-        subtitle.textContent = `🎄 CHRISTMAS MODE // ${state.faction.toUpperCase()} // FREE-FORM ROSTER`;
-      } else {
-        subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS (${state.dpBudget} DP)`;
-      }
+      subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS (${state.dpBudget} DP)`;
 
-      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      const dispObj = state.isChristmas ? null : DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
+      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
       const dispText = dispObj ? ` // Force Disposition: ${dispObj.ForceDisposition}` : '';
 
-      if (detObj && detPill && !state.isChristmas) {
+      if (detObj && detPill) {
         detPill.classList.remove("hidden");
         detPill.innerHTML = `
           <div class="flex justify-between items-center">
@@ -1214,29 +1188,35 @@
       }
 
       let totalPts = 0;
+      const unitCounts = {};
+      const enhancementNames = [];
       const errors = [];
 
       state.roster.forEach(item => {
         const itemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
         totalPts += itemPts;
+        unitCounts[item.unitName] = (unitCounts[item.unitName] || 0) + 1;
+        if (item.enhancement) enhancementNames.push(item.enhancement.name);
         item.weapons.forEach(w => {
-          if (!state.isChristmas && w.count > w.maxAllowed) errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max ${w.maxAllowed}).`);
+          if (w.count > w.maxAllowed) errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max ${w.maxAllowed}).`);
         });
       });
 
-      if (!state.isChristmas && state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) errors.push(`[COMMAND ERROR] No Warlord designated.`);
-      if (!state.isChristmas && typeof state.pointsLimit === 'number' && state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
+      Object.keys(unitCounts).forEach(uName => {
+        const sample = state.roster.find(r => r.unitName === uName);
+        if (unitCounts[uName] > sample.maxInArmy) errors.push(`[FORCE ORG] ${uName}: Exceeds max cap of ${sample.maxInArmy}.`);
+      });
 
-      if (ptsText) ptsText.textContent = `${totalPts} ${state.isChristmas ? 'pts (Free Form)' : '/ ' + state.pointsLimit + ' pts'}`;
+      if (state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) errors.push(`[COMMAND ERROR] No Warlord designated.`);
+      if (enhancementNames.length > 3) errors.push(`[ENHANCEMENT LIMIT] Max 3 enhancements permitted.`);
+
+      if (state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
+
+      if (ptsText) ptsText.textContent = `${totalPts} / ${state.pointsLimit} pts`;
+      const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
       if (ptsBar) {
-        if (state.isChristmas) {
-          ptsBar.style.width = "100%";
-          ptsBar.className = "bg-emerald-500 h-full transition-all duration-300";
-        } else {
-          const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
-          ptsBar.style.width = pct + "%";
-          ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
-        }
+        ptsBar.style.width = pct + "%";
+        ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
       }
 
       if (errors.length > 0 && errorBox) {
@@ -1266,7 +1246,7 @@
       sortedRoster.forEach(item => {
         const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
         const weaponsListHtml = item.weapons.map(w => `
-          <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${!state.isChristmas && w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
+          <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
             <div>
               <span class="text-amber-400 font-cogitator font-bold">${w.count}x</span> ${w.WeaponName}
               ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/80 font-cogitator ml-1">[${linkifyText(w.Keywords)}]</span>` : ''}
@@ -1466,12 +1446,8 @@
       if (state.roster.length === 0) return;
       let total = 0;
       let txt = `+++ MATYENICUS ARMY ROSTER (${state.faction.toUpperCase()}) +++\n`;
-      if (!state.isChristmas) {
-        txt += `Detachment: ${state.detachmentName}\n`;
-        txt += `Battle Size: ${state.pointsLimit} pts (${state.dpBudget} DP)\n\n`;
-      } else {
-        txt += `Mode: CHRISTMAS FREE-FORM\n\n`;
-      }
+      txt += `Detachment: ${state.detachmentName}\n`;
+      txt += `Battle Size: ${state.pointsLimit} pts (${state.dpBudget} DP)\n\n`;
 
       state.roster.forEach(r => {
         const pts = r.basePts + (r.enhancement ? r.enhancement.pts : 0);
@@ -1481,7 +1457,7 @@
         r.weapons.forEach(w => { txt += `  - ${w.count}x ${w.WeaponName}\n`; });
         txt += `\n`;
       });
-      txt += `TOTAL POINTS: ${total} pts`;
+      txt += `TOTAL POINTS: ${total} / ${state.pointsLimit} pts`;
       navigator.clipboard.writeText(txt).then(() => alert("Army Roster copied to clipboard!"));
     }
 
