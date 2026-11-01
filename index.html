@@ -65,6 +65,7 @@
     @media print {
       body { background: white !important; color: black !important; }
       header, .no-print { display: none !important; }
+      .print-unit-card { background: #f4f4f5 !important; border: 1px solid #71717a !important; color: black !important; margin-bottom: 16px; page-break-inside: avoid; }
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -75,7 +76,7 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
 
-  <!-- GLOSSARY MODAL POPUP -->
+  <!-- GLOSSARY MODAL -->
   <div id="glossaryModal" onclick="closeGlossaryModal(); playCogitatorClick();" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -99,8 +100,68 @@
     </div>
   </div>
 
+  <!-- CHRISTMAS CAMPAIGN LOG / JOURNAL MODAL -->
+  <div id="christmasModal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-[#121418] border-2 border-emerald-600 rounded-xl max-w-6xl w-full h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Christmas Modal Header -->
+      <div class="bg-gradient-to-r from-red-950 via-emerald-950 to-red-950 p-4 border-b border-emerald-600/50 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-holly-berry text-2xl text-red-500 animate-bounce"></i>
+          <h2 class="font-imperial font-bold text-lg md:text-xl text-emerald-400 uppercase tracking-widest">🎄 Christmas Campaign Log & Archive</h2>
+        </div>
+        <button onclick="closeChristmasModal(); playCogitatorClick();" class="px-3 py-1 rounded bg-zinc-900 hover:bg-red-900 text-zinc-300 font-bold text-sm">
+          <i class="fa-solid fa-xmark text-lg"></i> Close
+        </button>
+      </div>
+
+      <!-- Christmas Modal Body (10 Tabs on Left, Content on Right) -->
+      <div class="grid grid-cols-1 md:grid-cols-12 flex-grow overflow-hidden">
+        <!-- Left Side: 10 Tabs List -->
+        <div class="md:col-span-3 bg-zinc-950 border-r border-zinc-800 p-3 space-y-1.5 overflow-y-auto" id="christmasTabsContainer">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Right Side: Free Text & Record Editor -->
+        <div class="md:col-span-9 p-5 flex flex-col space-y-4 overflow-y-auto bg-[#0d0f13]">
+          <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+            <div>
+              <input type="text" id="activeTabTitleInput" oninput="saveActiveChristmasTab()" class="bg-transparent font-imperial font-bold text-lg md:text-xl text-amber-400 uppercase border-b border-transparent hover:border-amber-500/50 focus:border-amber-500 focus:outline-none px-1" placeholder="Campaign Session Name">
+              <p class="text-xs font-cogitator text-zinc-500 mt-0.5">Free-form archive for forces, key events, and special mission rules.</p>
+            </div>
+            <button onclick="saveActiveChristmasTab(); playRoboticBeep();" class="px-4 py-2 rounded bg-emerald-700 hover:bg-emerald-600 text-zinc-950 font-imperial font-bold text-xs uppercase tracking-wider shadow">
+              <i class="fa-solid fa-floppy-disk mr-1"></i> Save Session
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-grow">
+            <div class="space-y-1.5 flex flex-col">
+              <label class="text-xs font-cogitator text-amber-500 uppercase font-bold">Armies & Notable Units Enlisted</label>
+              <textarea id="chrisArmiesText" oninput="saveActiveChristmasTab()" class="w-full flex-grow bg-zinc-950 border border-zinc-800 rounded p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-600 font-cogitator" placeholder="• Player 1 (Orks): Stompa, 60 Boyz...&#10;• Player 2 (AdMech): Imperator Titan, Heavy Kastelan..."></textarea>
+            </div>
+            <div class="space-y-1.5 flex flex-col">
+              <label class="text-xs font-cogitator text-emerald-500 uppercase font-bold">Key Scenes & Narrative Highlights</label>
+              <textarea id="chrisScenesText" oninput="saveActiveChristmasTab()" class="w-full flex-grow bg-zinc-950 border border-zinc-800 rounded p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-600 font-cogitator" placeholder="• Turn 2: The AdMech dimension-breach triggered!&#10;• Santa successfully rescued across the bridge..."></textarea>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-cogitator text-red-400 uppercase font-bold">Mission Rules, Board Size & Trap Mechanics</label>
+            <textarea id="chrisRulesText" oninput="saveActiveChristmasTab()" class="w-full h-28 bg-zinc-950 border border-zinc-800 rounded p-3 text-sm text-zinc-200 focus:outline-none focus:border-emerald-600 font-cogitator" placeholder="• Board size: 2 combined tables (88x60 inches)&#10;• Trap mechanics: D6 mortal wounds on hazard zones..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- HEADER -->
   <header class="py-6 px-4 border-b border-amber-500/20 bg-gradient-to-b from-red-950/20 to-transparent text-center relative overflow-hidden no-print">
+    <!-- Christmas Campaign Button in Top Right -->
+    <div class="absolute top-4 right-4 z-20">
+      <button onclick="openChristmasModal(); playCogitatorClick();" class="px-3.5 py-2 rounded-lg bg-gradient-to-r from-red-900 via-emerald-900 to-red-900 border-2 border-emerald-500 hover:border-amber-400 text-emerald-300 hover:text-amber-200 font-imperial font-bold text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.4)] transition flex items-center gap-2">
+        <i class="fa-solid fa-tree text-red-500 animate-pulse text-base"></i> 🎄 Christmas Campaign Log
+      </button>
+    </div>
+
     <div class="max-w-xl mx-auto flex flex-col items-center">
       <div class="relative w-20 h-20 flex items-center justify-center mb-2">
         <svg class="w-20 h-20 text-amber-500/80 cog-spin absolute inset-0" viewBox="0 0 100 100" fill="currentColor">
@@ -124,11 +185,14 @@
         <button onclick="switchTab('builder'); playRoboticBeep();" id="tabBtnBuilder" class="px-3.5 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition">
           <i class="fa-solid fa-gears mr-1"></i> 1. Builder
         </button>
-        <button onclick="switchTab('battle'); playRoboticBeep();" id="tabBtnBattle" class="px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition">
+        <button onclick="switchTab('battle'); playRoboticBeep();" id="tabBtnBattle" class="px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 font-cogitator text-xs font-bold uppercase transition">
           <i class="fa-solid fa-shield-cat mr-1"></i> 2. Tabletop
         </button>
-        <button onclick="switchTab('ingame'); playRoboticBeep();" id="tabBtnIngame" class="px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 hover:text-amber-300 font-cogitator text-xs font-bold uppercase transition">
-          <i class="fa-solid fa-chess-board mr-1"></i> 3. In-Game & Stratagems
+        <button onclick="switchTab('stratagems'); playRoboticBeep();" id="tabBtnStratagems" class="px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 font-cogitator text-xs font-bold uppercase transition">
+          <i class="fa-solid fa-bolt mr-1"></i> 3. Stratagems
+        </button>
+        <button onclick="switchTab('ingame'); playRoboticBeep();" id="tabBtnIngame" class="px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 font-cogitator text-xs font-bold uppercase transition">
+          <i class="fa-solid fa-chess-board mr-1"></i> 4. In-Game & Score
         </button>
         <button onclick="toggleAudioMute()" id="audioMuteBtn" class="px-2.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 text-amber-400 font-cogitator text-xs font-bold uppercase transition" title="Toggle Audio">
           <i id="audioMuteIcon" class="fa-solid fa-volume-high"></i>
@@ -142,7 +206,6 @@
 
     <!-- VIEW 1: ARMY BUILDER -->
     <div id="viewBuilder" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      <!-- LEFT -->
       <section class="lg:col-span-6 space-y-4">
         <!-- STEP 1 & 2 -->
         <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
@@ -277,11 +340,11 @@
                 <button onclick="copyRosterToClipboard(); playCogitatorClick();" class="px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-[11px] font-cogitator text-zinc-300 transition" title="Copy Text">
                   <i class="fa-solid fa-copy"></i> Copy
                 </button>
-                <button onclick="exportRosterExcel(); playCogitatorClick();" class="px-2 py-1 rounded bg-emerald-950/60 border border-emerald-700 hover:bg-emerald-900 text-[11px] font-cogitator text-emerald-300 transition" title="Export to Excel">
-                  <i class="fa-solid fa-file-excel"></i> Excel
+                <button onclick="exportRosterExcelMultiSheet(); playCogitatorClick();" class="px-2 py-1 rounded bg-emerald-950/60 border border-emerald-700 hover:bg-emerald-900 text-[11px] font-cogitator text-emerald-300 transition" title="Export Excel (2 Sheets)">
+                  <i class="fa-solid fa-file-excel"></i> Excel (2 Sheets)
                 </button>
                 <button onclick="exportRosterPDF(); playCogitatorClick();" class="px-2 py-1 rounded bg-red-950/60 border border-red-700 hover:bg-red-900 text-[11px] font-cogitator text-red-300 transition" title="Print PDF Roster">
-                  <i class="fa-solid fa-file-pdf"></i> PDF
+                  <i class="fa-solid fa-file-pdf"></i> PDF Card Print
                 </button>
                 <button onclick="clearArmyRoster(); playRoboticBeep();" class="px-2 py-1 rounded bg-zinc-900 border border-red-800/60 text-[11px] font-cogitator text-red-400 transition" title="Purge">
                   <i class="fa-solid fa-trash-can"></i>
@@ -310,7 +373,7 @@
       </section>
     </div>
 
-    <!-- VIEW 2: BATTLE COGITATOR (Tabletop) -->
+    <!-- VIEW 2: BATTLE COGITATOR (Tabletop View with Collapsible Cards & Full Weapon Details) -->
     <div id="viewBattle" class="hidden space-y-4">
       <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
         <div class="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-3">
@@ -318,7 +381,7 @@
             <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
               <i class="fa-solid fa-chess-board text-red-600"></i> Battle Cogitator // Tabletop View
             </h2>
-            <p class="text-xs font-cogitator text-zinc-400">Click any unit below to expand its full operational dataslate with modified stats & buffs.</p>
+            <p class="text-xs font-cogitator text-zinc-400">Click any unit below to expand its full operational dataslate, equipped weapons, stats & keywords.</p>
           </div>
           <div id="battleHeaderInfo" class="text-xs font-cogitator text-amber-300">0 Units Enlisted</div>
         </div>
@@ -326,80 +389,15 @@
       </div>
     </div>
 
-    <!-- VIEW 3: IN-GAME & STRATAGEMS (The New Interactive Fül) -->
-    <div id="viewIngame" class="hidden space-y-6">
-      <!-- Campaign Tracker & Victory Points -->
+    <!-- VIEW 3: STRATAGEMS (Dedicated Tab) -->
+    <div id="viewStratagems" class="hidden space-y-6">
       <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
         <div class="border-b border-zinc-800 pb-3 flex justify-between items-center flex-wrap gap-2">
           <div>
             <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
-              <i class="fa-solid fa-flag text-red-600"></i> Campaign In-Game Tracker // "The Nightmare After Candlemass"
+              <i class="fa-solid fa-bolt text-red-600"></i> Active Detachment Stratagems Database
             </h2>
-            <p class="text-xs font-cogitator text-zinc-400">Track battle rounds, campaign phases, and live victory points for all participants.</p>
-          </div>
-          <div class="flex items-center gap-2 font-cogitator text-xs">
-            <span class="text-zinc-400">Current Battle Round:</span>
-            <select id="selBattleRound" onchange="playCogitatorClick()" class="bg-zinc-950 border border-amber-500/50 text-amber-300 px-3 py-1 rounded font-bold">
-              <option value="1">Round 1: The Frozen Assault</option>
-              <option value="2" selected>Round 2: AdMech Dimension-Breach (The Trap!)</option>
-              <option value="3">Round 3: Santa's System Overload</option>
-              <option value="4">Round 4: Webway Collapse & Extraction</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div class="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-2">
-            <div class="text-xs font-cogitator text-amber-400 font-bold uppercase">Harlequin (Defender)</div>
-            <div class="text-[11px] text-zinc-400">Disposition: Escort Santa</div>
-            <div class="flex items-center justify-between pt-1">
-              <span class="text-xs font-cogitator text-zinc-400">VP:</span>
-              <input type="number" id="vpHarlequin" value="0" class="w-16 bg-zinc-900 border border-zinc-700 text-center text-amber-300 font-bold rounded py-0.5 text-xs">
-            </div>
-          </div>
-          <div class="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-2">
-            <div class="text-xs font-cogitator text-red-400 font-bold uppercase">AdMech (Boss / Trap)</div>
-            <div class="text-[11px] text-zinc-400">Disposition: Reclaim Asset</div>
-            <div class="flex items-center justify-between pt-1">
-              <span class="text-xs font-cogitator text-zinc-400">VP:</span>
-              <input type="number" id="vpAdmech" value="0" class="w-16 bg-zinc-900 border border-zinc-700 text-center text-amber-300 font-bold rounded py-0.5 text-xs">
-            </div>
-          </div>
-          <div class="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-2">
-            <div class="text-xs font-cogitator text-emerald-400 font-bold uppercase">Ork Invaders</div>
-            <div class="text-[11px] text-zinc-400">Disposition: Loot & Smash</div>
-            <div class="flex items-center justify-between pt-1">
-              <span class="text-xs font-cogitator text-zinc-400">VP:</span>
-              <input type="number" id="vpOrk" value="0" class="w-16 bg-zinc-900 border border-zinc-700 text-center text-amber-300 font-bold rounded py-0.5 text-xs">
-            </div>
-          </div>
-          <div class="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-2">
-            <div class="text-xs font-cogitator text-purple-400 font-bold uppercase">Tyranid Swarm</div>
-            <div class="text-[11px] text-zinc-400">Disposition: Consume Warp-Tech</div>
-            <div class="flex items-center justify-between pt-1">
-              <span class="text-xs font-cogitator text-zinc-400">VP:</span>
-              <input type="number" id="vpNid" value="0" class="w-16 bg-zinc-900 border border-zinc-700 text-center text-amber-300 font-bold rounded py-0.5 text-xs">
-            </div>
-          </div>
-          <div class="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-2">
-            <div class="text-xs font-cogitator text-cyan-400 font-bold uppercase">Necron Phalanx</div>
-            <div class="text-[11px] text-zinc-400">Disposition: Reclaim Relics</div>
-            <div class="flex items-center justify-between pt-1">
-              <span class="text-xs font-cogitator text-zinc-400">VP:</span>
-              <input type="number" id="vpNecron" value="0" class="w-16 bg-zinc-900 border border-zinc-700 text-center text-amber-300 font-bold rounded py-0.5 text-xs">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live Stratagems & Tactical Deck -->
-      <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
-        <div class="border-b border-zinc-800 pb-3 flex justify-between items-center flex-wrap gap-2">
-          <div>
-            <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-red-600"></i> Active Detachment Stratagems & Tactical Deck
-            </h2>
-            <p class="text-xs font-cogitator text-zinc-400">Quick-reference database categorized by combat phase for your active army detachment.</p>
+            <p class="text-xs font-cogitator text-zinc-400">All available tactical stratagems for your active army detachment, filterable by combat phase.</p>
           </div>
           <div class="flex items-center gap-2 font-cogitator text-xs">
             <span class="text-zinc-400">Filter Phase:</span>
@@ -414,9 +412,54 @@
             </select>
           </div>
         </div>
+        <div id="stratagemsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+    </div>
 
-        <div id="stratagemsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <!-- Populated dynamically based on detachment -->
+    <!-- VIEW 4: IN-GAME & SCORE TRACKER (General Form) -->
+    <div id="viewIngame" class="hidden space-y-6">
+      <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
+        <div class="border-b border-zinc-800 pb-3 flex justify-between items-center flex-wrap gap-2">
+          <div>
+            <h2 class="text-base font-bold font-imperial tracking-wider text-amber-400 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-flag text-red-600"></i> General In-Game Score & Round Tracker
+            </h2>
+            <p class="text-xs font-cogitator text-zinc-400">General purpose battle tracker for live scorekeeping across standard tabletop matches.</p>
+          </div>
+          <div class="flex items-center gap-2 font-cogitator text-xs">
+            <span class="text-zinc-400">Battle Round:</span>
+            <select id="selBattleRound" onchange="playCogitatorClick()" class="bg-zinc-950 border border-amber-500/50 text-amber-300 px-3 py-1 rounded font-bold">
+              <option value="1">Round 1</option>
+              <option value="2" selected>Round 2</option>
+              <option value="3">Round 3</option>
+              <option value="4">Round 4</option>
+              <option value="5">Round 5</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-zinc-950 p-4 rounded border border-zinc-800 space-y-3">
+            <div class="flex justify-between items-center">
+              <input type="text" id="playerOneName" value="Player One (Defender)" class="bg-transparent font-imperial font-bold text-amber-400 text-sm border-b border-transparent focus:border-amber-500 focus:outline-none">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-cogitator text-zinc-400">VP:</span>
+                <input type="number" id="vpPlayerOne" value="0" class="w-20 bg-zinc-900 border border-zinc-700 text-center text-amber-300 font-bold rounded py-1 text-sm">
+              </div>
+            </div>
+            <textarea placeholder="Notes, primary/secondary objectives..." class="w-full h-24 bg-zinc-900/50 border border-zinc-800 rounded p-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 font-cogitator"></textarea>
+          </div>
+
+          <div class="bg-zinc-950 p-4 rounded border border-zinc-800 space-y-3">
+            <div class="flex justify-between items-center">
+              <input type="text" id="playerTwoName" value="Player Two (Attacker)" class="bg-transparent font-imperial font-bold text-red-400 text-sm border-b border-transparent focus:border-red-500 focus:outline-none">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-cogitator text-zinc-400">VP:</span>
+                <input type="number" id="vpPlayerTwo" value="0" class="w-20 bg-zinc-900 border border-zinc-700 text-center text-red-300 font-bold rounded py-1 text-sm">
+              </div>
+            </div>
+            <textarea placeholder="Notes, primary/secondary objectives..." class="w-full h-24 bg-zinc-900/50 border border-zinc-800 rounded p-2 text-xs text-zinc-300 focus:outline-none focus:border-red-500 font-cogitator"></textarea>
+          </div>
         </div>
       </div>
     </div>
@@ -427,6 +470,16 @@
     const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
 
     let isAudioMuted = localStorage.getItem("matyenicus_audio_muted") === "true";
+
+    // --- CHRISTMAS CAMPAIGN TABS STATE ---
+    let christmasLogs = JSON.parse(localStorage.getItem("matyenicus_christmas_logs") || "null") || Array.from({length: 10}, (_, i) => ({
+      id: i + 1,
+      title: `Session ${i + 1}: Campaign Battle`,
+      armies: "",
+      scenes: "",
+      rules: ""
+    }));
+    let activeChristmasTabId = 1;
 
     function updateAudioMuteUI() {
       const icon = document.getElementById("audioMuteIcon");
@@ -503,11 +556,7 @@
       { KeywordOrAbility: "Devastating Wounds", Category: "Weapon Rule", Description: "A Critical Wound inflicts mortal wounds equal to the weapon's Damage characteristic instead of normal damage." },
       { KeywordOrAbility: "Lethal Hits", Category: "Weapon Rule", Description: "A Critical Hit automatically wounds the target without needing to roll to wound." },
       { KeywordOrAbility: "Melta X", Category: "Weapon Rule", Description: "Increase the Damage characteristic by X when targeting units within half range." },
-      { KeywordOrAbility: "Sustained Hits X", Category: "Weapon Rule", Description: "Each Critical Hit scores X additional hits on the target." },
-      { KeywordOrAbility: "Heavy", Category: "Weapon Rule", Description: "Add 1 to Hit rolls if the bearer’s unit Remained Stationary this turn." },
-      { KeywordOrAbility: "Blast", Category: "Weapon Rule", Description: "Add 1 to the Attacks characteristic for every 5 models in the target unit." },
-      { KeywordOrAbility: "Torrent", Category: "Weapon Rule", Description: "This weapon automatically hits its target; do not make Hit rolls." },
-      { KeywordOrAbility: "Ignores Cover", Category: "Weapon Rule", Description: "The target cannot have the Benefit of Cover against attacks made with this weapon." }
+      { KeywordOrAbility: "Sustained Hits X", Category: "Weapon Rule", Description: "Each Critical Hit scores X additional hits on the target." }
     ];
 
     let DB = { Factions: [], Detachments: [], Dispositions: [], Units: [], Weapons: [], Stratagems: [], Glossary: [] };
@@ -533,15 +582,17 @@
     function switchTab(viewName) {
       const btnBuilder = document.getElementById("tabBtnBuilder");
       const btnBattle = document.getElementById("tabBtnBattle");
+      const btnStratagems = document.getElementById("tabBtnStratagems");
       const btnIngame = document.getElementById("tabBtnIngame");
       const viewBuilder = document.getElementById("viewBuilder");
       const viewBattle = document.getElementById("viewBattle");
+      const viewStratagems = document.getElementById("viewStratagems");
       const viewIngame = document.getElementById("viewIngame");
 
-      [btnBuilder, btnBattle, btnIngame].forEach(b => {
+      [btnBuilder, btnBattle, btnStratagems, btnIngame].forEach(b => {
         b.className = "px-3.5 py-1.5 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-500 text-zinc-400 font-cogitator text-xs font-bold uppercase transition";
       });
-      [viewBuilder, viewBattle, viewIngame].forEach(v => v.classList.add("hidden"));
+      [viewBuilder, viewBattle, viewStratagems, viewIngame].forEach(v => v.classList.add("hidden"));
 
       if (viewName === 'builder') {
         btnBuilder.className = "px-3.5 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
@@ -550,11 +601,58 @@
         btnBattle.className = "px-3.5 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
         viewBattle.classList.remove("hidden");
         renderBattleCogitatorView();
+      } else if (viewName === 'stratagems') {
+        btnStratagems.className = "px-3.5 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
+        viewStratagems.classList.remove("hidden");
+        renderStratagemsList();
       } else {
         btnIngame.className = "px-3.5 py-1.5 rounded bg-red-950/80 border border-red-600/60 text-amber-300 font-cogitator text-xs font-bold uppercase transition";
         viewIngame.classList.remove("hidden");
-        renderStratagemsList();
       }
+    }
+
+    // Christmas Modal Controls
+    function openChristmasModal() {
+      document.getElementById("christmasModal").classList.remove("hidden");
+      renderChristmasTabs();
+      loadChristmasTabContent(activeChristmasTabId);
+    }
+    function closeChristmasModal() {
+      document.getElementById("christmasModal").classList.add("hidden");
+    }
+
+    function renderChristmasTabs() {
+      const container = document.getElementById("christmasTabsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      christmasLogs.forEach(log => {
+        const isActive = log.id === activeChristmasTabId;
+        const btn = document.createElement("button");
+        btn.onclick = () => { activeChristmasTabId = log.id; renderChristmasTabs(); loadChristmasTabContent(log.id); playCogitatorClick(); };
+        btn.className = `w-full text-left px-3 py-2 rounded text-xs font-cogitator uppercase transition flex items-center justify-between ${isActive ? 'bg-emerald-950/80 border border-emerald-600 text-emerald-300 font-bold' : 'bg-zinc-900/60 hover:bg-zinc-900 text-zinc-400'}`;
+        btn.innerHTML = `<span><i class="fa-solid fa-tree mr-2 text-red-500"></i>${log.title}</span>`;
+        container.appendChild(btn);
+      });
+    }
+
+    function loadChristmasTabContent(id) {
+      const log = christmasLogs.find(l => l.id === id);
+      if (!log) return;
+      document.getElementById("activeTabTitleInput").value = log.title;
+      document.getElementById("chrisArmiesText").value = log.armies || "";
+      document.getElementById("chrisScenesText").value = log.scenes || "";
+      document.getElementById("chrisRulesText").value = log.rules || "";
+    }
+
+    function saveActiveChristmasTab() {
+      const log = christmasLogs.find(l => l.id === activeChristmasTabId);
+      if (!log) return;
+      log.title = document.getElementById("activeTabTitleInput").value;
+      log.armies = document.getElementById("chrisArmiesText").value;
+      log.scenes = document.getElementById("chrisScenesText").value;
+      log.rules = document.getElementById("chrisRulesText").value;
+      localStorage.setItem("matyenicus_christmas_logs", JSON.stringify(christmasLogs));
+      renderChristmasTabs();
     }
 
     async function fetchSheetTabCSV(tabName) {
@@ -677,28 +775,33 @@
       renderRoster();
     }
 
-    // EXPORT EXCEL & PDF
-    function exportRosterExcel() {
+    function exportRosterExcelMultiSheet() {
       if (state.roster.length === 0) {
         alert("No units in roster to export.");
         return;
       }
-      let excelData = [["Faction", state.faction], ["Detachment", state.detachmentName], ["Points Limit", state.pointsLimit], []];
-      excelData.push(["Unit Name", "Role", "Models", "Base Pts", "Enhancement", "Enh Pts", "Total Pts", "Wargear"]);
+      let unitsRows = [
+        ["Faction", state.faction], ["Detachment", state.detachmentName], ["Points Limit", state.pointsLimit], [],
+        ["Unit Name", "Role", "Models", "Movement (M)", "Toughness (T)", "Save (SV)", "Wounds (W)", "Leadership (LD)", "Objective Control (OC)", "Invulnerable Save", "Base Pts", "Enhancement", "Attached Leader", "Total Pts"]
+      ];
+      let weaponsRows = [
+        ["Unit Name", "Weapon Name", "Type", "Range", "Attacks (A)", "Ballistic/Weapon Skill (BS/WS)", "Strength (S)", "Armor Penetration (AP)", "Damage (D)", "Keywords", "Count Equipped"]
+      ];
+
       state.roster.forEach(r => {
-        const itemPts = r.basePts + (r.enhancement ? r.enhancement.pts : 0);
-        const wargearStr = r.weapons.map(w => `${w.count}x ${w.WeaponName}`).join(", ");
-        excelData.push([r.unitName, r.role, r.models, r.basePts, r.enhancement ? r.enhancement.name : "None", r.enhancement ? r.enhancement.pts : 0, itemPts, wargearStr]);
+        const uObj = DB.Units.find(u => String(u.Name).trim() === r.unitName) || { M: r.stats.M, T: r.stats.T, SV: r.stats.SV, W: r.stats.W, LD: r.stats.LD, OC: r.stats.OC, Invuln: r.stats.Invuln };
+        const itemPts = r.basePts + (r.enhancement ? r.enhancement.pts : 0) + (r.attachedLeader ? r.attachedLeader.pts : 0);
+        unitsRows.push([r.unitName, r.role, r.models, uObj.M, uObj.T, uObj.SV, uObj.W, uObj.LD, uObj.OC, uObj.Invuln || "-", r.basePts, r.enhancement ? r.enhancement.name : "None", r.attachedLeader ? r.attachedLeader.name : "None", itemPts]);
+        r.weapons.forEach(w => { weaponsRows.push([r.unitName, w.WeaponName, w.Type, w.Range, w.A, w.BS_WS, w.S, w.AP, w.D, w.Keywords || "-", w.count]); });
       });
-      const ws = XLSX.utils.aoa_to_sheet(excelData);
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Army Roster");
-      XLSX.writeFile(wb, `matyenicus_roster_${state.faction || 'army'}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(unitsRows), "Army Units & Stats");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(weaponsRows), "Weapons Arsenal");
+      XLSX.writeFile(wb, `matyenicus_roster_detailed_${state.faction || 'army'}.xlsx`);
     }
 
-    function exportRosterPDF() {
-      window.print();
-    }
+    function exportRosterPDF() { window.print(); }
 
     function termToPattern(rawTerm) {
       let escaped = rawTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -742,9 +845,7 @@
       document.getElementById("glossaryModal").classList.remove("hidden");
     }
 
-    function closeGlossaryModal() {
-      document.getElementById("glossaryModal").classList.add("hidden");
-    }
+    function closeGlossaryModal() { document.getElementById("glossaryModal").classList.add("hidden"); }
 
     function populateFactionsDropdown() {
       const sel = document.getElementById("selFaction");
@@ -827,11 +928,7 @@
       const list = [];
       for (let i = 1; i <= 4; i++) {
         if (detRow[`Enh${i}Name`]) {
-          list.push({
-            name: String(detRow[`Enh${i}Name`]).trim(),
-            pts: parseInt(detRow[`Enh${i}Pts`]) || 0,
-            desc: String(detRow[`Enh${i}Desc`] || "").trim()
-          });
+          list.push({ name: String(detRow[`Enh${i}Name`]).trim(), pts: parseInt(detRow[`Enh${i}Pts`]) || 0, desc: String(detRow[`Enh${i}Desc`] || "").trim() });
         }
       }
       return list;
@@ -865,7 +962,7 @@
       document.getElementById("stepWarlordCard").classList.remove("hidden");
       document.getElementById("stepUnitsCard").classList.remove("hidden");
       const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
-      const charUnits = facUnits.filter(u => String(u.CanBeWarlord || "").trim().toLowerCase() === "yes");
+      const charUnits = facUnits.filter(u => String(u.CanBeWarlord || "").trim().toLowerCase() === "yes" || String(u.Keywords || "").toLowerCase().includes("character"));
 
       const selWarlord = document.getElementById("selWarlordUnit");
       selWarlord.innerHTML = `<option value="">-- Select Character as Warlord --</option>`;
@@ -947,7 +1044,6 @@
 
       let weaponsHtml = stg.weaponsList.map((w, wIdx) => {
         const count = stg.weaponCounts[wIdx] || 0;
-        const maxAllowed = getWeaponMaxForModels(w, activeTier.models);
         return `
           <div class="p-2.5 rounded bg-zinc-950 border border-zinc-800 space-y-1">
             <div class="flex items-center justify-between gap-2">
@@ -1043,6 +1139,7 @@
         models: activeTier.models,
         basePts: activeTier.pts,
         enhancement: chosenEnh,
+        attachedLeader: null,
         weapons: equippedWeapons
       });
 
@@ -1055,6 +1152,55 @@
       renderRoster();
     }
 
+    function openAttachLeaderModal(unitId) {
+      const targetUnit = state.roster.find(r => r.id === unitId);
+      if (!targetUnit) return;
+
+      const facUnits = DB.Units.filter(u => String(u.Faction).trim() === state.faction);
+      const leaders = facUnits.filter(u => String(u.Keywords || "").toLowerCase().includes("character") && !String(u.Keywords || "").toLowerCase().includes("monster") && !String(u.Keywords || "").toLowerCase().includes("vehicle"));
+
+      let leaderOptions = `<option value="">-- No Attached Leader --</option>` + leaders.map(l => {
+        const pts = parseTiers(l.Tiers)[0].pts;
+        return `<option value="${l.Name}">${l.Name} (${pts} pts) - [Leader]</option>`;
+      }).join("");
+
+      let modalHtml = `
+        <div id="leaderModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-4">
+            <h3 class="font-imperial font-bold text-base text-amber-400 uppercase">Attach Leader to: ${targetUnit.unitName}</h3>
+            <select id="selModalLeader" class="w-full bg-zinc-950 border border-amber-600/60 rounded p-2 text-sm text-zinc-100">${leaderOptions}</select>
+            <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+              <button onclick="document.getElementById('leaderModal').remove()" class="px-3 py-1.5 rounded bg-zinc-800 text-xs text-zinc-300">Cancel</button>
+              <button onclick="confirmAttachLeader('${unitId}')" class="px-3.5 py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-xs text-zinc-950 font-bold uppercase">Attach Leader</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const div = document.createElement("div");
+      div.innerHTML = modalHtml;
+      document.body.appendChild(div);
+    }
+
+    function confirmAttachLeader(unitId) {
+      const sel = document.getElementById("selModalLeader");
+      const leaderName = sel ? sel.value : "";
+      const targetUnit = state.roster.find(r => r.id === unitId);
+
+      if (targetUnit) {
+        if (!leaderName) {
+          targetUnit.attachedLeader = null;
+        } else {
+          const lObj = DB.Units.find(u => String(u.Name).trim() === leaderName);
+          const pts = lObj ? parseTiers(lObj.Tiers)[0].pts : 50;
+          targetUnit.attachedLeader = { name: leaderName, pts: pts, abilities: lObj ? lObj.Abilities : "Leader attached ability." };
+        }
+        saveRosterToLocalStorage();
+        renderRoster();
+      }
+      const modal = document.getElementById("leaderModal");
+      if (modal) modal.parentElement.remove();
+    }
+
     function renderRoster() {
       const subtitle = document.getElementById("rosterSubtitle");
       const ptsText = document.getElementById("rosterPointsText");
@@ -1063,7 +1209,7 @@
 
       let totalPts = 0;
       state.roster.forEach(item => {
-        totalPts += item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        totalPts += item.basePts + (item.enhancement ? item.enhancement.pts : 0) + (item.attachedLeader ? item.attachedLeader.pts : 0);
       });
 
       if (ptsText) ptsText.textContent = `${totalPts} pts`;
@@ -1077,9 +1223,12 @@
 
       container.innerHTML = "";
       state.roster.forEach(item => {
-        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
+        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0) + (item.attachedLeader ? item.attachedLeader.pts : 0);
         const card = document.createElement("div");
-        card.className = `p-3.5 rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} space-y-2`;
+        card.className = `p-3.5 rounded bg-zinc-950 border ${item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} space-y-2 print-unit-card`;
+        
+        let weaponsTxt = item.weapons.map(w => `${w.count}x ${w.WeaponName} (Rng: ${w.Range}, A: ${w.A}, D: ${w.D})`).join("<br>");
+
         card.innerHTML = `
           <div class="flex items-start justify-between gap-2 border-b border-zinc-800 pb-2">
             <div>
@@ -1087,20 +1236,28 @@
                 <span class="font-imperial font-bold text-sm text-zinc-100 uppercase">${item.unitName}</span>
                 ${item.isWarlord ? `<span class="px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-cogitator text-[10px] font-bold"><i class="fa-solid fa-crown"></i> WARLORD</span>` : ''}
               </div>
-              <div class="text-[10px] font-cogitator text-zinc-400 mt-1">M:${item.stats.M} | T:${item.stats.T} | SV:${item.stats.SV} | W:${item.stats.W} | INV:${item.stats.Invuln}</div>
+              <div class="text-[10px] font-cogitator text-zinc-400 mt-1">M:${item.stats.M} | T:${item.stats.T} | SV:${item.stats.SV} | W:${item.stats.W} | LD:${item.stats.LD} | OC:${item.stats.OC} | INV:${item.stats.Invuln}</div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 no-print">
               <span class="font-cogitator font-bold text-sm text-amber-400">${totalItemPts} pts</span>
               <button onclick="removeUnitFromRoster('${item.id}')" class="p-1 px-2 rounded bg-zinc-900 text-zinc-400 hover:text-red-300 text-xs"><i class="fa-solid fa-xmark"></i></button>
             </div>
           </div>
           ${item.enhancement ? `<div class="text-xs text-amber-400"><i class="fa-solid fa-bolt mr-1"></i>Enhancement: ${item.enhancement.name} (+${item.enhancement.pts} pts)</div>` : ''}
+          ${item.attachedLeader ? `<div class="text-xs text-emerald-400"><i class="fa-solid fa-user-shield mr-1"></i>Attached Leader: ${item.attachedLeader.name} (+${item.attachedLeader.pts} pts)</div>` : ''}
+          <div class="text-xs text-zinc-300 pt-1"><strong class="text-amber-400">Wargear:</strong><br>${weaponsTxt || 'Standard Melee'}</div>
+          <div class="text-xs text-zinc-400 pt-1"><strong class="text-amber-400">Abilities:</strong> ${linkifyText(item.abilities)}</div>
+          <div class="pt-1 flex justify-end no-print">
+            <button onclick="openAttachLeaderModal('${item.id}')" class="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-cogitator text-emerald-300">
+              <i class="fa-solid fa-user-plus mr-1"></i> ${item.attachedLeader ? 'Change Leader' : 'Attach Leader'}
+            </button>
+          </div>
         `;
         container.appendChild(card);
       });
     }
 
-    // BATTLE COGITATOR (Tabletop View with Modified Stats / Buff Highlighting)
+    // BATTLE COGITATOR (Tabletop View with Collapsible Cards & Full Weapon Details)
     function renderBattleCogitatorView() {
       const container = document.getElementById("battleUnitsContainer");
       if (!container) return;
@@ -1110,35 +1267,88 @@
       }
       container.innerHTML = "";
       state.roster.forEach(item => {
-        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
-        // Check if enhanced or leader buffed (visual green highlight simulation)
+        const hasLeader = !!item.attachedLeader;
         const hasEnh = !!item.enhancement;
-        const card = document.createElement("div");
-        card.className = `rounded-lg bg-zinc-950 border ${item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} p-4 space-y-3`;
-        card.innerHTML = `
-          <div class="flex justify-between items-center flex-wrap gap-2 border-b border-zinc-800 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="font-imperial font-bold text-base text-zinc-100 uppercase">${item.unitName}</span>
-              ${hasEnh ? `<span class="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-600 text-emerald-300 text-[10px] font-cogitator font-bold" title="Enhanced Unit"><i class="fa-solid fa-star mr-1"></i>BUFFED / ENHANCED</span>` : ''}
-            </div>
-            <div class="grid grid-cols-6 gap-2 font-cogitator text-xs bg-zinc-900 px-3 py-1 rounded border border-zinc-800 text-center">
-              <div>M: <strong>${item.stats.M}</strong></div>
-              <div>T: <strong class="${hasEnh ? 'text-emerald-400' : ''}">${item.stats.T}</strong></div>
-              <div>SV: <strong class="${hasEnh ? 'text-emerald-400' : ''}">${item.stats.SV}</strong></div>
-              <div>W: <strong>${item.stats.W}</strong></div>
-              <div>INV: <strong class="text-amber-400">${item.stats.Invuln}</strong></div>
-              <div>PTS: <strong class="text-amber-400">${totalItemPts}</strong></div>
+        const isBuffed = hasLeader || hasEnh;
+        const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0) + (hasLeader ? item.attachedLeader.pts : 0);
+        const collapseId = `battleUnit_${item.id}`;
+
+        let weaponsListHtml = item.weapons.map(w => `
+          <div class="p-3 rounded-md bg-zinc-950 border border-zinc-800 space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="font-bold text-sm text-amber-300">${w.count}x ${w.WeaponName}</span>
+                <span class="text-xs font-cogitator px-2 py-0.5 rounded bg-zinc-900 text-zinc-300 ml-1.5">${w.Type}</span>
+                ${w.Keywords && w.Keywords !== '-' ? `<span class="text-xs text-amber-400/90 font-cogitator block mt-1">Keywords: [${linkifyText(w.Keywords)}]</span>` : ''}
+              </div>
+              <div class="font-cogitator text-xs text-zinc-200 bg-zinc-900 px-3 py-1.5 rounded-md border border-zinc-800 flex flex-wrap gap-3">
+                <div><span class="text-zinc-500">RNG:</span> <strong class="text-zinc-100">${w.Range}</strong></div>
+                <div><span class="text-zinc-500">A:</span> <strong class="text-zinc-100">${w.A}</strong></div>
+                <div><span class="text-zinc-500">BS/WS:</span> <strong class="text-zinc-100">${w.BS_WS}</strong></div>
+                <div><span class="text-zinc-500">S:</span> <strong class="text-zinc-100">${w.S}</strong></div>
+                <div><span class="text-zinc-500">AP:</span> <strong class="text-zinc-100">${w.AP}</strong></div>
+                <div><span class="text-zinc-500">D:</span> <strong class="text-amber-400">${w.D}</strong></div>
+              </div>
             </div>
           </div>
-          <div class="text-xs text-zinc-300 space-y-1">
-            <div><strong class="text-amber-400">Abilities:</strong> ${linkifyText(item.abilities)}</div>
+        `).join("");
+
+        const card = document.createElement("div");
+        card.className = `rounded-lg bg-zinc-950 border ${item.isWarlord ? 'border-amber-500' : 'border-zinc-800'} overflow-hidden transition`;
+        card.innerHTML = `
+          <div onclick="toggleBattleUnitCard('${collapseId}'); playCogitatorClick();" class="p-4 bg-zinc-900/95 hover:bg-zinc-900 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 cursor-pointer select-none">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="font-imperial font-bold text-base text-zinc-100 uppercase tracking-wide">${item.unitName}</span>
+              ${hasLeader ? `<span class="px-2.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-600 text-emerald-300 text-[10px] font-cogitator font-bold"><i class="fa-solid fa-user-shield mr-1"></i>${item.attachedLeader.name}</span>` : ''}
+              ${hasEnh ? `<span class="px-2.5 py-0.5 rounded bg-amber-950/80 border border-amber-600 text-amber-300 text-[10px] font-cogitator font-bold"><i class="fa-solid fa-star mr-1"></i>ENHANCED</span>` : ''}
+            </div>
+            <div class="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
+              <div class="grid grid-cols-7 gap-1 font-cogitator text-xs text-zinc-200 bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800 text-center">
+                <div class="px-1"><span class="text-[9px] text-zinc-500 block">M</span> <strong>${item.stats.M}</strong></div>
+                <div class="px-1 border-l border-zinc-800"><span class="text-[9px] text-zinc-500 block">T</span> <strong class="${isBuffed ? 'text-emerald-400' : ''}">${item.stats.T}</strong></div>
+                <div class="px-1 border-l border-zinc-800"><span class="text-[9px] text-zinc-500 block">SV</span> <strong class="${isBuffed ? 'text-emerald-400' : ''}">${item.stats.SV}</strong></div>
+                <div class="px-1 border-l border-zinc-800"><span class="text-[9px] text-zinc-500 block">W</span> <strong>${item.stats.W}</strong></div>
+                <div class="px-1 border-l border-zinc-800"><span class="text-[9px] text-zinc-500 block">LD</span> <strong>${item.stats.LD}</strong></div>
+                <div class="px-1 border-l border-zinc-800"><span class="text-[9px] text-zinc-500 block">OC</span> <strong>${item.stats.OC}</strong></div>
+                <div class="px-1 border-l border-zinc-800"><span class="text-[9px] text-zinc-500 block">INV</span> <strong class="text-amber-400">${item.stats.Invuln}</strong></div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-cogitator font-bold text-base text-amber-400">${totalItemPts} pts</span>
+                <i id="icon_${collapseId}" class="fa-solid fa-chevron-down text-zinc-400 text-sm transition-transform duration-200"></i>
+              </div>
+            </div>
+          </div>
+
+          <div id="${collapseId}" class="hidden p-4 space-y-4 bg-[#0d0f13] border-t border-zinc-800">
+            <div class="space-y-2">
+              <div class="text-xs font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs"></i> Equipped Weapons Arsenal & Keywords
+              </div>
+              <div class="space-y-2">${weaponsListHtml || '<div class="text-xs text-zinc-500 font-cogitator">Standard Melee</div>'}</div>
+            </div>
+            <div class="space-y-2 pt-3 border-t border-zinc-900 text-xs text-zinc-200">
+              <div><strong class="text-amber-400">Abilities:</strong> ${linkifyText(item.abilities)}</div>
+              ${hasLeader ? `<div class="text-emerald-300 pt-1"><strong class="text-emerald-400">Leader Attached Rule (${item.attachedLeader.name}):</strong> ${linkifyText(item.attachedLeader.abilities)}</div>` : ''}
+              <div class="text-zinc-400 pt-2"><strong class="text-zinc-500">Keywords:</strong> ${item.keywords}</div>
+            </div>
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    // IN-GAME STRATAGEMS RENDERER
+    function toggleBattleUnitCard(collapseId) {
+      const body = document.getElementById(collapseId);
+      const icon = document.getElementById(`icon_${collapseId}`);
+      if (body.classList.contains("hidden")) {
+        body.classList.remove("hidden");
+        icon.className = "fa-solid fa-chevron-up text-amber-400 text-sm transition-transform duration-200";
+      } else {
+        body.classList.add("hidden");
+        icon.className = "fa-solid fa-chevron-down text-zinc-400 text-sm transition-transform duration-200";
+      }
+    }
+
     function renderStratagemsList() {
       const container = document.getElementById("stratagemsContainer");
       const phaseFilter = document.getElementById("selStratPhaseFilter").value;
@@ -1149,12 +1359,9 @@
         list = list.filter(s => String(s.Detachment || "").trim().toLowerCase() === state.detachmentName.toLowerCase());
       }
       if (list.length === 0) {
-        // Fallback default sample stratagems if sheet doesn't have them yet
         list = [
           { Name: "Armor of Contempt", Phase: "Any Phase", CP: "1", Desc: "Target one friendly unit from your army that was selected as the target of an attack. Each time an attack is allocated to a model in that unit, improve that model's Armour Saving characteristic by 1 for that attack." },
-          { Name: "Fire Overwatch", Phase: "Shooting Phase", CP: "1", Desc: "In your opponent's Movement or Charge phase, after an enemy unit moves or declares a charge, one unit from your army can shoot that enemy unit as if it were your Shooting phase." },
-          { Name: "Heroic Intervention", Phase: "Charge Phase", CP: "1", Desc: "In your opponent's Charge phase, select one friendly unit that is within 6\" of an enemy unit. That unit can declare a charge against that enemy unit." },
-          { Name: "Tank Shock", Phase: "Charge Phase", CP: "1", Desc: "After your Vehicle unit ends a Charge move, select one enemy unit within Engagement Range and roll a number of D6 equal to its Toughness. For each 4+, inflict 1 mortal wound (max 6 MW)." }
+          { Name: "Fire Overwatch", Phase: "Shooting Phase", CP: "1", Desc: "In your opponent's Movement or Charge phase, after an enemy unit moves or declares a charge, one unit from your army can shoot that enemy unit as if it were your Shooting phase." }
         ];
       }
 
@@ -1196,7 +1403,7 @@
       if (state.roster.length === 0) return;
       let txt = `+++ MATYENICUS ROSTER (${state.faction}) +++\n\n`;
       state.roster.forEach(r => {
-        txt += `• ${r.unitName} (${r.models} models)\n`;
+        txt += `• ${r.unitName} (${r.models} models)${r.attachedLeader ? ' w/ ' + r.attachedLeader.name : ''}\n`;
       });
       navigator.clipboard.writeText(txt).then(() => alert("Roster copied to clipboard!"));
     }
