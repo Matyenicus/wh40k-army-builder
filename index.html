@@ -49,7 +49,6 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Glossary Clickable Term Styling */
     .glossary-term {
       color: #f59e0b;
       border-bottom: 1px dashed rgba(245, 158, 11, 0.7);
@@ -71,9 +70,7 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-red-900 selection:text-amber-200">
 
-  <!-- =====================================================================
-       GLOSSARY MODAL POPUP
-       ===================================================================== -->
+  <!-- GLOSSARY MODAL POPUP -->
   <div id="glossaryModal" onclick="closeGlossaryModal(); playCogitatorClick();" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div onclick="event.stopPropagation()" class="bg-[#121418] mech-border rounded-lg max-w-md w-full p-5 space-y-3 relative shadow-2xl">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -97,9 +94,7 @@
     </div>
   </div>
 
-  <!-- =====================================================================
-       CENTERED MECHANICUS HEADER & VIEW TABS
-       ===================================================================== -->
+  <!-- HEADER -->
   <header class="py-6 px-4 border-b border-amber-500/20 bg-gradient-to-b from-red-950/20 to-transparent text-center relative overflow-hidden">
     <div class="max-w-xl mx-auto flex flex-col items-center">
       <div class="relative w-20 h-20 flex items-center justify-center mb-2">
@@ -134,9 +129,7 @@
     </div>
   </header>
 
-  <!-- =====================================================================
-       MAIN CONTENT CONTAINER
-       ===================================================================== -->
+  <!-- MAIN CONTENT -->
   <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
 
     <!-- VIEW 1: ARMY BUILDER -->
@@ -175,6 +168,7 @@
                   <option value="2000">2000 pts (3 DP)</option>
                   <option value="2500">2500 pts (4 DP)</option>
                   <option value="3000">3000 pts (4 DP)</option>
+                  <option value="christmas">🎄 Christmas (Free Form)</option>
                 </select>
               </div>
             </div>
@@ -301,10 +295,10 @@
             <div class="bg-zinc-950 p-3 rounded border border-zinc-800">
               <div class="flex justify-between items-center text-xs font-cogitator mb-1">
                 <span class="text-zinc-400">REQUISITIONED POINTS TOTAL</span>
-                <span id="rosterPointsText" class="text-sm font-bold text-amber-400">0 / 0 pts</span>
+                <span id="rosterPointsText" class="text-sm font-bold text-amber-400">0 pts</span>
               </div>
               <div class="w-full bg-zinc-900 h-2.5 rounded overflow-hidden">
-                <div id="rosterPointsBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 0%"></div>
+                <div id="rosterPointsBar" class="bg-amber-500 h-full transition-all duration-300" style="width: 100%"></div>
               </div>
             </div>
           </div>
@@ -323,7 +317,7 @@
       </section>
     </div>
 
-    <!-- VIEW 2: BATTLE COGITATOR (In-Game Tabletop Mode - Extra Large Readability) -->
+    <!-- VIEW 2: BATTLE COGITATOR -->
     <div id="viewBattle" class="hidden space-y-4">
       <div class="bg-[#121418] mech-border rounded p-4 space-y-4">
         <div class="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-3">
@@ -336,9 +330,7 @@
           <div id="battleHeaderInfo" class="text-xs font-cogitator text-amber-300">0 Units Enlisted</div>
         </div>
 
-        <div id="battleUnitsContainer" class="space-y-3">
-          <!-- Populated dynamically -->
-        </div>
+        <div id="battleUnitsContainer" class="space-y-3"></div>
       </div>
     </div>
 
@@ -347,7 +339,6 @@
   <script>
     const GOOGLE_SHEET_ID = "1-B5vlsLuQ4T_jhjA70UXgLrRKXnluzqGNsi5Sq6y_x4";
 
-    // --- SOUND SYNTHESIZER ENGINE & MUTE CONTROLLER ---
     let isAudioMuted = localStorage.getItem("matyenicus_audio_muted") === "true";
 
     function updateAudioMuteUI() {
@@ -374,7 +365,6 @@
       if (!isAudioMuted) playCogitatorClick();
     }
 
-    // --- STEP MINIMIZE / COLLAPSE FUNCTION ---
     function toggleStepBody(bodyId, iconId) {
       const body = document.getElementById(bodyId);
       const icon = document.getElementById(iconId);
@@ -436,7 +426,6 @@
         osc.stop(now + 0.2);
       } catch (e) {}
     }
-    // ------------------------------------------------
 
     const DEFAULT_GLOSSARY = [
       { KeywordOrAbility: "Devastating Wounds", Category: "Weapon Rule", Description: "A Critical Wound inflicts mortal wounds equal to the weapon's Damage characteristic instead of normal damage." },
@@ -471,6 +460,7 @@
     let state = {
       faction: "",
       pointsLimit: 0,
+      isChristmas: false,
       dpBudget: 0,
       detachmentName: "",
       roster: [],
@@ -484,7 +474,6 @@
       return 4;
     }
 
-    // Tab Switcher
     function switchTab(viewName) {
       const btnBuilder = document.getElementById("tabBtnBuilder");
       const btnBattle = document.getElementById("tabBtnBattle");
@@ -578,11 +567,11 @@
       loadRosterFromLocalStorage();
     }
 
-    // LocalStorage Save & Load
     function saveRosterToLocalStorage() {
       localStorage.setItem("matyenicus_saved_roster", JSON.stringify({
         faction: state.faction,
         pointsLimit: state.pointsLimit,
+        isChristmas: state.isChristmas,
         dpBudget: state.dpBudget,
         detachmentName: state.detachmentName,
         roster: state.roster
@@ -595,8 +584,9 @@
         try {
           const data = JSON.parse(saved);
           state.faction = data.faction || "";
-          state.pointsLimit = data.pointsLimit || 0;
-          state.dpBudget = data.dpBudget || getDPBudgetForPoints(state.pointsLimit);
+          state.isChristmas = data.isChristmas || false;
+          state.pointsLimit = data.pointsLimit || (state.isChristmas ? "christmas" : 0);
+          state.dpBudget = data.dpBudget || getDPBudgetForPoints(typeof state.pointsLimit === 'number' ? state.pointsLimit : 2000);
           state.detachmentName = data.detachmentName || "";
           state.roster = data.roster || [];
 
@@ -604,11 +594,11 @@
             document.getElementById("selFaction").value = state.faction;
             onSelectFaction();
           }
-          if (state.pointsLimit) {
+          if (state.pointsLimit !== undefined && state.pointsLimit !== 0) {
             document.getElementById("selPoints").value = state.pointsLimit;
             onSelectPoints();
           }
-          if (state.detachmentName) {
+          if (state.detachmentName && !state.isChristmas) {
             setTimeout(() => {
               const selDet = document.getElementById("selDetachment");
               if (selDet) {
@@ -624,7 +614,6 @@
       renderRoster();
     }
 
-    // JSON File Export & Import
     function exportRosterJSON() {
       if (state.roster.length === 0) {
         alert("No units in roster to export.");
@@ -633,13 +622,14 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
         faction: state.faction,
         pointsLimit: state.pointsLimit,
+        isChristmas: state.isChristmas,
         dpBudget: state.dpBudget,
         detachmentName: state.detachmentName,
         roster: state.roster
       }, null, 2));
       const dlAnchor = document.createElement('a');
       dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", `matyenicus_roster_${state.faction || 'army'}_${state.pointsLimit || 0}pts.json`);
+      dlAnchor.setAttribute("download", `matyenicus_roster_${state.faction || 'army'}_${state.isChristmas ? 'christmas' : (state.pointsLimit || 0) + 'pts'}.json`);
       document.body.appendChild(dlAnchor);
       dlAnchor.click();
       dlAnchor.remove();
@@ -653,8 +643,9 @@
           try {
             const data = JSON.parse(e.target.result);
             state.faction = data.faction || "";
-            state.pointsLimit = data.pointsLimit || 0;
-            state.dpBudget = data.dpBudget || getDPBudgetForPoints(state.pointsLimit);
+            state.isChristmas = data.isChristmas || false;
+            state.pointsLimit = data.pointsLimit || (state.isChristmas ? "christmas" : 0);
+            state.dpBudget = data.dpBudget || getDPBudgetForPoints(typeof state.pointsLimit === 'number' ? state.pointsLimit : 2000);
             state.detachmentName = data.detachmentName || "";
             state.roster = data.roster || [];
 
@@ -662,11 +653,11 @@
               document.getElementById("selFaction").value = state.faction;
               onSelectFaction();
             }
-            if (state.pointsLimit) {
+            if (state.pointsLimit !== undefined && state.pointsLimit !== 0) {
               document.getElementById("selPoints").value = state.pointsLimit;
               onSelectPoints();
             }
-            if (state.detachmentName) {
+            if (state.detachmentName && !state.isChristmas) {
               setTimeout(() => {
                 const selDet = document.getElementById("selDetachment");
                 if (selDet) {
@@ -685,7 +676,6 @@
       }
     }
 
-    // Glossary Engine
     function termToPattern(rawTerm) {
       let escaped = rawTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
       let pattern = escaped.replace(/\bX\b/gi, '(?:\\d*D\\d+(?:\\+\\d+)?|\\d+)');
@@ -745,7 +735,6 @@
       document.getElementById("glossaryModal").classList.add("hidden");
     }
 
-    // Builder Workflows
     function populateFactionsDropdown() {
       const sel = document.getElementById("selFaction");
       sel.innerHTML = `<option value="">-- Choose Faction --</option>`;
@@ -783,21 +772,36 @@
         document.getElementById("factionRuleDesc").innerHTML = linkifyText(facObj.ArmyRuleDesc || "");
       }
 
-      if (state.pointsLimit > 0) unlockDetachmentStep();
+      if (state.pointsLimit !== 0 && state.pointsLimit !== "") unlockDetachmentStep();
     }
 
     function onSelectPoints() {
-      const pts = parseInt(document.getElementById("selPoints").value) || 0;
-      state.pointsLimit = pts;
-      state.dpBudget = getDPBudgetForPoints(pts);
-      
-      const dpBudgetEl = document.getElementById("dpBudgetText");
-      if (dpBudgetEl) dpBudgetEl.textContent = `BUDGET: ${state.dpBudget} DP`;
+      const rawVal = document.getElementById("selPoints").value;
+      const detCard = document.getElementById("stepDetachmentCard");
 
-      if (pts > 0 && state.faction) unlockDetachmentStep();
+      if (rawVal === "christmas") {
+        state.isChristmas = true;
+        state.pointsLimit = "christmas";
+        state.dpBudget = 0;
+        state.detachmentName = "Christmas Free-Form Protocol";
+        
+        detCard.classList.add("hidden");
+        if (state.faction) unlockWarlordAndUnitsSteps();
+      } else {
+        state.isChristmas = false;
+        const pts = parseInt(rawVal) || 0;
+        state.pointsLimit = pts;
+        state.dpBudget = getDPBudgetForPoints(pts);
+        
+        const dpBudgetEl = document.getElementById("dpBudgetText");
+        if (dpBudgetEl) dpBudgetEl.textContent = `BUDGET: ${state.dpBudget} DP`;
+
+        if (pts > 0 && state.faction) unlockDetachmentStep();
+      }
     }
 
     function unlockDetachmentStep() {
+      if (state.isChristmas) return;
       const detCard = document.getElementById("stepDetachmentCard");
       detCard.classList.remove("hidden");
 
@@ -953,8 +957,8 @@
       const isCharacter = String(u.Keywords || "").toLowerCase().includes("character") || String(u.Role || "").toLowerCase().includes("character");
       const isEpicHero = String(u.Keywords || "").toLowerCase().includes("epic hero") || u.Role === "Epic Hero";
 
-      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      const availableEnhancements = (isCharacter && !isEpicHero) ? getEnhancementsFromDetachment(detObj) : [];
+      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const availableEnhancements = (!state.isChristmas && isCharacter && !isEpicHero) ? getEnhancementsFromDetachment(detObj) : [];
 
       let tiersHtml = stg.tiers.map((t, idx) =>
         `<option value="${idx}" ${idx === stg.tierIdx ? 'selected' : ''}>${t.models} Model(s) — ${t.pts} pts</option>`
@@ -1039,7 +1043,7 @@
             </select>
           </div>
 
-          ${isCharacter ? (
+          ${!state.isChristmas && isCharacter ? (
             isEpicHero ? `
               <div class="p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] font-cogitator text-zinc-500">
                 <i class="fa-solid fa-ban text-red-500 mr-1"></i> EPIC HERO RULE: Epic Heroes cannot be given Enhancements.
@@ -1101,8 +1105,8 @@
 
       const u = stg.unitObj;
       const activeTier = stg.tiers[stg.tierIdx] || stg.tiers[0];
-      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      const enhList = getEnhancementsFromDetachment(detObj);
+      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const enhList = state.isChristmas ? [] : getEnhancementsFromDetachment(detObj);
       const chosenEnh = enhList.find(e => e.name === stg.enhancementName) || null;
 
       if (mode === "warlord") state.roster.forEach(r => r.isWarlord = false);
@@ -1119,7 +1123,7 @@
         id: "unit_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
         unitName: u.Name,
         role: u.Role,
-        maxInArmy: parseInt(u.MaxInArmy) || 3,
+        maxInArmy: parseInt(u.MaxInArmy) || 99,
         stats: { M: u.M, T: u.T, SV: u.SV, W: u.W, LD: u.LD, OC: u.OC, Invuln: u.Invuln },
         abilities: u.Abilities,
         keywords: u.Keywords,
@@ -1139,9 +1143,6 @@
       renderRoster();
     }
 
-    // =========================================================================
-    // ROSTER RENDERER (Builder View)
-    // =========================================================================
     function renderRoster() {
       const subtitle = document.getElementById("rosterSubtitle");
       const ptsText = document.getElementById("rosterPointsText");
@@ -1152,8 +1153,8 @@
 
       if (!state.faction) {
         subtitle.textContent = "AWAITING INITIAL DIRECTIVES...";
-        ptsText.textContent = "0 / 0 pts";
-        ptsBar.style.width = "0%";
+        ptsText.textContent = "0 pts";
+        if (ptsBar) ptsBar.style.width = "100%";
         detPill.classList.add("hidden");
         errorBox.classList.add("hidden");
         if (container) {
@@ -1168,13 +1169,17 @@
         return;
       }
 
-      subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS (${state.dpBudget} DP)`;
+      if (state.isChristmas) {
+        subtitle.textContent = `🎄 CHRISTMAS MODE // ${state.faction.toUpperCase()} // FREE-FORM ROSTER`;
+      } else {
+        subtitle.textContent = `${state.faction.toUpperCase()} // ${state.detachmentName || 'NO DETACHMENT'} // ${state.pointsLimit || 0} PTS (${state.dpBudget} DP)`;
+      }
 
-      const detObj = DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
-      const dispObj = DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
+      const detObj = state.isChristmas ? null : DB.Detachments.find(d => String(d.Faction).trim() === state.faction && String(d.DetachmentName).trim() === state.detachmentName);
+      const dispObj = state.isChristmas ? null : DB.Dispositions.find(disp => String(disp.DetachmentName || "").trim().toLowerCase() === String(state.detachmentName).trim().toLowerCase());
       const dispText = dispObj ? ` // Force Disposition: ${dispObj.ForceDisposition}` : '';
 
-      if (detObj && detPill) {
+      if (detObj && detPill && !state.isChristmas) {
         detPill.classList.remove("hidden");
         detPill.innerHTML = `
           <div class="flex justify-between items-center">
@@ -1188,35 +1193,29 @@
       }
 
       let totalPts = 0;
-      const unitCounts = {};
-      const enhancementNames = [];
       const errors = [];
 
       state.roster.forEach(item => {
         const itemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
         totalPts += itemPts;
-        unitCounts[item.unitName] = (unitCounts[item.unitName] || 0) + 1;
-        if (item.enhancement) enhancementNames.push(item.enhancement.name);
         item.weapons.forEach(w => {
-          if (w.count > w.maxAllowed) errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max ${w.maxAllowed}).`);
+          if (!state.isChristmas && w.count > w.maxAllowed) errors.push(`[WARGEAR OVERLOAD] ${item.unitName}: Equipped ${w.count}x ${w.WeaponName} (Max ${w.maxAllowed}).`);
         });
       });
 
-      Object.keys(unitCounts).forEach(uName => {
-        const sample = state.roster.find(r => r.unitName === uName);
-        if (unitCounts[uName] > sample.maxInArmy) errors.push(`[FORCE ORG] ${uName}: Exceeds max cap of ${sample.maxInArmy}.`);
-      });
+      if (!state.isChristmas && state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) errors.push(`[COMMAND ERROR] No Warlord designated.`);
+      if (!state.isChristmas && typeof state.pointsLimit === 'number' && state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
 
-      if (state.roster.length > 0 && !state.roster.some(r => r.isWarlord)) errors.push(`[COMMAND ERROR] No Warlord designated.`);
-      if (enhancementNames.length > 3) errors.push(`[ENHANCEMENT LIMIT] Max 3 enhancements permitted.`);
-
-      if (state.pointsLimit > 0 && totalPts > state.pointsLimit) errors.push(`[POINTS EXCEEDED] Total points (${totalPts}) exceeds limit (${state.pointsLimit}).`);
-
-      if (ptsText) ptsText.textContent = `${totalPts} / ${state.pointsLimit} pts`;
-      const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
+      if (ptsText) ptsText.textContent = `${totalPts} ${state.isChristmas ? 'pts (Free Form)' : '/ ' + state.pointsLimit + ' pts'}`;
       if (ptsBar) {
-        ptsBar.style.width = pct + "%";
-        ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
+        if (state.isChristmas) {
+          ptsBar.style.width = "100%";
+          ptsBar.className = "bg-emerald-500 h-full transition-all duration-300";
+        } else {
+          const pct = state.pointsLimit > 0 ? Math.min(100, Math.round((totalPts / state.pointsLimit) * 100)) : 0;
+          ptsBar.style.width = pct + "%";
+          ptsBar.className = (state.pointsLimit > 0 && totalPts > state.pointsLimit) ? "bg-red-600 h-full transition-all duration-300" : "bg-amber-500 h-full transition-all duration-300";
+        }
       }
 
       if (errors.length > 0 && errorBox) {
@@ -1246,7 +1245,7 @@
       sortedRoster.forEach(item => {
         const totalItemPts = item.basePts + (item.enhancement ? item.enhancement.pts : 0);
         const weaponsListHtml = item.weapons.map(w => `
-          <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
+          <div class="flex flex-wrap items-center justify-between text-[11px] py-1 border-b border-zinc-900 ${!state.isChristmas && w.count > w.maxAllowed ? 'text-red-400 font-bold' : 'text-zinc-300'}">
             <div>
               <span class="text-amber-400 font-cogitator font-bold">${w.count}x</span> ${w.WeaponName}
               ${w.Keywords && w.Keywords !== '-' ? `<span class="text-[10px] text-amber-500/80 font-cogitator ml-1">[${linkifyText(w.Keywords)}]</span>` : ''}
@@ -1300,9 +1299,6 @@
       });
     }
 
-    // =========================================================================
-    // BATTLE COGITATOR (In-Game Tabletop Mode - Extra Large Readability)
-    // =========================================================================
     function renderBattleCogitatorView() {
       const container = document.getElementById("battleUnitsContainer");
       const headerInfo = document.getElementById("battleHeaderInfo");
@@ -1353,7 +1349,6 @@
         card.className = `rounded-lg bg-zinc-950 border ${item.isWarlord ? 'border-amber-500 shadow-[0_0_20px_rgba(197,155,39,0.25)]' : 'border-zinc-800'} overflow-hidden transition`;
         
         card.innerHTML = `
-          <!-- Collapsed Header Bar with Extra Large Stats -->
           <div onclick="toggleBattleUnitCard('${collapseId}'); playCogitatorClick();" class="p-4 md:p-5 bg-zinc-900/95 hover:bg-zinc-900 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 cursor-pointer select-none">
             <div class="flex items-center gap-3 flex-wrap">
               <span class="font-imperial font-bold text-base md:text-xl text-zinc-100 uppercase tracking-wide">${item.unitName}</span>
@@ -1362,7 +1357,6 @@
               <span class="text-xs md:text-sm font-cogitator text-zinc-400">[${item.role}]</span>
             </div>
 
-            <!-- Extra Large Tabletop Stat Strip -->
             <div class="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
               <div class="grid grid-cols-7 gap-1 md:gap-2 font-cogitator text-xs md:text-sm text-zinc-200 bg-zinc-950 px-3.5 py-2 rounded-lg border border-zinc-800 text-center">
                 <div class="px-1.5"><span class="text-[10px] md:text-xs text-zinc-500 block">M</span> <strong class="text-base md:text-lg text-zinc-100">${item.stats.M}</strong></div>
@@ -1381,7 +1375,6 @@
             </div>
           </div>
 
-          <!-- Expanded Full Dataslate Body -->
           <div id="${collapseId}" class="hidden p-4 md:p-5 space-y-4 bg-[#0d0f13] border-t border-zinc-800">
             ${item.enhancement ? `
               <div class="p-3.5 rounded-md bg-amber-950/20 border border-amber-600/40 text-sm">
@@ -1390,7 +1383,6 @@
               </div>
             ` : ''}
 
-            <!-- Wargear & Weapons Section -->
             <div class="space-y-2">
               <div class="text-xs md:text-sm font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-crosshairs text-base"></i> Equipped Wargear & Weapons
@@ -1400,7 +1392,6 @@
               </div>
             </div>
 
-            <!-- Abilities & Keywords Section -->
             <div class="space-y-2 pt-3 border-t border-zinc-900">
               <div class="text-xs md:text-sm font-cogitator text-amber-400 uppercase font-bold tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-book-bookmark text-base"></i> Datasheet Abilities & Rules
@@ -1446,8 +1437,12 @@
       if (state.roster.length === 0) return;
       let total = 0;
       let txt = `+++ MATYENICUS ARMY ROSTER (${state.faction.toUpperCase()}) +++\n`;
-      txt += `Detachment: ${state.detachmentName}\n`;
-      txt += `Battle Size: ${state.pointsLimit} pts (${state.dpBudget} DP)\n\n`;
+      if (!state.isChristmas) {
+        txt += `Detachment: ${state.detachmentName}\n`;
+        txt += `Battle Size: ${state.pointsLimit} pts (${state.dpBudget} DP)\n\n`;
+      } else {
+        txt += `Mode: CHRISTMAS FREE-FORM\n\n`;
+      }
 
       state.roster.forEach(r => {
         const pts = r.basePts + (r.enhancement ? r.enhancement.pts : 0);
@@ -1457,7 +1452,7 @@
         r.weapons.forEach(w => { txt += `  - ${w.count}x ${w.WeaponName}\n`; });
         txt += `\n`;
       });
-      txt += `TOTAL POINTS: ${total} / ${state.pointsLimit} pts`;
+      txt += `TOTAL POINTS: ${total} pts`;
       navigator.clipboard.writeText(txt).then(() => alert("Army Roster copied to clipboard!"));
     }
 
